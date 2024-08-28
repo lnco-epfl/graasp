@@ -3,7 +3,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { ItemLoginSchemaType } from '@graasp/sdk';
 
 import { resolveDependency } from '../../di/utils';
-import { notUndefined } from '../../utils/assertions';
+import { asDefined } from '../../utils/assertions';
 import { buildRepositories } from '../../utils/repositories';
 import { SESSION_KEY, isAuthenticated, optionalIsAuthenticated } from '../auth/plugins/passport';
 import { matchOne } from '../authorization';
@@ -93,7 +93,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async ({ user, params: { id: itemId }, body: { type } }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return db.transaction(async (manager) => {
         return itemLoginService.put(member, buildRepositories(manager), itemId, type);
@@ -111,7 +111,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
     async ({ user, params: { id: itemId } }) => {
       return db.transaction(async (manager) => {
-        const member = notUndefined(user?.account);
+        const member = asDefined(user?.account);
         assertIsMember(member);
         return itemLoginService.delete(member, buildRepositories(manager), itemId);
       });

@@ -10,7 +10,7 @@ import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
 
 import { resolveDependency } from '../../di/utils';
-import { notUndefined } from '../../utils/assertions';
+import { asDefined } from '../../utils/assertions';
 import { buildRepositories } from '../../utils/repositories';
 import { isAuthenticated, optionalIsAuthenticated } from '../auth/plugins/passport';
 import { matchOne } from '../authorization';
@@ -78,7 +78,7 @@ const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
           params: { itemId },
           body,
         } = request;
-        const member = notUndefined(user?.account);
+        const member = asDefined(user?.account);
         return await db.transaction(async (manager) => {
           const repositories = buildRepositories(manager);
           const message = await chatService.postOne(member, repositories, itemId, body);
@@ -108,7 +108,7 @@ const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
           body,
         } = request;
         return await db.transaction(async (manager) => {
-          const member = notUndefined(user?.account);
+          const member = asDefined(user?.account);
           const repositories = buildRepositories(manager);
           const message = await chatService.patchOne(member, repositories, itemId, messageId, body);
           await actionChatService.postPatchMessageAction(request, repositories, message);
@@ -129,7 +129,7 @@ const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
           user,
           params: { itemId, messageId },
         } = request;
-        const member = notUndefined(user?.account);
+        const member = asDefined(user?.account);
         return await db.transaction(async (manager) => {
           const repositories = buildRepositories(manager);
           const message = await chatService.deleteOne(member, repositories, itemId, messageId);
@@ -151,7 +151,7 @@ const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
           user,
           params: { itemId },
         } = request;
-        const member = notUndefined(user?.account);
+        const member = asDefined(user?.account);
         await db.transaction(async (manager) => {
           const repositories = buildRepositories(manager);
           await chatService.clear(member, repositories, itemId);

@@ -5,7 +5,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { ItemType, MembershipRequestStatus, PermissionLevel } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../di/utils';
-import { notUndefined } from '../../../../utils/assertions';
+import { asDefined } from '../../../../utils/assertions';
 import { ItemNotFolder } from '../../../../utils/errors';
 import { buildRepositories } from '../../../../utils/repositories';
 import { isAuthenticated } from '../../../auth/plugins/passport';
@@ -47,7 +47,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async ({ user, params }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       const { itemId } = params;
 
       await db.transaction(async (manager) => {
@@ -72,7 +72,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async ({ user, params }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       const { itemId } = params;
 
       await db.transaction(async (manager) => {
@@ -109,7 +109,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async ({ user, params }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       const { itemId } = params;
 
@@ -161,7 +161,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async ({ user, params }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       const { itemId, memberId } = params;
 
       await db.transaction(async (manager) => {
