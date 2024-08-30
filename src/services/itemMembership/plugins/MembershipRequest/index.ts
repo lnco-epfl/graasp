@@ -6,6 +6,7 @@ import { MembershipRequestStatus, PermissionLevel } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../di/utils';
 import { notUndefined } from '../../../../utils/assertions';
+import { ItemNotFound } from '../../../../utils/errors';
 import { buildRepositories } from '../../../../utils/repositories';
 import { isAuthenticated } from '../../../auth/plugins/passport';
 import { matchOne, validatePermission } from '../../../authorization';
@@ -85,7 +86,11 @@ const plugin: FastifyPluginAsync = async (fastify) => {
           return reply.send({ status: MembershipRequestStatus.Approved });
         }
 
-        return reply.send({ status: MembershipRequestStatus.NotSubmittedOrDeleted });
+        if (await itemService.get(member, repositories, itemId, PermissionLevel.Read, false)) {
+          return reply.send({ status: MembershipRequestStatus.NotSubmittedOrDeleted });
+        }
+
+        throw new ItemNotFound(itemId);
       });
     },
   );
