@@ -18,8 +18,13 @@ export class ItemTagService {
     const { itemTagRepository } = repositories;
     const item = await this.itemService.get(actor, repositories, itemId);
 
-    return itemTagRepository.getForItem(item);
+    return itemTagRepository.getByItemPath(item.path);
   }
+
+  async getByItemPath({ itemTagRepository }: Repositories, itemPath: string) {
+    return itemTagRepository.getByItemPath(itemPath);
+  }
+
   async getForManyItems(actor: Actor, repositories: Repositories, itemIds: string[]) {
     const { itemTagRepository } = repositories;
     const { data, errors } = await this.itemService.getMany(actor, repositories, itemIds);
