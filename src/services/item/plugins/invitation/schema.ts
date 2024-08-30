@@ -159,3 +159,22 @@ export const sendOne = {
     },
   },
 };
+
+export const enroll = {
+  tags: ['itemMemberships'],
+  summary: 'Create an item membership for the logged in user if there is an Item Login',
+  description: `Create an item membership on the item with the given ID for the logged in user. 
+    The item be associated with an Item Login.`,
+  params: {
+    type: 'object',
+    required: ['itemId'],
+    properties: {
+      itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
+    },
+  },
+  response: {
+    200: {
+      $ref: 'https://graasp.org/item-memberships/#/definitions/itemMembership',
+    },
+  },
+};

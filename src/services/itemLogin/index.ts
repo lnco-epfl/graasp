@@ -7,7 +7,6 @@ import { notUndefined } from '../../utils/assertions';
 import { buildRepositories } from '../../utils/repositories';
 import { SESSION_KEY, isAuthenticated, optionalIsAuthenticated } from '../auth/plugins/passport';
 import { matchOne } from '../authorization';
-import { ItemService } from '../item/service';
 import { assertIsMember } from '../member/entities/member';
 import { validatedMemberAccountRole } from '../member/strategies/validatedMemberAccountRole';
 import { ValidMemberSession } from './errors';
@@ -24,8 +23,7 @@ import { ItemLoginService } from './service';
 const plugin: FastifyPluginAsync = async (fastify) => {
   const { db } = fastify;
 
-  const itemService = resolveDependency(ItemService);
-  const itemLoginService = new ItemLoginService(fastify, itemService);
+  const itemLoginService = resolveDependency(ItemLoginService);
 
   // get login schema type for item
   // used to trigger item login for student

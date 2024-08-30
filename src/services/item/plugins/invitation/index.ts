@@ -4,6 +4,8 @@ import { fastifyMultipart } from '@fastify/multipart';
 import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
 
+import { PermissionLevel } from '@graasp/sdk';
+
 import { resolveDependency } from '../../../../di/utils';
 import { MailerService } from '../../../../plugins/mailer/service';
 import { EntryNotFoundBeforeDeleteException } from '../../../../repositories/errors';
@@ -11,15 +13,28 @@ import { IdParam, isNonEmptyArray } from '../../../../types';
 import { notUndefined } from '../../../../utils/assertions';
 import { Repositories, buildRepositories } from '../../../../utils/repositories';
 import { isAuthenticated, optionalIsAuthenticated } from '../../../auth/plugins/passport';
-import { matchOne } from '../../../authorization';
+import { matchOne, validatePermission } from '../../../authorization';
+import { ItemLoginSchemaNotFound } from '../../../itemLogin/errors';
+import { ItemLoginService } from '../../../itemLogin/service';
+import { ItemMembershipAlreadyExists } from '../../../itemMembership/plugins/MembershipRequest/error';
+import { ItemMembershipService } from '../../../itemMembership/service';
 import { Actor, Member, assertIsMember } from '../../../member/entities/member';
 import { MemberService } from '../../../member/service';
 import { memberAccountRole } from '../../../member/strategies/memberAccountRole';
 import { validatedMemberAccountRole } from '../../../member/strategies/validatedMemberAccountRole';
+import { ItemService } from '../../service';
 import { MAX_FILE_SIZE } from './constants';
 import { Invitation } from './entity';
 import { NoFileProvidedForInvitations, NoInvitationReceivedFound } from './errors';
-import definitions, { deleteOne, getById, getForItem, invite, sendOne, updateOne } from './schema';
+import definitions, {
+  deleteOne,
+  enroll,
+  getById,
+  getForItem,
+  invite,
+  sendOne,
+  updateOne,
+} from './schema';
 import { InvitationService } from './service';
 
 const plugin: FastifyPluginAsync = async (fastify) => {
@@ -27,6 +42,9 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   const mailerService = resolveDependency(MailerService);
   const memberService = resolveDependency(MemberService);
   const invitationService = resolveDependency(InvitationService);
+  const itemService = resolveDependency(ItemService);
+  const itemLoginService = resolveDependency(ItemLoginService);
+  const itemMembershipService = resolveDependency(ItemMembershipService);
 
   if (!mailerService) {
     throw new Error('Mailer plugin is not defined');
@@ -190,6 +208,59 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       assertIsMember(member);
       await invitationService.resend(member, buildRepositories(), invitationId);
       reply.status(StatusCodes.NO_CONTENT);
+    },
+  );
+
+  fastify.post<{ Params: { itemId: string } }>(
+    '/:itemId/enroll',
+    {
+      schema: enroll,
+      preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
+    },
+    async ({ user, params }) => {
+      const member = notUndefined(user?.account);
+      assertIsMember(member);
+      const { itemId } = params;
+
+      return await db.transaction(async (manager) => {
+        const repositories = buildRepositories(manager);
+
+        const item = await itemService.get(
+          member,
+          repositories,
+          itemId,
+          PermissionLevel.Read,
+          false,
+        );
+
+        if (!(await itemLoginService.getByItemPath(repositories, item.path))) {
+          const error = new ItemLoginSchemaNotFound();
+          error.statusCode = StatusCodes.FORBIDDEN;
+          throw error;
+        }
+
+        // Check if the member already has a membership, if so, throw an error
+        let hasPermission = true;
+        try {
+          await validatePermission(repositories, PermissionLevel.Read, member, item);
+        } catch (err) {
+          hasPermission = err.statusCode !== StatusCodes.FORBIDDEN;
+        }
+        if (hasPermission) {
+          throw new ItemMembershipAlreadyExists();
+        }
+
+        return await itemMembershipService.post(
+          member,
+          repositories,
+          {
+            permission: PermissionLevel.Read,
+            itemId,
+            memberId: member.id,
+          },
+          false,
+        );
+      });
     },
   );
 };

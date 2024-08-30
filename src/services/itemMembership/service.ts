@@ -110,6 +110,7 @@ export class ItemMembershipService {
     actor: Account,
     repositories: Repositories,
     membership: { permission: PermissionLevel; itemId: UUID; memberId: UUID },
+    throwOnForbiddenPermission?: boolean,
   ) {
     // check memberships
     const item = await this.itemService.get(
@@ -117,6 +118,7 @@ export class ItemMembershipService {
       repositories,
       membership.itemId,
       PermissionLevel.Admin,
+      throwOnForbiddenPermission,
     );
 
     return this._post(actor, repositories, item, membership.memberId, membership.permission);

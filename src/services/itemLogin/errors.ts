@@ -150,3 +150,16 @@ export class NotGuest extends GraaspItemLoginError {
     );
   }
 }
+
+export class ItemLoginSchemaExists extends GraaspItemLoginError {
+  constructor(data?: unknown) {
+    super(
+      {
+        code: 'GILERR012',
+        statusCode: StatusCodes.CONFLICT,
+        message: FAILURE_MESSAGES.CANNOT_CREATE_MEMBERSHIP_CAUSE_ITEM_LOGIN_SCHEMA_EXISTS,
+      },
+      data,
+    );
+  }
+}
