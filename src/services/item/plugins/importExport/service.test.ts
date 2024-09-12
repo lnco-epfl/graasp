@@ -11,9 +11,7 @@ import { BaseLogger } from '../../../../logger';
 import { buildRepositories } from '../../../../utils/repositories';
 import { ItemService } from '../../service';
 import { ItemTestUtils } from '../../test/fixtures/items';
-import { EtherpadItemService } from '../etherpad/service';
 import FileItemService from '../file/service';
-import type { H5PService } from '../html/h5p/service';
 import { ItemTagRepository } from '../itemTag/repository';
 import { ImportExportService } from './service';
 
@@ -50,8 +48,6 @@ describe('ZIP routes tests', () => {
         app.db,
         {} as unknown as FileItemService,
         resolveDependency(ItemService),
-        {} as unknown as H5PService,
-        {} as unknown as EtherpadItemService,
         resolveDependency(BaseLogger),
       );
       const repositories = buildRepositories();
@@ -94,8 +90,6 @@ describe('ZIP routes tests', () => {
           getUrl: jest.fn(),
         } as unknown as FileItemService,
         resolveDependency(ItemService),
-        {} as unknown as H5PService,
-        {} as unknown as EtherpadItemService,
         resolveDependency(BaseLogger),
       );
       const repositories = buildRepositories();
@@ -117,8 +111,6 @@ describe('ZIP routes tests', () => {
         app.db,
         {} as unknown as FileItemService,
         resolveDependency(ItemService),
-        {} as unknown as H5PService,
-        {} as unknown as EtherpadItemService,
         resolveDependency(BaseLogger),
       );
       const repositories = buildRepositories();
@@ -140,8 +132,6 @@ describe('ZIP routes tests', () => {
         app.db,
         {} as unknown as FileItemService,
         resolveDependency(ItemService),
-        {} as unknown as H5PService,
-        {} as unknown as EtherpadItemService,
         resolveDependency(BaseLogger),
       );
       const repositories = buildRepositories();
@@ -163,8 +153,6 @@ describe('ZIP routes tests', () => {
         app.db,
         {} as unknown as FileItemService,
         resolveDependency(ItemService),
-        {} as unknown as H5PService,
-        {} as unknown as EtherpadItemService,
         resolveDependency(BaseLogger),
       );
       const repositories = buildRepositories();
@@ -192,8 +180,6 @@ describe('ZIP routes tests', () => {
         app.db,
         {} as unknown as FileItemService,
         resolveDependency(ItemService),
-        {} as unknown as H5PService,
-        {} as unknown as EtherpadItemService,
         resolveDependency(BaseLogger),
       );
       const repositories = buildRepositories();
@@ -222,10 +208,6 @@ describe('ZIP routes tests', () => {
         app.db,
         {} as unknown as FileItemService,
         resolveDependency(ItemService),
-        {
-          getUrl: jest.fn(),
-        } as unknown as H5PService,
-        {} as unknown as EtherpadItemService,
         resolveDependency(BaseLogger),
       );
       const repositories = buildRepositories();
@@ -254,12 +236,6 @@ describe('ZIP routes tests', () => {
         app.db,
         {} as unknown as FileItemService,
         resolveDependency(ItemService),
-        {
-          getUrl: jest.fn(),
-        } as unknown as H5PService,
-        {
-          getEtherpadContentFromItem: jest.fn(async () => 'mycontent'),
-        } as unknown as EtherpadItemService,
         resolveDependency(BaseLogger),
       );
       const repositories = buildRepositories();
@@ -278,10 +254,6 @@ describe('ZIP routes tests', () => {
         app.db,
         {} as unknown as FileItemService,
         resolveDependency(ItemService),
-        {
-          getUrl: jest.fn(),
-        } as unknown as H5PService,
-        {} as unknown as EtherpadItemService,
         resolveDependency(BaseLogger),
       );
       const repositories = buildRepositories();

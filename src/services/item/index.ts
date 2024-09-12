@@ -27,10 +27,8 @@ import graaspApps from './plugins/app';
 import graaspDocumentItem from './plugins/document';
 import graaspEmbeddedLinkItem from './plugins/embeddedLink';
 import { PREFIX_EMBEDDED_LINK } from './plugins/embeddedLink/service';
-//import graaspEtherpadPlugin from './plugins/etherpad';
 import graaspFileItem from './plugins/file';
 import itemGeolocationPlugin from './plugins/geolocation/index';
-//import graaspH5PPlugin from './plugins/html/h5p';
 import graaspZipPlugin from './plugins/importExport';
 import graaspInvitationsPlugin from './plugins/invitation';
 import graaspCategoryPlugin from './plugins/itemCategory';
@@ -38,9 +36,9 @@ import graaspFavoritePlugin from './plugins/itemFavorite';
 import graaspItemFlags from './plugins/itemFlag';
 import graaspItemLikes from './plugins/itemLike';
 import graaspItemTags from './plugins/itemTag';
-// import graaspItemPublicationState from './plugins/publication/publicationState';
-// import graaspItemPublish from './plugins/publication/published';
-// import graaspValidationPlugin from './plugins/publication/validation';
+import graaspItemPublicationState from './plugins/publication/publicationState';
+import graaspItemPublish from './plugins/publication/published';
+import graaspValidationPlugin from './plugins/publication/validation';
 import graaspRecycledItemData from './plugins/recycled';
 import ShortLinkService from './plugins/shortLink';
 import { SHORT_LINKS_ROUTE_PREFIX } from './plugins/shortLink/service';
@@ -87,7 +85,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
 
       fastify.register(graaspFavoritePlugin);
 
-      // fastify.register(graaspItemPublish);
+      fastify.register(graaspItemPublish);
 
       fastify.register(thumbnailsPlugin);
 
@@ -99,16 +97,11 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         prefix: SHORT_LINKS_ROUTE_PREFIX,
       });
 
-      // fastify.register(graaspItemPublicationState);
+      fastify.register(graaspItemPublicationState);
 
       // core routes - require authentication
       fastify.register(async function (fastify) {
         fastify.register(itemWsHooks);
-
-        // H5P plugin must be registered before ZIP
-        //fastify.register(graaspH5PPlugin);
-
-        //fastify.register(graaspEtherpadPlugin);
 
         fastify.register(graaspZipPlugin);
 
@@ -126,7 +119,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
 
         fastify.register(graaspRecycledItemData);
 
-        // fastify.register(graaspValidationPlugin);
+        fastify.register(graaspValidationPlugin);
 
         fastify.register(graaspItemLikes);
 
