@@ -32,8 +32,6 @@ import { ItemPublishedRepository } from '../repositories/itemPublished';
 
 const testUtils = new ItemTestUtils();
 
-jest.mock('../plugins/search/meilisearch');
-
 const rawRepository = AppDataSource.getRepository(ItemTag);
 
 const expectPublishedEntry = (value, expectedValue) => {
