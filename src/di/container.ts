@@ -1,28 +1,15 @@
 import { Redis } from 'ioredis';
-import { MeiliSearch } from 'meilisearch';
 
 import { FastifyInstance } from 'fastify';
 
-import Etherpad from '@graasp/etherpad-api';
-
-import { CRON_3AM_MONDAY, JobServiceBuilder } from '../jobs';
 import { BaseLogger } from '../logger';
 import { MailerService } from '../plugins/mailer/service';
 import { CachingService } from '../services/caching/service';
 import FileService from '../services/file/service';
 import { fileRepositoryFactory } from '../services/file/utils/factory';
-import { wrapEtherpadErrors } from '../services/item/plugins/etherpad/etherpad';
-import {
-  EtherpadItemService,
-  RandomPadNameFactory,
-} from '../services/item/plugins/etherpad/service';
-import { EtherpadServiceConfig } from '../services/item/plugins/etherpad/serviceConfig';
 import FileItemService from '../services/item/plugins/file/service';
-import { H5PService } from '../services/item/plugins/html/h5p/service';
 import { ImportExportService } from '../services/item/plugins/importExport/service';
 import { PublicationService } from '../services/item/plugins/publication/publicationState/service';
-import { MeiliSearchWrapper } from '../services/item/plugins/publication/published/plugins/search/meilisearch';
-import { SearchService } from '../services/item/plugins/publication/published/plugins/search/service';
 import { ValidationQueue } from '../services/item/plugins/publication/validation/validationQueue';
 import { ItemService } from '../services/item/service';
 import {
@@ -36,8 +23,6 @@ import {
   MAILER_CONFIG_SMTP_PORT,
   MAILER_CONFIG_SMTP_USE_SSL,
   MAILER_CONFIG_USERNAME,
-  MEILISEARCH_MASTER_KEY,
-  MEILISEARCH_URL,
   REDIS_HOST,
   REDIS_PASSWORD,
   REDIS_PORT,
@@ -46,7 +31,6 @@ import {
 } from '../utils/config';
 import { buildRepositories } from '../utils/repositories';
 import {
-  ETHERPAD_NAME_FACTORY_DI_KEY,
   FASTIFY_LOGGER_DI_KEY,
   FILE_ITEM_TYPE_DI_KEY,
   FILE_SERVICE_URLS_CACHING_DI_KEY,
@@ -162,8 +146,6 @@ export const registerDependencies = (instance: FastifyInstance) => {
       db,
       resolveDependency(FileItemService),
       resolveDependency(ItemService),
-      resolveDependency(H5PService),
-      resolveDependency(EtherpadItemService),
       resolveDependency(BaseLogger),
     ),
   );
