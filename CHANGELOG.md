@@ -2,10 +2,6 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## [1.47.0](https://github.com/graasp/graasp/compare/v1.46.0...v1.47.0) (2024-08-19)
-
-## [1.54.2](https://github.com/graasp/graasp/compare/v1.54.1...v1.54.2) (2024-10-21)
-
 ## [1.60.0](https://github.com/graasp/graasp/compare/v1.59.0...v1.60.0) (2024-12-13)
 
 ### Features
