@@ -14048,7 +14048,21 @@ __metadata:
   dependencies:
     "@smithy/types": "npm:^3.5.0"
     tslib: "npm:^2.6.2"
+<<<<<<< HEAD
   checksum: 10/b1c4c58a8d27ba4e809d6ff721ebe5104dd2aac87ca1837319ae2c4d588dcdeb352b3ff65a38353b302569e3568874272df6847792f240b7aa2a692a67e421e3
+=======
+  checksum: 10/3448eef72037f2ee95f26abfd1ae33a2e626be2467126a8fb0102a0067fecbb50e99d6104e45681717617456de33d0ac518362f807091678f1303f5a896f3051
+  languageName: node
+  linkType: hard
+
+"@aws-sdk/types@npm:^3.222.0":
+  version: 3.649.0
+  resolution: "@aws-sdk/types@npm:3.649.0"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/9929e255909c7375c965e94e33871d38a841a9a13797b7b729d8c45b0aa91d5591d80ca18a879982a2387f12c9ce4bd5b3401182fb76046bf5f180c1e3c5e951
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -14134,6 +14148,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.12.13, @babel/code-frame@npm:^7.22.13, @babel/code-frame@npm:^7.25.7":
   version: 7.25.7
   resolution: "@babel/code-frame@npm:7.25.7"
@@ -14148,10 +14163,27 @@ __metadata:
   version: 7.25.8
   resolution: "@babel/compat-data@npm:7.25.8"
   checksum: 10/269fcb0d89e02e36c8a11e0c1b960a6b4204e88f59f20c374d28f8e318f4cd5ded42dfedc4b54162065e6a10f71c0de651f5ed3f9b45d3a4b52240196df85726
+=======
+"@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.12.13, @babel/code-frame@npm:^7.22.13, @babel/code-frame@npm:^7.24.7":
+  version: 7.24.7
+  resolution: "@babel/code-frame@npm:7.24.7"
+  dependencies:
+    "@babel/highlight": "npm:^7.24.7"
+    picocolors: "npm:^1.0.0"
+  checksum: 10/4812e94885ba7e3213d49583a155fdffb05292330f0a9b2c41b49288da70cf3c746a3fda0bf1074041a6d741c33f8d7be24be5e96f41ef77395eeddc5c9ff624
+  languageName: node
+  linkType: hard
+
+"@babel/compat-data@npm:^7.25.2":
+  version: 7.25.4
+  resolution: "@babel/compat-data@npm:7.25.4"
+  checksum: 10/d37a8936cc355a9ca3050102e03d179bdae26bd2e5c99a977637376c192b23637a039795f153c849437a086727628c9860e2c6af92d7151396e2362c09176337
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
 "@babel/core@npm:^7.11.6, @babel/core@npm:^7.12.3, @babel/core@npm:^7.23.9":
+<<<<<<< HEAD
   version: 7.25.8
   resolution: "@babel/core@npm:7.25.8"
   dependencies:
@@ -14165,12 +14197,31 @@ __metadata:
     "@babel/template": "npm:^7.25.7"
     "@babel/traverse": "npm:^7.25.7"
     "@babel/types": "npm:^7.25.8"
+=======
+  version: 7.25.2
+  resolution: "@babel/core@npm:7.25.2"
+  dependencies:
+    "@ampproject/remapping": "npm:^2.2.0"
+    "@babel/code-frame": "npm:^7.24.7"
+    "@babel/generator": "npm:^7.25.0"
+    "@babel/helper-compilation-targets": "npm:^7.25.2"
+    "@babel/helper-module-transforms": "npm:^7.25.2"
+    "@babel/helpers": "npm:^7.25.0"
+    "@babel/parser": "npm:^7.25.0"
+    "@babel/template": "npm:^7.25.0"
+    "@babel/traverse": "npm:^7.25.2"
+    "@babel/types": "npm:^7.25.2"
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
     convert-source-map: "npm:^2.0.0"
     debug: "npm:^4.1.0"
     gensync: "npm:^1.0.0-beta.2"
     json5: "npm:^2.2.3"
     semver: "npm:^6.3.1"
+<<<<<<< HEAD
   checksum: 10/31eb1a8ca1a3cc0026060720eb290e68205d95c5c00fbd831e69ddc0810f5920b8eb2749db1889ac0a0312b6eddbf321d18a996a88858f3b75c9582bef9ec1e4
+=======
+  checksum: 10/0d6ec10ff430df66f654c089d6f7ef1d9bed0c318ac257ad5f0dfa0caa45666011828ae75f998bcdb279763e892b091b2925d0bc483299e61649d2c7a2245e33
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -14185,6 +14236,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@babel/generator@npm:^7.23.0, @babel/generator@npm:^7.25.7, @babel/generator@npm:^7.7.2":
   version: 7.25.7
   resolution: "@babel/generator@npm:7.25.7"
@@ -14207,6 +14259,30 @@ __metadata:
     lru-cache: "npm:^5.1.1"
     semver: "npm:^6.3.1"
   checksum: 10/bbf9be8480da3f9a89e36e9ea2e1c76601014c1074ccada7c2edb1adeb3b62bc402cc4abaf8d16760734b25eceb187a9510ce44f6a7a6f696ccc74f69283625b
+=======
+"@babel/generator@npm:^7.23.0, @babel/generator@npm:^7.25.0, @babel/generator@npm:^7.25.6, @babel/generator@npm:^7.7.2":
+  version: 7.25.6
+  resolution: "@babel/generator@npm:7.25.6"
+  dependencies:
+    "@babel/types": "npm:^7.25.6"
+    "@jridgewell/gen-mapping": "npm:^0.3.5"
+    "@jridgewell/trace-mapping": "npm:^0.3.25"
+    jsesc: "npm:^2.5.1"
+  checksum: 10/541e4fbb6ea7806f44232d70f25bf09dee9a57fe43d559e375536870ca5261ebb4647fec3af40dcbb3325ea2a49aff040e12a4e6f88609eaa88f10c4e27e31f8
+  languageName: node
+  linkType: hard
+
+"@babel/helper-compilation-targets@npm:^7.25.2":
+  version: 7.25.2
+  resolution: "@babel/helper-compilation-targets@npm:7.25.2"
+  dependencies:
+    "@babel/compat-data": "npm:^7.25.2"
+    "@babel/helper-validator-option": "npm:^7.24.8"
+    browserslist: "npm:^4.23.1"
+    lru-cache: "npm:^5.1.1"
+    semver: "npm:^6.3.1"
+  checksum: 10/eccb2d75923d2d4d596f9ff64716e8664047c4192f1b44c7d5c07701d4a3498ac2587a72ddae1046e65a501bc630eb7df4557958b08ec2dcf5b4a264a052f111
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -14238,6 +14314,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@babel/helper-module-imports@npm:^7.25.7":
   version: 7.25.7
   resolution: "@babel/helper-module-imports@npm:7.25.7"
@@ -14276,6 +14353,46 @@ __metadata:
     "@babel/traverse": "npm:^7.25.7"
     "@babel/types": "npm:^7.25.7"
   checksum: 10/42da1c358f2516337a4f2927c77ebb952907543b9f85d7cb1e2b5b5f6d808cdc081ee66a73e2ecdf48c315d9b0c2a81a857d5e1923ea210b8e81aba5e6cd2b53
+=======
+"@babel/helper-module-imports@npm:^7.24.7":
+  version: 7.24.7
+  resolution: "@babel/helper-module-imports@npm:7.24.7"
+  dependencies:
+    "@babel/traverse": "npm:^7.24.7"
+    "@babel/types": "npm:^7.24.7"
+  checksum: 10/df8bfb2bb18413aa151ecd63b7d5deb0eec102f924f9de6bc08022ced7ed8ca7fed914562d2f6fa5b59b74a5d6e255dc35612b2bc3b8abf361e13f61b3704770
+  languageName: node
+  linkType: hard
+
+"@babel/helper-module-transforms@npm:^7.25.2":
+  version: 7.25.2
+  resolution: "@babel/helper-module-transforms@npm:7.25.2"
+  dependencies:
+    "@babel/helper-module-imports": "npm:^7.24.7"
+    "@babel/helper-simple-access": "npm:^7.24.7"
+    "@babel/helper-validator-identifier": "npm:^7.24.7"
+    "@babel/traverse": "npm:^7.25.2"
+  peerDependencies:
+    "@babel/core": ^7.0.0
+  checksum: 10/a3bcf7815f3e9d8b205e0af4a8d92603d685868e45d119b621357e274996bf916216bb95ab5c6a60fde3775b91941555bf129d608e3d025b04f8aac84589f300
+  languageName: node
+  linkType: hard
+
+"@babel/helper-plugin-utils@npm:^7.0.0, @babel/helper-plugin-utils@npm:^7.10.4, @babel/helper-plugin-utils@npm:^7.12.13, @babel/helper-plugin-utils@npm:^7.14.5, @babel/helper-plugin-utils@npm:^7.24.7, @babel/helper-plugin-utils@npm:^7.24.8, @babel/helper-plugin-utils@npm:^7.8.0":
+  version: 7.24.8
+  resolution: "@babel/helper-plugin-utils@npm:7.24.8"
+  checksum: 10/adbc9fc1142800a35a5eb0793296924ee8057fe35c61657774208670468a9fbfbb216f2d0bc46c680c5fefa785e5ff917cc1674b10bd75cdf9a6aa3444780630
+  languageName: node
+  linkType: hard
+
+"@babel/helper-simple-access@npm:^7.24.7":
+  version: 7.24.7
+  resolution: "@babel/helper-simple-access@npm:7.24.7"
+  dependencies:
+    "@babel/traverse": "npm:^7.24.7"
+    "@babel/types": "npm:^7.24.7"
+  checksum: 10/5083e190186028e48fc358a192e4b93ab320bd016103caffcfda81302a13300ccce46c9cd255ae520c25d2a6a9b47671f93e5fe5678954a2329dc0a685465c49
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -14288,6 +14405,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@babel/helper-string-parser@npm:^7.25.7":
   version: 7.25.7
   resolution: "@babel/helper-string-parser@npm:7.25.7"
@@ -14339,6 +14457,59 @@ __metadata:
   bin:
     parser: ./bin/babel-parser.js
   checksum: 10/0396eb71e379903cedb43862f84ebb1bec809c41e82b4894d2e6e83b8e8bc636ba6eff45382e615baefdb2399ede76ca82247ecc3a9877ac16eb3140074a3276
+=======
+"@babel/helper-string-parser@npm:^7.24.8":
+  version: 7.24.8
+  resolution: "@babel/helper-string-parser@npm:7.24.8"
+  checksum: 10/6d1bf8f27dd725ce02bdc6dffca3c95fb9ab8a06adc2edbd9c1c9d68500274230d1a609025833ed81981eff560045b6b38f7b4c6fb1ab19fc90e5004e3932535
+  languageName: node
+  linkType: hard
+
+"@babel/helper-validator-identifier@npm:^7.16.7, @babel/helper-validator-identifier@npm:^7.24.7":
+  version: 7.24.7
+  resolution: "@babel/helper-validator-identifier@npm:7.24.7"
+  checksum: 10/86875063f57361471b531dbc2ea10bbf5406e12b06d249b03827d361db4cad2388c6f00936bcd9dc86479f7e2c69ea21412c2228d4b3672588b754b70a449d4b
+  languageName: node
+  linkType: hard
+
+"@babel/helper-validator-option@npm:^7.24.8":
+  version: 7.24.8
+  resolution: "@babel/helper-validator-option@npm:7.24.8"
+  checksum: 10/a52442dfa74be6719c0608fee3225bd0493c4057459f3014681ea1a4643cd38b68ff477fe867c4b356da7330d085f247f0724d300582fa4ab9a02efaf34d107c
+  languageName: node
+  linkType: hard
+
+"@babel/helpers@npm:^7.25.0":
+  version: 7.25.6
+  resolution: "@babel/helpers@npm:7.25.6"
+  dependencies:
+    "@babel/template": "npm:^7.25.0"
+    "@babel/types": "npm:^7.25.6"
+  checksum: 10/43abc8d017b754619aa189d05e2bdb54aaf44f03ec0439e89b3e7c180d538adb01ce9014a1689f632a7e8b17655c72bfac0a92268476eec708b41d3ba0a65296
+  languageName: node
+  linkType: hard
+
+"@babel/highlight@npm:^7.24.7":
+  version: 7.24.7
+  resolution: "@babel/highlight@npm:7.24.7"
+  dependencies:
+    "@babel/helper-validator-identifier": "npm:^7.24.7"
+    chalk: "npm:^2.4.2"
+    js-tokens: "npm:^4.0.0"
+    picocolors: "npm:^1.0.0"
+  checksum: 10/69b73f38cdd4f881b09b939a711e76646da34f4834f4ce141d7a49a6bb1926eab1c594148970a8aa9360398dff800f63aade4e81fafdd7c8d8a8489ea93bfec1
+  languageName: node
+  linkType: hard
+
+"@babel/parser@npm:^7.1.0, @babel/parser@npm:^7.14.7, @babel/parser@npm:^7.20.5, @babel/parser@npm:^7.20.7, @babel/parser@npm:^7.23.0, @babel/parser@npm:^7.23.9, @babel/parser@npm:^7.25.0, @babel/parser@npm:^7.25.6":
+  version: 7.25.6
+  resolution: "@babel/parser@npm:7.25.6"
+  dependencies:
+    "@babel/types": "npm:^7.25.6"
+  bin:
+    parser: ./bin/babel-parser.js
+  checksum: 10/830aab72116aa14eb8d61bfa8f9d69fc8f3a43d909ce993cb4350ae14d3af1a2f740a54410a22d821c48a253263643dfecbc094f9608e6a70ce9ff3c0bbfe91a
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -14387,6 +14558,7 @@ __metadata:
   linkType: hard
 
 "@babel/plugin-syntax-import-attributes@npm:^7.24.7":
+<<<<<<< HEAD
   version: 7.25.7
   resolution: "@babel/plugin-syntax-import-attributes@npm:7.25.7"
   dependencies:
@@ -14394,6 +14566,15 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 10/7c5451e2d8351693acbc53b1e1f6951026e35899d22847a6d22424a1ee5c92c11ac6c6f209a9e18f85d7bb9267caaf2532653e892997cdcd51784106a5858b7e
+=======
+  version: 7.25.6
+  resolution: "@babel/plugin-syntax-import-attributes@npm:7.25.6"
+  dependencies:
+    "@babel/helper-plugin-utils": "npm:^7.24.8"
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 10/5afeba6b8979e61e8e37af905514891920eab103a08b36216f5518474328f9fae5204357bfadf6ce4cc80cb96848cdb7b8989f164ae93bd063c86f3f586728c0
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -14420,6 +14601,7 @@ __metadata:
   linkType: hard
 
 "@babel/plugin-syntax-jsx@npm:^7.7.2":
+<<<<<<< HEAD
   version: 7.25.7
   resolution: "@babel/plugin-syntax-jsx@npm:7.25.7"
   dependencies:
@@ -14427,6 +14609,15 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 10/243476a943a84b6b86e99076301e66f48268e8799564053e8feccab90da7944a0b42c91360216dbfb0b2958bbd0ed100d2c7b2db688dab83d19ff2745d4892eb
+=======
+  version: 7.24.7
+  resolution: "@babel/plugin-syntax-jsx@npm:7.24.7"
+  dependencies:
+    "@babel/helper-plugin-utils": "npm:^7.24.7"
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 10/a93516ae5b34868ab892a95315027d4e5e38e8bd1cfca6158f2974b0901cbb32bbe64ea10ad5b25f919ddc40c6d8113c4823372909c9c9922170c12b0b1acecb
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -14519,6 +14710,7 @@ __metadata:
   linkType: hard
 
 "@babel/plugin-syntax-typescript@npm:^7.7.2":
+<<<<<<< HEAD
   version: 7.25.7
   resolution: "@babel/plugin-syntax-typescript@npm:7.25.7"
   dependencies:
@@ -14526,10 +14718,20 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 10/f1492336230920cc4daa6e7aa3571253fb0c0fd05a1d0a7b5dc0a5b907f31945235ee8bf09c83f7738b89943a2320a61dda95e0db2b6310b07040aeda6be4f44
+=======
+  version: 7.25.4
+  resolution: "@babel/plugin-syntax-typescript@npm:7.25.4"
+  dependencies:
+    "@babel/helper-plugin-utils": "npm:^7.24.8"
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 10/0771b45a35fd536cd3b3a48e5eda0f53e2d4f4a0ca07377cc247efa39eaf6002ed1c478106aad2650e54aefaebcb4f34f3284c4ae9252695dbd944bf66addfb0
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
 "@babel/runtime@npm:^7.21.0, @babel/runtime@npm:^7.23.2":
+<<<<<<< HEAD
   version: 7.25.7
   resolution: "@babel/runtime@npm:7.25.7"
   dependencies:
@@ -14546,6 +14748,24 @@ __metadata:
     "@babel/parser": "npm:^7.25.7"
     "@babel/types": "npm:^7.25.7"
   checksum: 10/49e1e88d2eac17d31ae28d6cf13d6d29c1f49384c4f056a6751c065d6565c351e62c01ce6b11fef5edb5f3a77c87e114ea7326ca384fa618b4834e10cf9b20f3
+=======
+  version: 7.25.6
+  resolution: "@babel/runtime@npm:7.25.6"
+  dependencies:
+    regenerator-runtime: "npm:^0.14.0"
+  checksum: 10/0c4134734deb20e1005ffb9165bf342e1074576621b246d8e5e41cc7cb315a885b7d98950fbf5c63619a2990a56ae82f444d35fe8c4691a0b70c2fe5673667dc
+  languageName: node
+  linkType: hard
+
+"@babel/template@npm:^7.24.7, @babel/template@npm:^7.25.0, @babel/template@npm:^7.3.3":
+  version: 7.25.0
+  resolution: "@babel/template@npm:7.25.0"
+  dependencies:
+    "@babel/code-frame": "npm:^7.24.7"
+    "@babel/parser": "npm:^7.25.0"
+    "@babel/types": "npm:^7.25.0"
+  checksum: 10/07ebecf6db8b28244b7397628e09c99e7a317b959b926d90455c7253c88df3677a5a32d1501d9749fe292a263ff51a4b6b5385bcabd5dadd3a48036f4d4949e0
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -14567,6 +14787,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@babel/traverse@npm:^7.25.7":
   version: 7.25.7
   resolution: "@babel/traverse@npm:7.25.7"
@@ -14579,6 +14800,20 @@ __metadata:
     debug: "npm:^4.3.1"
     globals: "npm:^11.1.0"
   checksum: 10/5b2d332fcd6bc78e6500c997e79f7e2a54dfb357e06f0908cb7f0cdd9bb54e7fd3c5673f45993849d433d01ea6076a6d04b825958f0cfa01288ad55ffa5c286f
+=======
+"@babel/traverse@npm:^7.24.7, @babel/traverse@npm:^7.25.2":
+  version: 7.25.6
+  resolution: "@babel/traverse@npm:7.25.6"
+  dependencies:
+    "@babel/code-frame": "npm:^7.24.7"
+    "@babel/generator": "npm:^7.25.6"
+    "@babel/parser": "npm:^7.25.6"
+    "@babel/template": "npm:^7.25.0"
+    "@babel/types": "npm:^7.25.6"
+    debug: "npm:^4.3.1"
+    globals: "npm:^11.1.0"
+  checksum: 10/de75a918299bc27a44ec973e3f2fa8c7902bbd67bd5d39a0be656f3c1127f33ebc79c12696fbc8170a0b0e1072a966d4a2126578d7ea2e241b0aeb5d16edc738
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -14592,6 +14827,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@babel/types@npm:^7.0.0, @babel/types@npm:^7.17.0, @babel/types@npm:^7.20.7, @babel/types@npm:^7.23.0, @babel/types@npm:^7.24.7, @babel/types@npm:^7.25.7, @babel/types@npm:^7.25.8, @babel/types@npm:^7.3.3":
   version: 7.25.8
   resolution: "@babel/types@npm:7.25.8"
@@ -14600,6 +14836,16 @@ __metadata:
     "@babel/helper-validator-identifier": "npm:^7.25.7"
     to-fast-properties: "npm:^2.0.0"
   checksum: 10/973108dbb189916bb87360f2beff43ae97f1b08f1c071bc6499d363cce48b3c71674bf3b59dfd617f8c5062d1c76dc2a64232bc07b6ccef831fd0c06162d44d9
+=======
+"@babel/types@npm:^7.0.0, @babel/types@npm:^7.17.0, @babel/types@npm:^7.20.7, @babel/types@npm:^7.23.0, @babel/types@npm:^7.24.7, @babel/types@npm:^7.25.0, @babel/types@npm:^7.25.2, @babel/types@npm:^7.25.6, @babel/types@npm:^7.3.3":
+  version: 7.25.6
+  resolution: "@babel/types@npm:7.25.6"
+  dependencies:
+    "@babel/helper-string-parser": "npm:^7.24.8"
+    "@babel/helper-validator-identifier": "npm:^7.24.7"
+    to-fast-properties: "npm:^2.0.0"
+  checksum: 10/7b54665e1b51f525fe0f451efdd9fe7a4a6dfba3fd4956c3530bc77336b66ffe3d78c093796ed044119b5d213176af7cf326f317a2057c538d575c6cefcb3562
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -15036,9 +15282,15 @@ __metadata:
   linkType: hard
 
 "@eslint-community/regexpp@npm:^4.10.0, @eslint-community/regexpp@npm:^4.6.1":
+<<<<<<< HEAD
   version: 4.11.1
   resolution: "@eslint-community/regexpp@npm:4.11.1"
   checksum: 10/934b6d3588c7f16b18d41efec4fdb89616c440b7e3256b8cb92cfd31ae12908600f2b986d6c1e61a84cbc10256b1dd3448cd1eec79904bd67ac365d0f1aba2e2
+=======
+  version: 4.11.0
+  resolution: "@eslint-community/regexpp@npm:4.11.0"
+  checksum: 10/f053f371c281ba173fe6ee16dbc4fe544c84870d58035ccca08dba7f6ce1830d895ce3237a0db89ba37616524775dca82f1c502066b58e2d5712d7f87f5ba17c
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -16139,6 +16391,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@smithy/abort-controller@npm:^3.1.5":
   version: 3.1.5
   resolution: "@smithy/abort-controller@npm:3.1.5"
@@ -16146,6 +16399,15 @@ __metadata:
     "@smithy/types": "npm:^3.5.0"
     tslib: "npm:^2.6.2"
   checksum: 10/2a305f3a9ab75786553f9e44678bee90cadd25b68ec3824205e89096832c418a7b37a5b38b82edff743da3e80074e2d16f539469d1b2115ec362a6e6ce04ab29
+=======
+"@smithy/abort-controller@npm:^3.1.1, @smithy/abort-controller@npm:^3.1.2":
+  version: 3.1.2
+  resolution: "@smithy/abort-controller@npm:3.1.2"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/9c3bfeb5544d14459ae51071bf376be89fa21eda11a10755a813e4724e18cce97b683a9c9e24a2e2ac54be6b90b5c8fbc64042ac7d13b5530e2ca7d065e8c48a
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -16168,6 +16430,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@smithy/config-resolver@npm:^3.0.9":
   version: 3.0.9
   resolution: "@smithy/config-resolver@npm:3.0.9"
@@ -16322,6 +16585,162 @@ __metadata:
     "@smithy/types": "npm:^3.5.0"
     tslib: "npm:^2.6.2"
   checksum: 10/55a7949274a1ef113d7b216935d84f629b7f2ed0bdc96f2f13fa6f869d6044081adaea172afd5409e393d43a94a74d2f7ef129336c780d489b86e60d3554ccba
+=======
+"@smithy/config-resolver@npm:^3.0.5, @smithy/config-resolver@npm:^3.0.6":
+  version: 3.0.6
+  resolution: "@smithy/config-resolver@npm:3.0.6"
+  dependencies:
+    "@smithy/node-config-provider": "npm:^3.1.5"
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/util-config-provider": "npm:^3.0.0"
+    "@smithy/util-middleware": "npm:^3.0.4"
+    tslib: "npm:^2.6.2"
+  checksum: 10/424c2e81ce0507bb232ece4ea2e74872ae553e134f1612c638811dfb2937cbce15c846ac1193f5872854f0a638761bacc1bddc4232df10bfed3becae48d4c897
+  languageName: node
+  linkType: hard
+
+"@smithy/core@npm:^2.4.0":
+  version: 2.4.1
+  resolution: "@smithy/core@npm:2.4.1"
+  dependencies:
+    "@smithy/middleware-endpoint": "npm:^3.1.1"
+    "@smithy/middleware-retry": "npm:^3.0.16"
+    "@smithy/middleware-serde": "npm:^3.0.4"
+    "@smithy/protocol-http": "npm:^4.1.1"
+    "@smithy/smithy-client": "npm:^3.3.0"
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/util-body-length-browser": "npm:^3.0.0"
+    "@smithy/util-middleware": "npm:^3.0.4"
+    "@smithy/util-utf8": "npm:^3.0.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/82665c86e8e7629d11c759debd95bc827b871469d796d23bbb0328971d48e16460847c39a8bdf920c5a9fd87d2680bbdeaf2688931d7810bddf5e029b2393292
+  languageName: node
+  linkType: hard
+
+"@smithy/credential-provider-imds@npm:^3.2.0, @smithy/credential-provider-imds@npm:^3.2.1":
+  version: 3.2.1
+  resolution: "@smithy/credential-provider-imds@npm:3.2.1"
+  dependencies:
+    "@smithy/node-config-provider": "npm:^3.1.5"
+    "@smithy/property-provider": "npm:^3.1.4"
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/url-parser": "npm:^3.0.4"
+    tslib: "npm:^2.6.2"
+  checksum: 10/8d413f24161549b6c7af55353844e2fb28f27836b12ce8ad884b8cd22a70aba0662a37215be021a2a00d962fd7a797ea9483a4df385d83b8b8c6f6716014a215
+  languageName: node
+  linkType: hard
+
+"@smithy/eventstream-codec@npm:^3.1.3":
+  version: 3.1.3
+  resolution: "@smithy/eventstream-codec@npm:3.1.3"
+  dependencies:
+    "@aws-crypto/crc32": "npm:5.2.0"
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/util-hex-encoding": "npm:^3.0.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/f4901b03cd8c0122519de8af48bdd3b586d3adc6837d7ff214b13d8981052a8ab8c284f551a75cfba58ff3741aac167cfa19ce24f254d067b64287951dcd6993
+  languageName: node
+  linkType: hard
+
+"@smithy/eventstream-serde-browser@npm:^3.0.6":
+  version: 3.0.7
+  resolution: "@smithy/eventstream-serde-browser@npm:3.0.7"
+  dependencies:
+    "@smithy/eventstream-serde-universal": "npm:^3.0.6"
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/203215491f2d1be688fbe3fe8c84d85c109cf703894707cff55e0f4720d1e7c81372f41f74d9a5da8733058311f201b73e80844b5d58bf03aab7c4a0c0967254
+  languageName: node
+  linkType: hard
+
+"@smithy/eventstream-serde-config-resolver@npm:^3.0.3":
+  version: 3.0.4
+  resolution: "@smithy/eventstream-serde-config-resolver@npm:3.0.4"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/073882d0b3b0b7f31261b5d900e147b5b193851affc46f89b1a737c6ab187e15de28a9521f84a39e649a6a6e8b8069cbc57f328e01d07a014c15da35f93bb38c
+  languageName: node
+  linkType: hard
+
+"@smithy/eventstream-serde-node@npm:^3.0.5":
+  version: 3.0.6
+  resolution: "@smithy/eventstream-serde-node@npm:3.0.6"
+  dependencies:
+    "@smithy/eventstream-serde-universal": "npm:^3.0.6"
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/635543e4312cc8cd95a5f1e79b728ea5e672aafba6d77f21700279ca9ba09a8cb30ea69eaa6cacf8176355e9db528b1bbb942566df92d2974ae927a951cf2321
+  languageName: node
+  linkType: hard
+
+"@smithy/eventstream-serde-universal@npm:^3.0.6":
+  version: 3.0.6
+  resolution: "@smithy/eventstream-serde-universal@npm:3.0.6"
+  dependencies:
+    "@smithy/eventstream-codec": "npm:^3.1.3"
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/073eab5d5d1d421afa881ca7cf184cf28f64bc7234478338e28fe47b261701b3f9c671cdbdb7a03f5c8e4e03ece007e0c317c46f82558e03a4931771a103dcdb
+  languageName: node
+  linkType: hard
+
+"@smithy/fetch-http-handler@npm:^3.2.4, @smithy/fetch-http-handler@npm:^3.2.5":
+  version: 3.2.5
+  resolution: "@smithy/fetch-http-handler@npm:3.2.5"
+  dependencies:
+    "@smithy/protocol-http": "npm:^4.1.1"
+    "@smithy/querystring-builder": "npm:^3.0.4"
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/util-base64": "npm:^3.0.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/d9f6387699fa83342efe41dc5f5a3a496afcdcfc5064b379f4e45be7b3809d2a5a5b6d794dbc90494f4b647b18100b972d8fb47066231ae8bd1146457405e09c
+  languageName: node
+  linkType: hard
+
+"@smithy/hash-blob-browser@npm:^3.1.2":
+  version: 3.1.3
+  resolution: "@smithy/hash-blob-browser@npm:3.1.3"
+  dependencies:
+    "@smithy/chunked-blob-reader": "npm:^3.0.0"
+    "@smithy/chunked-blob-reader-native": "npm:^3.0.0"
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/26d1c76994d3c680ecb4e36f94a2f8c7d11054d685e200b420e7eda628415f58a293153b7dd1196e703fa0366c9fff3a74ff7024d95f2aeea5e72e9e4ab39521
+  languageName: node
+  linkType: hard
+
+"@smithy/hash-node@npm:^3.0.3":
+  version: 3.0.4
+  resolution: "@smithy/hash-node@npm:3.0.4"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/util-buffer-from": "npm:^3.0.0"
+    "@smithy/util-utf8": "npm:^3.0.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/78d98c1d98e4f7595eb32368ffa15192314f9ee7874eccdef5e6f736a4afeb151f7e8d40d6d460705c58f32633bd9dc763ff9c9447813177c5e162df8e225abd
+  languageName: node
+  linkType: hard
+
+"@smithy/hash-stream-node@npm:^3.1.2":
+  version: 3.1.3
+  resolution: "@smithy/hash-stream-node@npm:3.1.3"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/util-utf8": "npm:^3.0.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/5c3faf2d6c846ceb914d5770823630e56f5b2c1a3fb2184d8a1a4668af23dcbc8337121ae3873bb86ba8f13f31434160a0d600fa1b60d9acdd150298959be901
+  languageName: node
+  linkType: hard
+
+"@smithy/invalid-dependency@npm:^3.0.3":
+  version: 3.0.4
+  resolution: "@smithy/invalid-dependency@npm:3.0.4"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/ad004c5fe4fe207714c39f3af7f9c0d240e9a782b0748eb08215317396d8da8b0329e4419e55acb4dcb072f200921af03697bc6f557109e0a27f0fa63a2eb78a
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -16343,6 +16762,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@smithy/md5-js@npm:^3.0.7":
   version: 3.0.7
   resolution: "@smithy/md5-js@npm:3.0.7"
@@ -16549,6 +16969,214 @@ __metadata:
     "@smithy/types": "npm:^3.5.0"
     tslib: "npm:^2.6.2"
   checksum: 10/dda89ac7fd406dc519771fa3cead3b18b19a8d1ad46f105645d574d81aca2294cb7564cdd8ebe2e34fcfbaa644d5e363cf2880cbe5c40b658fb41e09b4605a33
+=======
+"@smithy/md5-js@npm:^3.0.3":
+  version: 3.0.4
+  resolution: "@smithy/md5-js@npm:3.0.4"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/util-utf8": "npm:^3.0.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/f84d4b37b713c6edd9e46f4e60a193fca4b6c882c4288683b334f0c3fc224abf884252e5fd9d55d04823192b1c0dca9c26f865599a8663397e51ce566c7df148
+  languageName: node
+  linkType: hard
+
+"@smithy/middleware-content-length@npm:^3.0.5":
+  version: 3.0.6
+  resolution: "@smithy/middleware-content-length@npm:3.0.6"
+  dependencies:
+    "@smithy/protocol-http": "npm:^4.1.1"
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/f9f3f3b6099ad5c5b697e5dca0016ff2f182ed0b66739c12c9cfa46f7c92761d9ffc8425097c929e094fd030a20f60ffbf6bd701d1062592dfcb0ba88a3fe53e
+  languageName: node
+  linkType: hard
+
+"@smithy/middleware-endpoint@npm:^3.1.0, @smithy/middleware-endpoint@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "@smithy/middleware-endpoint@npm:3.1.1"
+  dependencies:
+    "@smithy/middleware-serde": "npm:^3.0.4"
+    "@smithy/node-config-provider": "npm:^3.1.5"
+    "@smithy/shared-ini-file-loader": "npm:^3.1.5"
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/url-parser": "npm:^3.0.4"
+    "@smithy/util-middleware": "npm:^3.0.4"
+    tslib: "npm:^2.6.2"
+  checksum: 10/a4cc7321e1e38d99eb2a641f5a52c7c56e6bad6aecdceefb7200d97f26b0c146483d3b57c2e44330d730c445f416d26a6d2250ad7f39d6a98e9748bc8a358de7
+  languageName: node
+  linkType: hard
+
+"@smithy/middleware-retry@npm:^3.0.15, @smithy/middleware-retry@npm:^3.0.16":
+  version: 3.0.16
+  resolution: "@smithy/middleware-retry@npm:3.0.16"
+  dependencies:
+    "@smithy/node-config-provider": "npm:^3.1.5"
+    "@smithy/protocol-http": "npm:^4.1.1"
+    "@smithy/service-error-classification": "npm:^3.0.4"
+    "@smithy/smithy-client": "npm:^3.3.0"
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/util-middleware": "npm:^3.0.4"
+    "@smithy/util-retry": "npm:^3.0.4"
+    tslib: "npm:^2.6.2"
+    uuid: "npm:^9.0.1"
+  checksum: 10/90a3ec6dd79f200f74f9a025a6acf5ca4c87342826d88ccec7668addad1961032ba10a6018d6a16c43779dc2f296c6baf9dc00679d1113649381d41089a4decb
+  languageName: node
+  linkType: hard
+
+"@smithy/middleware-serde@npm:^3.0.3, @smithy/middleware-serde@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "@smithy/middleware-serde@npm:3.0.4"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/a4d3dd79b6cc314245bfcb0e649e5869cabf6cfb8e9685ae797919ecaeb123eb0335c054c9278dba1304fe4a0cd06e71d6a77e0442f62530bfabd5df79c819da
+  languageName: node
+  linkType: hard
+
+"@smithy/middleware-stack@npm:^3.0.3, @smithy/middleware-stack@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "@smithy/middleware-stack@npm:3.0.4"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/63bf03bd512367ff781e3a220a5126cb3784e982891e1dcb00cf975da6801d454ffe9d244ac67f6db2ee2f34146089d113bc9ae25f190c12a318d121ccdd03fb
+  languageName: node
+  linkType: hard
+
+"@smithy/node-config-provider@npm:^3.1.4, @smithy/node-config-provider@npm:^3.1.5":
+  version: 3.1.5
+  resolution: "@smithy/node-config-provider@npm:3.1.5"
+  dependencies:
+    "@smithy/property-provider": "npm:^3.1.4"
+    "@smithy/shared-ini-file-loader": "npm:^3.1.5"
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/1efa20757cb0d21eafc377d1820c2b644ef3a45ace4c2012e299ff4f9cb1f390c3ab72de5827d50302dccc5e6f1ef741778befcdb91ef5c319de9b1888cd1b96
+  languageName: node
+  linkType: hard
+
+"@smithy/node-http-handler@npm:^3.1.4, @smithy/node-http-handler@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "@smithy/node-http-handler@npm:3.2.0"
+  dependencies:
+    "@smithy/abort-controller": "npm:^3.1.2"
+    "@smithy/protocol-http": "npm:^4.1.1"
+    "@smithy/querystring-builder": "npm:^3.0.4"
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/4606980a2e43db0fa65027d8e6412332a311115a98f1daf75fe8da333da4fd161f250f6de03d51cab3396f0c4d7231b974f6a4007d46beb8f030599b5a8c7b51
+  languageName: node
+  linkType: hard
+
+"@smithy/property-provider@npm:^3.1.3, @smithy/property-provider@npm:^3.1.4":
+  version: 3.1.4
+  resolution: "@smithy/property-provider@npm:3.1.4"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/d1c1597be13f4ea43d61117e388a5ea574163d888bf55f1df182c978fa2d92231ec0ff98b4a6c338aa39b9f71e379e1ddb2567b3f9979c633c957165426c02c2
+  languageName: node
+  linkType: hard
+
+"@smithy/protocol-http@npm:^4.1.0, @smithy/protocol-http@npm:^4.1.1":
+  version: 4.1.1
+  resolution: "@smithy/protocol-http@npm:4.1.1"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/9ed2501b66a5e8a4fe2b64299e72d962c9ec0ed82b034d5e171ee6df1c51fe17343d3c690b6898e5c5275efda5c8ed8eb6d4efe5c5639ea1437a9ae472136b97
+  languageName: node
+  linkType: hard
+
+"@smithy/querystring-builder@npm:^3.0.3, @smithy/querystring-builder@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "@smithy/querystring-builder@npm:3.0.4"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/util-uri-escape": "npm:^3.0.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/c049e80ae242683fcf2156cca405435d94f72201e5616116546c2a43f02ba75064121a28fcac7ef5edfb87a4d788f1fb64be1020d8c9ce036147e852cd54fee8
+  languageName: node
+  linkType: hard
+
+"@smithy/querystring-parser@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "@smithy/querystring-parser@npm:3.0.4"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/a985e95590ea3acc84f4123aa951bd6fdcc4b3cb83ef179d906635f82589b025cdde6f73c6c3417b18a569c6aee82ff9345d34e3b3d976f71ea5d9132033adea
+  languageName: node
+  linkType: hard
+
+"@smithy/service-error-classification@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "@smithy/service-error-classification@npm:3.0.4"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+  checksum: 10/a06600871da110279b7e44901b395e95965391de5456ac747b972bd0330484270946c0eae796f1ba60b6ebe8c5e4a5447f1ccd5d6793b27b45dbc12d1776fad4
+  languageName: node
+  linkType: hard
+
+"@smithy/shared-ini-file-loader@npm:^3.1.4, @smithy/shared-ini-file-loader@npm:^3.1.5":
+  version: 3.1.5
+  resolution: "@smithy/shared-ini-file-loader@npm:3.1.5"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/722e375db736195c12680558a395129affbcf486219da80684363b7035bdef6394399881696dd4645ce7af28197a50aed66a26bb2a526195fab419a87eb324cb
+  languageName: node
+  linkType: hard
+
+"@smithy/signature-v4@npm:^4.1.0":
+  version: 4.1.1
+  resolution: "@smithy/signature-v4@npm:4.1.1"
+  dependencies:
+    "@smithy/is-array-buffer": "npm:^3.0.0"
+    "@smithy/protocol-http": "npm:^4.1.1"
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/util-hex-encoding": "npm:^3.0.0"
+    "@smithy/util-middleware": "npm:^3.0.4"
+    "@smithy/util-uri-escape": "npm:^3.0.0"
+    "@smithy/util-utf8": "npm:^3.0.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/f77d8b6cb384a0b9a0925ce6a693fbbcbf13c6f9ddf12cb9e1b39fb06452d001b17164d5e2618ea103edb427f2f1225d057827e2815e629b582115b2d533194f
+  languageName: node
+  linkType: hard
+
+"@smithy/smithy-client@npm:^3.2.0, @smithy/smithy-client@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "@smithy/smithy-client@npm:3.3.0"
+  dependencies:
+    "@smithy/middleware-endpoint": "npm:^3.1.1"
+    "@smithy/middleware-stack": "npm:^3.0.4"
+    "@smithy/protocol-http": "npm:^4.1.1"
+    "@smithy/types": "npm:^3.4.0"
+    "@smithy/util-stream": "npm:^3.1.4"
+    tslib: "npm:^2.6.2"
+  checksum: 10/b060a7ae03ff9fc98a7478114709466a4d0813eda3d77e98567733f42be376d4935650abb34d6a9fe41610f5498096c06fa0677bdbe24f2d455c733f46ed48e6
+  languageName: node
+  linkType: hard
+
+"@smithy/types@npm:^3.3.0, @smithy/types@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "@smithy/types@npm:3.4.0"
+  dependencies:
+    tslib: "npm:^2.6.2"
+  checksum: 10/be723df4524ca1697346a85825b036aafdcf7fd73f739004026a3e85d43ca5c45df88105abc8b69a941ffe2a91329b34b7010b6a34a4315407d23f624e3100b9
+  languageName: node
+  linkType: hard
+
+"@smithy/url-parser@npm:^3.0.3, @smithy/url-parser@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "@smithy/url-parser@npm:3.0.4"
+  dependencies:
+    "@smithy/querystring-parser": "npm:^3.0.4"
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/0b582094db501fb9f285fbc61503ac32191557ef6467f75e4019b1ea3ebaa2ceaa6bebd2b7db54b68ad244a67c29d3ea1262006dd252bb78acc95126b1035ba5
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -16610,6 +17238,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@smithy/util-defaults-mode-browser@npm:^3.0.23":
   version: 3.0.23
   resolution: "@smithy/util-defaults-mode-browser@npm:3.0.23"
@@ -16646,6 +17275,44 @@ __metadata:
     "@smithy/types": "npm:^3.5.0"
     tslib: "npm:^2.6.2"
   checksum: 10/2f8cdb6fbd85974e331a3cda8a475921de65bdcaecfaf47d6dd5ac295471b354fbd2a4722a9a1ea23409b0f6b1d3d210d04ef0561b5a388aa6527238bb6c3c4b
+=======
+"@smithy/util-defaults-mode-browser@npm:^3.0.15":
+  version: 3.0.16
+  resolution: "@smithy/util-defaults-mode-browser@npm:3.0.16"
+  dependencies:
+    "@smithy/property-provider": "npm:^3.1.4"
+    "@smithy/smithy-client": "npm:^3.3.0"
+    "@smithy/types": "npm:^3.4.0"
+    bowser: "npm:^2.11.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/5a4a3a7b9df20e84ce9f7555860ebabd2afdb48614a4ef15c75ea1895f6567baa0dbe5670cce3f05d62a4fd080fad650623915e73ee90b5ab29afe4c4c55ed15
+  languageName: node
+  linkType: hard
+
+"@smithy/util-defaults-mode-node@npm:^3.0.15":
+  version: 3.0.16
+  resolution: "@smithy/util-defaults-mode-node@npm:3.0.16"
+  dependencies:
+    "@smithy/config-resolver": "npm:^3.0.6"
+    "@smithy/credential-provider-imds": "npm:^3.2.1"
+    "@smithy/node-config-provider": "npm:^3.1.5"
+    "@smithy/property-provider": "npm:^3.1.4"
+    "@smithy/smithy-client": "npm:^3.3.0"
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/4b2a8b982cc694c6cd43ed2c721d042093e3133aba4cf6c7bae92608905c5e764fda73730f56456d39cc2fe4b56a4e9eb2fb221435db9f9ff821167fff79628a
+  languageName: node
+  linkType: hard
+
+"@smithy/util-endpoints@npm:^2.0.5":
+  version: 2.1.0
+  resolution: "@smithy/util-endpoints@npm:2.1.0"
+  dependencies:
+    "@smithy/node-config-provider": "npm:^3.1.5"
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/813d5f60132315912c6170f25021db69c8f7ade602faa3be0a6d96d44fb87a399f5a21408f5435dbd9fe55cde8a5d9f26bf842eb1f9ef72c03c4febf30b8e33e
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -16658,6 +17325,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@smithy/util-middleware@npm:^3.0.7":
   version: 3.0.7
   resolution: "@smithy/util-middleware@npm:3.0.7"
@@ -16686,12 +17354,46 @@ __metadata:
     "@smithy/fetch-http-handler": "npm:^3.2.9"
     "@smithy/node-http-handler": "npm:^3.2.4"
     "@smithy/types": "npm:^3.5.0"
+=======
+"@smithy/util-middleware@npm:^3.0.3, @smithy/util-middleware@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "@smithy/util-middleware@npm:3.0.4"
+  dependencies:
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/d358c8e5ab462b749b32421135f1660302de8b2a942e5cf92b63b1489e87d0fc57aa4cc578fee46a7192472946b06a898d98b1f01c8cf4b9fccc4ad489ffde5a
+  languageName: node
+  linkType: hard
+
+"@smithy/util-retry@npm:^3.0.3, @smithy/util-retry@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "@smithy/util-retry@npm:3.0.4"
+  dependencies:
+    "@smithy/service-error-classification": "npm:^3.0.4"
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/9d8e4ee8a3c71e3f7cd799a03fc8d2cb69e294d475f798d3fd9db85f64135ff545d333d9ca89fa7b621dfa17fa6f91f7c2d90a889089e0417484d821a627e225
+  languageName: node
+  linkType: hard
+
+"@smithy/util-stream@npm:^3.1.3, @smithy/util-stream@npm:^3.1.4":
+  version: 3.1.4
+  resolution: "@smithy/util-stream@npm:3.1.4"
+  dependencies:
+    "@smithy/fetch-http-handler": "npm:^3.2.5"
+    "@smithy/node-http-handler": "npm:^3.2.0"
+    "@smithy/types": "npm:^3.4.0"
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
     "@smithy/util-base64": "npm:^3.0.0"
     "@smithy/util-buffer-from": "npm:^3.0.0"
     "@smithy/util-hex-encoding": "npm:^3.0.0"
     "@smithy/util-utf8": "npm:^3.0.0"
     tslib: "npm:^2.6.2"
+<<<<<<< HEAD
   checksum: 10/a0caaf44fce2dc66b4a633c0fd90b592bc6041e0361bdf6a8bec367ca3560c734560dac8540ee27ff56295ff5f81ddfb953322b19b0bafd2667e8f43dc166f7f
+=======
+  checksum: 10/37970467674b504aef7cd1a241bbe4227c27449647567d8f4b465cf2868b4d4c0b63fe29826f9b8f17a9440572f53cc6a1993e5c8872f5409115b073f4b3cd8f
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -16724,6 +17426,7 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@smithy/util-waiter@npm:^3.1.6":
   version: 3.1.6
   resolution: "@smithy/util-waiter@npm:3.1.6"
@@ -16732,6 +17435,16 @@ __metadata:
     "@smithy/types": "npm:^3.5.0"
     tslib: "npm:^2.6.2"
   checksum: 10/7beb89ddefca10cef3d8b56aac356d696b551648143a96e48761803b125af2e2bfb0716d83f0a825aa84c9d25dd561a2400b971b2b6187c662be5e9be06c167b
+=======
+"@smithy/util-waiter@npm:^3.1.2":
+  version: 3.1.3
+  resolution: "@smithy/util-waiter@npm:3.1.3"
+  dependencies:
+    "@smithy/abort-controller": "npm:^3.1.2"
+    "@smithy/types": "npm:^3.4.0"
+    tslib: "npm:^2.6.2"
+  checksum: 10/6e0ae10a7c7d8284d5e91eb362f726fd0406c9ddae655d2c9a40f429ef7805f21b9688db9c249975be50d1ecd6311b7513c387af86e48a2c421fa258f27d7be7
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -16891,15 +17604,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@types/express-serve-static-core@npm:^5.0.0":
   version: 5.0.0
   resolution: "@types/express-serve-static-core@npm:5.0.0"
+=======
+"@types/express-serve-static-core@npm:^4.17.33":
+  version: 4.19.5
+  resolution: "@types/express-serve-static-core@npm:4.19.5"
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   dependencies:
     "@types/node": "npm:*"
     "@types/qs": "npm:*"
     "@types/range-parser": "npm:*"
     "@types/send": "npm:*"
+<<<<<<< HEAD
   checksum: 10/fc40cdeae61113d8b2335f4b0f9334a7a64388a0931f2e98f8fc9bdadd0b13b501a70da14c256ae4aa140db49bd2eff75a99a683266d561e62540784a61dc489
+=======
+  checksum: 10/49350c6315eeb7d640e13e6138ba6005121b3b610b1e25746fccd5b86b559be810a4ba384b9bd7eee288975b5bd8cf67c1772c646254b812beaa488774eb5513
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -17036,9 +17759,15 @@ __metadata:
   linkType: hard
 
 "@types/lodash@npm:*":
+<<<<<<< HEAD
   version: 4.17.10
   resolution: "@types/lodash@npm:4.17.10"
   checksum: 10/10fe24a93adc6048cb23e4135c1ed1d52cc39033682e6513f4f51b74a9af6d7a24fbea92203c22dc4e01e35f1ab3aa0fd0a2b487e8a4a2bbdf1fc05970094066
+=======
+  version: 4.17.7
+  resolution: "@types/lodash@npm:4.17.7"
+  checksum: 10/b8177f19cf962414a66989837481b13f546afc2e98e8d465bec59e6ac03a59c584eb7053ce511cde3a09c5f3096d22a5ae22cfb56b23f3b0da75b0743b6b1a44
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -17083,11 +17812,19 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
+<<<<<<< HEAD
   version: 22.7.5
   resolution: "@types/node@npm:22.7.5"
   dependencies:
     undici-types: "npm:~6.19.2"
   checksum: 10/e8ba102f8c1aa7623787d625389be68d64e54fcbb76d41f6c2c64e8cf4c9f4a2370e7ef5e5f1732f3c57529d3d26afdcb2edc0101c5e413a79081449825c57ac
+=======
+  version: 22.5.4
+  resolution: "@types/node@npm:22.5.4"
+  dependencies:
+    undici-types: "npm:~6.19.2"
+  checksum: 10/d46e0abf437b36bdf89011287aa43873d68ea6f2521a11b5c9a033056fd0d07af36daf51439010e8d41c62c55d0b00e9b5e09ed00bb2617723f73f28a873903a
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -17108,11 +17845,19 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:^18.11.18":
+<<<<<<< HEAD
   version: 18.19.55
   resolution: "@types/node@npm:18.19.55"
   dependencies:
     undici-types: "npm:~5.26.4"
   checksum: 10/7ba2b7203338f855fd7e90d09de3196e0d534c361ee0fbd7e3f24d416b867a017530d5721c4186f2c5402184e824a1fe65d2b5f9291751b9d8a7d2f9824f9a73
+=======
+  version: 18.19.50
+  resolution: "@types/node@npm:18.19.50"
+  dependencies:
+    undici-types: "npm:~5.26.4"
+  checksum: 10/d238bb877953fcecda830df140f8722b9ba9644ae63e810fe6fa40cab8285c42f9b34c9529f2144a6f8cfeee5b0ff7fefd9425261e41830157d6710d501b829d
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -17486,11 +18231,19 @@ __metadata:
   linkType: hard
 
 "acorn@npm:^8.11.0, acorn@npm:^8.4.1, acorn@npm:^8.9.0":
+<<<<<<< HEAD
   version: 8.13.0
   resolution: "acorn@npm:8.13.0"
   bin:
     acorn: bin/acorn
   checksum: 10/33e3a03114b02b3bc5009463b3d9549b31a90ee38ebccd5e66515830a02acf62a90edcc12abfb6c9fb3837b6c17a3ec9b72b3bf52ac31d8ad8248a4af871e0f5
+=======
+  version: 8.12.1
+  resolution: "acorn@npm:8.12.1"
+  bin:
+    acorn: bin/acorn
+  checksum: 10/d08c2d122bba32d0861e0aa840b2ee25946c286d5dc5990abca991baf8cdbfbe199b05aacb221b979411a2fea36f83e26b5ac4f6b4e0ce49038c62316c1848f0
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -18080,17 +18833,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "browserslist@npm:^4.24.0":
   version: 4.24.0
   resolution: "browserslist@npm:4.24.0"
   dependencies:
     caniuse-lite: "npm:^1.0.30001663"
     electron-to-chromium: "npm:^1.5.28"
+=======
+"browserslist@npm:^4.23.1":
+  version: 4.23.3
+  resolution: "browserslist@npm:4.23.3"
+  dependencies:
+    caniuse-lite: "npm:^1.0.30001646"
+    electron-to-chromium: "npm:^1.5.4"
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
     node-releases: "npm:^2.0.18"
     update-browserslist-db: "npm:^1.1.0"
   bin:
     browserslist: cli.js
+<<<<<<< HEAD
   checksum: 10/26c1b8ba257a0b51b102080ba9d42945af2abaa8c4cf6da21cd47b3f123fc1e81640203b293214356c2c17d9d265bb3a5ed428b6d302f383576dd6ce8fd5036c
+=======
+  checksum: 10/e266d18c6c6c5becf9a1a7aa264477677b9796387972e8fce34854bb33dc1666194dc28389780e5dc6566e68a95e87ece2ce222e1c4ca93c2b75b61dfebd5f1c
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -18240,10 +19006,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "caniuse-lite@npm:^1.0.30001663":
   version: 1.0.30001669
   resolution: "caniuse-lite@npm:1.0.30001669"
   checksum: 10/cd0b481bb997703cb7651e55666b4aa4e7b4ecf9784796e2393179a15e55c71a6abc6ff865c922bbd3bbfa4a4bf0530d8da13989b97ff8c7850c8a5bd4e00491
+=======
+"caniuse-lite@npm:^1.0.30001646":
+  version: 1.0.30001660
+  resolution: "caniuse-lite@npm:1.0.30001660"
+  checksum: 10/5d83f0b7e2075b7e31f114f739155dc6c21b0afe8cb61180f625a4903b0ccd3d7591a5f81c930f14efddfa57040203ba0890850b8a3738f6c7f17c7dd83b9de8
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -19136,10 +19909,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "electron-to-chromium@npm:^1.5.28":
   version: 1.5.39
   resolution: "electron-to-chromium@npm:1.5.39"
   checksum: 10/b4fa275ba5cb22a4b39e55b9117c94e9b341e9c4122ef98424c628ecd7a04adf6e4c32e7e224a4647eab6025f519476511a6de479655d98447d575e9ff7e888c
+=======
+"electron-to-chromium@npm:^1.5.4":
+  version: 1.5.19
+  resolution: "electron-to-chromium@npm:1.5.19"
+  checksum: 10/59dae0244682a9fee2bba4b99e2fee41bec428de0763e56de14e189bdddda3c682a89a168306c2d4b3bdcfa3756acdc3d2a5cbefeb1e7f5b6fd289e8c9fd03e6
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -19332,7 +20112,11 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "escalade@npm:^3.1.1, escalade@npm:^3.2.0":
+=======
+"escalade@npm:^3.1.1, escalade@npm:^3.1.2":
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   version: 3.2.0
   resolution: "escalade@npm:3.2.0"
   checksum: 10/9d7169e3965b2f9ae46971afa392f6e5a25545ea30f2e2dd99c9b0a95a3f52b5653681a84f5b2911a413ddad2d7a93d3514165072f349b5ffc59c75a899970d6
@@ -19415,14 +20199,23 @@ __metadata:
   linkType: hard
 
 "eslint-module-utils@npm:^2.8.0, eslint-module-utils@npm:^2.8.1":
+<<<<<<< HEAD
   version: 2.12.0
   resolution: "eslint-module-utils@npm:2.12.0"
+=======
+  version: 2.11.0
+  resolution: "eslint-module-utils@npm:2.11.0"
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   dependencies:
     debug: "npm:^3.2.7"
   peerDependenciesMeta:
     eslint:
       optional: true
+<<<<<<< HEAD
   checksum: 10/dd27791147eca17366afcb83f47d6825b6ce164abb256681e5de4ec1d7e87d8605641eb869298a0dbc70665e2446dbcc2f40d3e1631a9475dd64dd23d4ca5dee
+=======
+  checksum: 10/1ba42cf48c5f9ec3b76dfa42c16f1c24c10508313689425c05ccb1d0eaa34bdc5c5b9c0c033cd402e9c429666bd3eb8c6d0c66565b0c00949fae743ad3643c95
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -20236,11 +21029,19 @@ __metadata:
   linkType: hard
 
 "get-tsconfig@npm:^4.7.5":
+<<<<<<< HEAD
   version: 4.8.1
   resolution: "get-tsconfig@npm:4.8.1"
   dependencies:
     resolve-pkg-maps: "npm:^1.0.0"
   checksum: 10/3fb5a8ad57b9633eaea085d81661e9e5c9f78b35d8f8689eaf8b8b45a2a3ebf3b3422266d4d7df765e308cc1e6231648d114803ab3d018332e29916f2c1de036
+=======
+  version: 4.8.0
+  resolution: "get-tsconfig@npm:4.8.0"
+  dependencies:
+    resolve-pkg-maps: "npm:^1.0.0"
+  checksum: 10/aac6d98894bdb8b9f320f5c4953f9a89d11b1cbb15cc95447abe00366dc5fcda6dbce214f2e4572b1b835ab55c4f35f004b219c3d17e07c5ddca44ef9e3858d2
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -20482,8 +21283,13 @@ __metadata:
     geoip-lite: "npm:1.4.10"
     h5p-standalone: "npm:3.7.0"
     http-status-codes: "npm:2.3.0"
+<<<<<<< HEAD
     husky: "npm:8.0.3"
     i18next: "npm:23.15.2"
+=======
+    husky: "npm:9.1.5"
+    i18next: "npm:23.12.2"
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
     ioredis: "npm:5.4.1"
     jest: "npm:29.7.0"
     jsonwebtoken: "npm:9.0.2"
@@ -20775,12 +21581,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"husky@npm:8.0.3":
-  version: 8.0.3
-  resolution: "husky@npm:8.0.3"
+"husky@npm:9.1.5":
+  version: 9.1.5
+  resolution: "husky@npm:9.1.5"
   bin:
-    husky: lib/bin.js
-  checksum: 10/b754cf70fdc97c3b60fec5b80056b9c11436464953b1691bf2b5dcf0081fb6685d2c5f47abb8b2b1c49f504aabea5321fdd6496f8b755d9f6e7525a493406abb
+    husky: bin.js
+  checksum: 10/21a3036dd03141c41347693bde301c62502b4e3bffb87310e7e42b3011c2e55691af2e4a9a5f39bd94e6b1d69e3cfc26ec636d8e164e19737b26f11c556caf10
   languageName: node
   linkType: hard
 
@@ -22762,11 +23568,19 @@ __metadata:
   linkType: hard
 
 "nan@npm:^2.13.2, nan@npm:^2.20.0":
+<<<<<<< HEAD
   version: 2.22.0
   resolution: "nan@npm:2.22.0"
   dependencies:
     node-gyp: "npm:latest"
   checksum: 10/ab165ba910e549fcc21fd561a33f534d86e81ae36c97b1019dcfe506b09692ff867c97794a54b49c9a83b8b485f529f0f58d24966c3a11863c97dc70814f4d50
+=======
+  version: 2.20.0
+  resolution: "nan@npm:2.20.0"
+  dependencies:
+    node-gyp: "npm:latest"
+  checksum: 10/5f16e4c9953075d9920229c703c1d781c0b74118ce3d9e926b448a4eef92b7d8be5ac6adc748a13a5fafb594436cbfe63250e3471aefdd78e3a0cd14603b9ba7
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -23526,7 +24340,11 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "picocolors@npm:^1.0.0, picocolors@npm:^1.1.0":
+=======
+"picocolors@npm:^1.0.0, picocolors@npm:^1.0.1":
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   version: 1.1.0
   resolution: "picocolors@npm:1.1.0"
   checksum: 10/a2ad60d94d185c30f2a140b19c512547713fb89b920d32cc6cf658fa786d63a37ba7b8451872c3d9fc34883971fb6e5878e07a20b60506e0bb2554dce9169ccb
@@ -23591,8 +24409,13 @@ __metadata:
   linkType: hard
 
 "pino@npm:^9.0.0":
+<<<<<<< HEAD
   version: 9.5.0
   resolution: "pino@npm:9.5.0"
+=======
+  version: 9.4.0
+  resolution: "pino@npm:9.4.0"
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   dependencies:
     atomic-sleep: "npm:^1.0.0"
     fast-redact: "npm:^3.1.1"
@@ -23607,7 +24430,11 @@ __metadata:
     thread-stream: "npm:^3.0.0"
   bin:
     pino: bin.js
+<<<<<<< HEAD
   checksum: 10/e2dba79524be133e2a0800ad0424bbf2c4c94c46f028a81e514d40951666f3dcec76c582fd5ce6f6155df0f5a9d6d0257924fdf043fe285236d36c76509a59dd
+=======
+  checksum: 10/1c730c216052bab277cab619da8fb9ef916fd29c7aee66e0a6e0c089cb41713df6a9071517755e3bef0ca3160629fd85d22c8f9d277e41ce332c91999e073146
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -23635,6 +24462,7 @@ __metadata:
   linkType: hard
 
 "postcss@npm:^8.3.11":
+<<<<<<< HEAD
   version: 8.4.47
   resolution: "postcss@npm:8.4.47"
   dependencies:
@@ -23642,6 +24470,15 @@ __metadata:
     picocolors: "npm:^1.1.0"
     source-map-js: "npm:^1.2.1"
   checksum: 10/f2b50ba9b6fcb795232b6bb20de7cdc538c0025989a8ed9c4438d1960196ba3b7eaff41fdb1a5c701b3504651ea87aeb685577707f0ae4d6ce6f3eae5df79a81
+=======
+  version: 8.4.45
+  resolution: "postcss@npm:8.4.45"
+  dependencies:
+    nanoid: "npm:^3.3.7"
+    picocolors: "npm:^1.0.1"
+    source-map-js: "npm:^1.2.0"
+  checksum: 10/7eaf7346d04929ee979548ece5e34d253eae6f175346e298b2c4621ad6f4ee00adfe7abe72688640e910c0361ae50537c5dda3e35fd1066491282c342b3ee5c8
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -24248,15 +25085,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "sanitize-filename@npm:1.6.3":
   version: 1.6.3
   resolution: "sanitize-filename@npm:1.6.3"
+=======
+"sanitize-html@npm:2.13.0, sanitize-html@npm:^2.10.0":
+  version: 2.13.0
+  resolution: "sanitize-html@npm:2.13.0"
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   dependencies:
     truncate-utf8-bytes: "npm:^1.0.0"
   checksum: 10/1c162e2cffa797571221c3ed9fe796fa8c6eabb0812418b52a839e4fc63ab130093eb546ec39e1b94b8d3511c0d7de81db3e67906a7e76d7a7bcb6fbab4ed961
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "sanitize-html@npm:2.13.1, sanitize-html@npm:^2.10.0":
   version: 2.13.1
   resolution: "sanitize-html@npm:2.13.1"
@@ -24271,6 +25115,8 @@ __metadata:
   languageName: node
   linkType: hard
 
+=======
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
 "secure-json-parse@npm:2.7.0, secure-json-parse@npm:^2.4.0, secure-json-parse@npm:^2.7.0":
   version: 2.7.0
   resolution: "secure-json-parse@npm:2.7.0"
@@ -24564,6 +25410,7 @@ __metadata:
   linkType: hard
 
 "sonic-boom@npm:^4.0.1":
+<<<<<<< HEAD
   version: 4.2.0
   resolution: "sonic-boom@npm:4.2.0"
   dependencies:
@@ -24573,6 +25420,17 @@ __metadata:
   linkType: hard
 
 "source-map-js@npm:^1.2.1":
+=======
+  version: 4.1.0
+  resolution: "sonic-boom@npm:4.1.0"
+  dependencies:
+    atomic-sleep: "npm:^1.0.0"
+  checksum: 10/7d42eb31a79e5927f268217b13206ab39c135c95f5e4b9a68745d9f4fdede0c291216c7594947028a7fdcf850342aa3bc49d0f5211618bfeff06dccdbc1bdb4e
+  languageName: node
+  linkType: hard
+
+"source-map-js@npm:^1.2.0":
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   version: 1.2.1
   resolution: "source-map-js@npm:1.2.1"
   checksum: 10/ff9d8c8bf096d534a5b7707e0382ef827b4dd360a577d3f34d2b9f48e12c9d230b5747974ee7c607f0df65113732711bb701fe9ece3c7edbd43cb2294d707df3
@@ -24738,8 +25596,13 @@ __metadata:
   linkType: hard
 
 "streamx@npm:^2.15.0":
+<<<<<<< HEAD
   version: 2.20.1
   resolution: "streamx@npm:2.20.1"
+=======
+  version: 2.20.0
+  resolution: "streamx@npm:2.20.0"
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   dependencies:
     bare-events: "npm:^2.2.0"
     fast-fifo: "npm:^1.3.2"
@@ -24748,7 +25611,11 @@ __metadata:
   dependenciesMeta:
     bare-events:
       optional: true
+<<<<<<< HEAD
   checksum: 10/3c69a48c4f397fb8a9460d1a780ece352849a4719a8938a866879dd1773098121882c3c2b99b9c7f605a123461d8ab2e652fd22c13ccda18f79e234e78ec7ed7
+=======
+  checksum: 10/635fe73c6cacc95a9932e338905781ce1aaa200b3a4935afaa873ff69be867f820e7e0dfe98d1b553b5ed1f5311a36e8158a6b748e41f3bd15a6a29ecc33b97d
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -25063,18 +25930,32 @@ __metadata:
   linkType: hard
 
 "tinyexec@npm:^0.3.0":
+<<<<<<< HEAD
   version: 0.3.1
   resolution: "tinyexec@npm:0.3.1"
   checksum: 10/0537c70590d52d354f40c0255ff0f654a3d18ddb3812b440ddf9d436edf516c8057838ad5a38744c0c59670ec03e3cf23fbe04ae3d49f031d948274e99002569
+=======
+  version: 0.3.0
+  resolution: "tinyexec@npm:0.3.0"
+  checksum: 10/317cc536d091ce7e50271287798d91ef53c4dc80088844d890752a2c7387d213004cba83e5e1d9129390ced617625e34f4a8f0ba5779e31c9b6939f9be0d3543
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
 "tlds@npm:^1.242.0":
+<<<<<<< HEAD
   version: 1.255.0
   resolution: "tlds@npm:1.255.0"
   bin:
     tlds: bin.js
   checksum: 10/ec42c9e913ded4cdce26cc95343be444850ac23ed6193944d7eb5b6e0a2978fb597956aaed1e9e22f1cd5c562aed94a6664c4779048593b8d3170e7a54c62f75
+=======
+  version: 1.254.0
+  resolution: "tlds@npm:1.254.0"
+  bin:
+    tlds: bin.js
+  checksum: 10/6701e3f79e0ec9f7f6bf638a81ca22e3f1e6f5797f4daf23ab6f24b08b5ac1b2f40df7f6b026e3dfa5b9983aa6e4b4a4a0e4d8d8eac35c8e1e1da7b00dd715fa
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -25276,9 +26157,15 @@ __metadata:
   linkType: hard
 
 "tslib@npm:^2.0.0, tslib@npm:^2.1.0, tslib@npm:^2.4.0, tslib@npm:^2.5.0, tslib@npm:^2.6.2":
+<<<<<<< HEAD
   version: 2.8.0
   resolution: "tslib@npm:2.8.0"
   checksum: 10/1bc7c43937477059b4d26f2dbde7e49ef0fb4f38f3014e0603eaea76d6a885742c8b1762af45949145e5e7408a736d20ded949da99dabc8ccba1fc5531d2d927
+=======
+  version: 2.7.0
+  resolution: "tslib@npm:2.7.0"
+  checksum: 10/9a5b47ddac65874fa011c20ff76db69f97cf90c78cff5934799ab8894a5342db2d17b4e7613a087046bc1d133d21547ddff87ac558abeec31ffa929c88b7fce6
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -25485,12 +26372,21 @@ __metadata:
   linkType: hard
 
 "typescript@npm:^4.6.4 || ^5.2.2":
+<<<<<<< HEAD
   version: 5.6.3
   resolution: "typescript@npm:5.6.3"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10/c328e418e124b500908781d9f7b9b93cf08b66bf5936d94332b463822eea2f4e62973bfb3b8a745fdc038785cb66cf59d1092bac3ec2ac6a3e5854687f7833f1
+=======
+  version: 5.6.2
+  resolution: "typescript@npm:5.6.2"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10/f95365d4898f357823e93d334ecda9fcade54f009b397c7d05b7621cd9e865981033cf89ccde0f3e3a7b73b1fdbae18e92bc77db237b43e912f053fef0f9a53b
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -25505,12 +26401,21 @@ __metadata:
   linkType: hard
 
 "typescript@patch:typescript@npm%3A^4.6.4 || ^5.2.2#optional!builtin<compat/typescript>":
+<<<<<<< HEAD
   version: 5.6.3
   resolution: "typescript@patch:typescript@npm%3A5.6.3#optional!builtin<compat/typescript>::version=5.6.3&hash=8c6c40"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10/00504c01ee42d470c23495426af07512e25e6546bce7e24572e72a9ca2e6b2e9bea63de4286c3cfea644874da1467dcfca23f4f98f7caf20f8b03c0213bb6837
+=======
+  version: 5.6.2
+  resolution: "typescript@patch:typescript@npm%3A5.6.2#optional!builtin<compat/typescript>::version=5.6.2&hash=8c6c40"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10/8bfc7ca0d9feca4c3fcbd6c70741abfcd714197d6448e68225ae71e462447d904d3bfba49759a8fbe4956d87f054e2d346833c8349c222daa594a2626d4e1be8
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -25580,8 +26485,13 @@ __metadata:
   linkType: hard
 
 "update-browserslist-db@npm:^1.1.0":
+<<<<<<< HEAD
   version: 1.1.1
   resolution: "update-browserslist-db@npm:1.1.1"
+=======
+  version: 1.1.0
+  resolution: "update-browserslist-db@npm:1.1.0"
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   dependencies:
     escalade: "npm:^3.2.0"
     picocolors: "npm:^1.1.0"
@@ -25589,7 +26499,11 @@ __metadata:
     browserslist: ">= 4.21.0"
   bin:
     update-browserslist-db: cli.js
+<<<<<<< HEAD
   checksum: 10/7678dd8609750588d01aa7460e8eddf2ff9d16c2a52fb1811190e0d056390f1fdffd94db3cf8fb209cf634ab4fa9407886338711c71cc6ccade5eeb22b093734
+=======
+  checksum: 10/d70b9efeaf4601aadb1a4f6456a7a5d9118e0063d995866b8e0c5e0cf559482671dab6ce7b079f9536b06758a344fbd83f974b965211e1c6e8d1958540b0c24c
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
@@ -25602,7 +26516,11 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "url-http@npm:1.2.2":
+=======
+"url-http@npm:~1.2.0":
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   version: 1.2.2
   resolution: "url-http@npm:1.2.2"
   dependencies:
@@ -25924,11 +26842,19 @@ __metadata:
   linkType: hard
 
 "yaml@npm:^2.2.2":
+<<<<<<< HEAD
   version: 2.6.0
   resolution: "yaml@npm:2.6.0"
   bin:
     yaml: bin.mjs
   checksum: 10/f4369f667c7626c216ea81b5840fe9b530cdae4cff2d84d166ec1239e54bf332dbfac4a71bf60d121f8e85e175364a4e280a520292269b6cf9d074368309adf9
+=======
+  version: 2.5.1
+  resolution: "yaml@npm:2.5.1"
+  bin:
+    yaml: bin.mjs
+  checksum: 10/0eecb679db75ea6a989ad97715a9fa5d946972945aa6aa7d2175bca66c213b5564502ccb1cdd04b1bf816ee38b5c43e4e2fda3ff6f5e09da24dabb51ae92c57d
+>>>>>>> 4ab8648a (fix: remove unnecessary back end features (#12))
   languageName: node
   linkType: hard
 
