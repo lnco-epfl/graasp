@@ -59,10 +59,6 @@ All notable changes to this project will be documented in this file. See [standa
 
 - # fix password reset email content ([#1619](https://github.com/graasp/graasp/issues/1619)) ([7c6ab79](https://github.com/graasp/graasp/commit/7c6ab7974060dd3fd3e1ba81f8607a355fe2fa92))
 
-## [1.54.2](https://github.com/graasp/graasp/compare/v1.54.1...v1.54.2) (2024-10-21)
-
-> > > > > > > 6a0642d8 (fix: remove unnecessary back end features (#12))
-
 ## [1.56.1](https://github.com/graasp/graasp/compare/v1.56.0...v1.56.1) (2024-11-04)
 
 ### Bug Fixes
@@ -95,10 +91,6 @@ All notable changes to this project will be documented in this file. See [standa
 - update invite invitation to include membership creation ([#1274](https://github.com/graasp/graasp/issues/1274)) ([117a409](https://github.com/graasp/graasp/commit/117a409000137c46ec56f615a51684349ee2afbe))
 - validate the thumbnail of items ([#1277](https://github.com/graasp/graasp/issues/1277)) ([4a276ba](https://github.com/graasp/graasp/commit/4a276ba0e4a9200a9aa5dd864ce4c0b5bb26f6c6))
 - add migration from item category to item lang ([#1567](https://github.com/graasp/graasp/issues/1567)) ([dcff750](https://github.com/graasp/graasp/commit/dcff750995ad0501ccd7ffe38deea62588f78938))
-
-## [1.54.1](https://github.com/graasp/graasp/compare/v1.54.0...v1.54.1) (2024-10-18)
-
-## [1.46.0](https://github.com/graasp/graasp/compare/v1.45.0...v1.46.0) (2024-07-31)
 
 ## [1.55.0](https://github.com/graasp/graasp/compare/v1.54.2...v1.55.0) (2024-10-29)
 
@@ -151,8 +143,6 @@ All notable changes to this project will be documented in this file. See [standa
 
 - set html as optional for link metadata ([#1546](https://github.com/graasp/graasp/issues/1546)) ([1d87bce](https://github.com/graasp/graasp/commit/1d87bceb9f4ee81b3d4bbc61ef1b029c50a7dce1))
 - update schema for current account ([#1542](https://github.com/graasp/graasp/issues/1542)) ([417f397](https://github.com/graasp/graasp/commit/417f397bd235ef6e3bc818f20cabc40d50ffc00a))
-
-## [1.45.0](https://github.com/graasp/graasp/compare/v1.44.0...v1.45.0) (2024-07-24)
 
 ## [1.54.0](https://github.com/graasp/graasp/compare/v1.53.1...v1.54.0) (2024-10-18)
 
@@ -218,8 +208,6 @@ All notable changes to this project will be documented in this file. See [standa
 - do not allow special characters in username ([#1406](https://github.com/graasp/graasp/issues/1406)) ([2e9ea18](https://github.com/graasp/graasp/commit/2e9ea18d6eaba0645446e8f5c0e14743bff9b9e9))
 - flacky tests post items ([#1444](https://github.com/graasp/graasp/issues/1444)) ([ae7b2d7](https://github.com/graasp/graasp/commit/ae7b2d75ec8313f28b588b639d657d42f0f7ac48))
 
-## [1.44.0](https://github.com/graasp/graasp/compare/v1.43.1...v1.44.0) (2024-07-12)
-
 ## [1.52.0](https://github.com/graasp/graasp/compare/v1.51.0...v1.52.0) (2024-09-27)
 
 ### Features
@@ -257,10 +245,6 @@ All notable changes to this project will be documented in this file. See [standa
 - filter out smartly given descendants ([#1162](https://github.com/graasp/graasp/issues/1162)) ([e354f2b](https://github.com/graasp/graasp/commit/e354f2ba0a6e07131e47edfc1b3af2a66de3044c))
 - logout member on delete ([#1158](https://github.com/graasp/graasp/issues/1158)) ([2ca19c9](https://github.com/graasp/graasp/commit/2ca19c9af2007d170a056ab55488b1b09f9cef42))
 - replace luxon by date-fns ([#967](https://github.com/graasp/graasp/issues/967)) ([5923b29](https://github.com/graasp/graasp/commit/5923b291cbf01729952ed3e7f19392c3cb55ceef))
-
-## [1.43.1](https://github.com/graasp/graasp/compare/v1.43.0...v1.43.1) (2024-07-01)
-
-- guest account migration ([#1426](https://github.com/graasp/graasp/issues/1426)) ([4ccec91](https://github.com/graasp/graasp/commit/4ccec9198cbd762c784130f30e49b46df35b9da4))
 
 ## [1.50.1](https://github.com/graasp/graasp/compare/v1.50.0...v1.50.1) (2024-09-24)
 
@@ -311,8 +295,6 @@ All notable changes to this project will be documented in this file. See [standa
 - **deps:** update dependency pdf2pic to v3.1.3 ([#1382](https://github.com/graasp/graasp/issues/1382)) ([69dad6c](https://github.com/graasp/graasp/commit/69dad6cd6bcde843c8a8f1cd32367f9df9bbe4fa))
 - **deps:** update dependency sharp to v0.33.5 ([#1354](https://github.com/graasp/graasp/issues/1354)) ([d172146](https://github.com/graasp/graasp/commit/d17214696f9b2a86c932fe920259e93c97b433bc))
 - **deps:** update dependency uuid to v10 ([#1263](https://github.com/graasp/graasp/issues/1263)) ([13fa2d4](https://github.com/graasp/graasp/commit/13fa2d41cadb2d25233e65457d5ac74ac779c4c6))
-
-## [1.43.0](https://github.com/graasp/graasp/compare/v1.42.1...v1.43.0) (2024-06-28)
 
 ## [1.48.0](https://github.com/graasp/graasp/compare/v1.47.0...v1.48.0) (2024-09-12)
 
@@ -380,8 +362,6 @@ All notable changes to this project will be documented in this file. See [standa
 - log group in dev should be `ecs/graasp` ([#1250](https://github.com/graasp/graasp/issues/1250)) ([b21c4d8](https://github.com/graasp/graasp/commit/b21c4d80ab2196c27fc70b072fdf14362dc9c8db))
 - release please workflow to use PAT ([#1240](https://github.com/graasp/graasp/issues/1240)) ([7446772](https://github.com/graasp/graasp/commit/7446772b219501e08e26ad469e21e9d6a8b46b46))
 - remove mock for datasource ([#1234](https://github.com/graasp/graasp/issues/1234)) ([cd0b079](https://github.com/graasp/graasp/commit/cd0b07997a6976f77b27f37c0cf7ac4f40b49723))
-
-## [1.42.1](https://github.com/graasp/graasp/compare/v1.42.0...v1.42.1) (2024-06-13)
 
 ## [1.45.0](https://github.com/graasp/graasp/compare/v1.44.0...v1.45.0) (2024-07-24)
 
