@@ -4,73 +4,71 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [1.60.0](https://github.com/graasp/graasp/compare/v1.59.0...v1.60.0) (2024-12-13)
 
-
 ### Features
 
-* add post and patch item folder ([#1625](https://github.com/graasp/graasp/issues/1625)) ([8ade6e8](https://github.com/graasp/graasp/commit/8ade6e819806e1f12a1f752c960f76c6a195bb30))
-* integrate tags to meilisearch, remove categories, migration ([#1665](https://github.com/graasp/graasp/issues/1665)) ([c0c978b](https://github.com/graasp/graasp/commit/c0c978b5e566e2d944854557f9a0f8f710dda778))
-
+- add post and patch item folder ([#1625](https://github.com/graasp/graasp/issues/1625)) ([8ade6e8](https://github.com/graasp/graasp/commit/8ade6e819806e1f12a1f752c960f76c6a195bb30))
+- integrate tags to meilisearch, remove categories, migration ([#1665](https://github.com/graasp/graasp/issues/1665)) ([c0c978b](https://github.com/graasp/graasp/commit/c0c978b5e566e2d944854557f9a0f8f710dda778))
 
 ### Bug Fixes
 
-* add item in app action ([#1681](https://github.com/graasp/graasp/issues/1681)) ([d726491](https://github.com/graasp/graasp/commit/d726491f7b690a440939a525e7468c7527062dce))
-* remove deprecated values for cc licenses ([#1678](https://github.com/graasp/graasp/issues/1678)) ([6d61341](https://github.com/graasp/graasp/commit/6d6134123f069d58e00e2c6eff3c70e78fb2929a))
-* return no content for no avatar ([#1679](https://github.com/graasp/graasp/issues/1679)) ([baafaa5](https://github.com/graasp/graasp/commit/baafaa552892bef0fc4b92939b97b01a4b8654ff))
+- add item in app action ([#1681](https://github.com/graasp/graasp/issues/1681)) ([d726491](https://github.com/graasp/graasp/commit/d726491f7b690a440939a525e7468c7527062dce))
+- remove deprecated values for cc licenses ([#1678](https://github.com/graasp/graasp/issues/1678)) ([6d61341](https://github.com/graasp/graasp/commit/6d6134123f069d58e00e2c6eff3c70e78fb2929a))
+- return no content for no avatar ([#1679](https://github.com/graasp/graasp/issues/1679)) ([baafaa5](https://github.com/graasp/graasp/commit/baafaa552892bef0fc4b92939b97b01a4b8654ff))
 
 ## [1.59.0](https://github.com/graasp/graasp/compare/v1.58.0...v1.59.0) (2024-12-10)
 
-
 ### Features
 
-* add delete item login schema ([#1658](https://github.com/graasp/graasp/issues/1658)) ([fef252b](https://github.com/graasp/graasp/commit/fef252b3a4afb5a83a6711262a435e3e409899e2))
-* add tag count search ([#1651](https://github.com/graasp/graasp/issues/1651)) ([ffc51e1](https://github.com/graasp/graasp/commit/ffc51e14f2ac7d52c9f71c8a8268a5caf140d53a))
-* remove display name ([#1674](https://github.com/graasp/graasp/issues/1674)) ([7173c0c](https://github.com/graasp/graasp/commit/7173c0cffd5f57d4d3b4119f5363ce53c6b2a6fc))
-
+- add delete item login schema ([#1658](https://github.com/graasp/graasp/issues/1658)) ([fef252b](https://github.com/graasp/graasp/commit/fef252b3a4afb5a83a6711262a435e3e409899e2))
+- add tag count search ([#1651](https://github.com/graasp/graasp/issues/1651)) ([ffc51e1](https://github.com/graasp/graasp/commit/ffc51e14f2ac7d52c9f71c8a8268a5caf140d53a))
+- remove display name ([#1674](https://github.com/graasp/graasp/issues/1674)) ([7173c0c](https://github.com/graasp/graasp/commit/7173c0cffd5f57d4d3b4119f5363ce53c6b2a6fc))
 
 ### Bug Fixes
 
-* add transaction around the createEtherPadItem to fix error 500 ([#1667](https://github.com/graasp/graasp/issues/1667)) ([b4cda5e](https://github.com/graasp/graasp/commit/b4cda5e5d1c9f132184ec0191c657948ade4a879))
-* allow undefined `previousItemId` ([#1660](https://github.com/graasp/graasp/issues/1660)) ([3659cba](https://github.com/graasp/graasp/commit/3659cba1b0e9ff4beea29d30e6a6dd27d1f7bab9))
-* file id error ([#1663](https://github.com/graasp/graasp/issues/1663)) ([54287a2](https://github.com/graasp/graasp/commit/54287a27d39457fbb2707d01e9043bc76e83dc61))
-* sanitize html on upload and import ([#1653](https://github.com/graasp/graasp/issues/1653)) ([46abaa6](https://github.com/graasp/graasp/commit/46abaa65a3de20437fd50108a87f418496af6b14))
-* use lower limit for consecutive exports ([#1664](https://github.com/graasp/graasp/issues/1664)) ([35fe733](https://github.com/graasp/graasp/commit/35fe7334f49bf2c8766d36aac045e62515d99277))
-* use member username format from sdk ([#1656](https://github.com/graasp/graasp/issues/1656)) ([0a615af](https://github.com/graasp/graasp/commit/0a615afacc37e08bf478bc7a8b3d37dd3d90b359))
+- add transaction around the createEtherPadItem to fix error 500 ([#1667](https://github.com/graasp/graasp/issues/1667)) ([b4cda5e](https://github.com/graasp/graasp/commit/b4cda5e5d1c9f132184ec0191c657948ade4a879))
+- allow undefined `previousItemId` ([#1660](https://github.com/graasp/graasp/issues/1660)) ([3659cba](https://github.com/graasp/graasp/commit/3659cba1b0e9ff4beea29d30e6a6dd27d1f7bab9))
+- file id error ([#1663](https://github.com/graasp/graasp/issues/1663)) ([54287a2](https://github.com/graasp/graasp/commit/54287a27d39457fbb2707d01e9043bc76e83dc61))
+- sanitize html on upload and import ([#1653](https://github.com/graasp/graasp/issues/1653)) ([46abaa6](https://github.com/graasp/graasp/commit/46abaa65a3de20437fd50108a87f418496af6b14))
+- use lower limit for consecutive exports ([#1664](https://github.com/graasp/graasp/issues/1664)) ([35fe733](https://github.com/graasp/graasp/commit/35fe7334f49bf2c8766d36aac045e62515d99277))
+- use member username format from sdk ([#1656](https://github.com/graasp/graasp/issues/1656)) ([0a615af](https://github.com/graasp/graasp/commit/0a615afacc37e08bf478bc7a8b3d37dd3d90b359))
 
 ## [1.58.0](https://github.com/graasp/graasp/compare/v1.57.0...v1.58.0) (2024-11-20)
 
-
 ### Features
 
-* add delete tag for item ([#1645](https://github.com/graasp/graasp/issues/1645)) ([e96c358](https://github.com/graasp/graasp/commit/e96c35833aa05e053932f21792724d0807259990))
-* **file-upload:** identify and treat the H5P files in the general file upload ([#1631](https://github.com/graasp/graasp/issues/1631)) ([212bf92](https://github.com/graasp/graasp/commit/212bf92f92883046dc8a9365f88842ce47b266e8))
-* implement create tag for item ([#1641](https://github.com/graasp/graasp/issues/1641)) ([24a9eb2](https://github.com/graasp/graasp/commit/24a9eb2b466d41fecbd4039fdbb10d50baf34bea))
-
+- add delete tag for item ([#1645](https://github.com/graasp/graasp/issues/1645)) ([e96c358](https://github.com/graasp/graasp/commit/e96c35833aa05e053932f21792724d0807259990))
+- **file-upload:** identify and treat the H5P files in the general file upload ([#1631](https://github.com/graasp/graasp/issues/1631)) ([212bf92](https://github.com/graasp/graasp/commit/212bf92f92883046dc8a9365f88842ce47b266e8))
+- implement create tag for item ([#1641](https://github.com/graasp/graasp/issues/1641)) ([24a9eb2](https://github.com/graasp/graasp/commit/24a9eb2b466d41fecbd4039fdbb10d50baf34bea))
 
 ### Bug Fixes
 
-* add documentation and details to published schemas ([#1642](https://github.com/graasp/graasp/issues/1642)) ([6c9433a](https://github.com/graasp/graasp/commit/6c9433aae7abb719618d3b87a1db93724aed145a))
-* fix tests ([#1646](https://github.com/graasp/graasp/issues/1646)) ([e7dc5b5](https://github.com/graasp/graasp/commit/e7dc5b5e4a89e2939e9c82a6e959ca674d264553))
+- add documentation and details to published schemas ([#1642](https://github.com/graasp/graasp/issues/1642)) ([6c9433a](https://github.com/graasp/graasp/commit/6c9433aae7abb719618d3b87a1db93724aed145a))
+- fix tests ([#1646](https://github.com/graasp/graasp/issues/1646)) ([e7dc5b5](https://github.com/graasp/graasp/commit/e7dc5b5e4a89e2939e9c82a6e959ca674d264553))
 
 ## [1.57.0](https://github.com/graasp/graasp/compare/v1.56.1...v1.57.0) (2024-11-12)
 
-
 ### Features
 
-* add tag and item to tag entities ([#1611](https://github.com/graasp/graasp/issues/1611)) ([1981576](https://github.com/graasp/graasp/commit/1981576d1473e0b6833fa7c84c78b3a91f6aa526))
-* add temperature in query params for chatbot API ([#1628](https://github.com/graasp/graasp/issues/1628)) ([6adf661](https://github.com/graasp/graasp/commit/6adf661211c617d32e97526ba993c739637a7855))
-* get item tags ([#1632](https://github.com/graasp/graasp/issues/1632)) ([33a9cb2](https://github.com/graasp/graasp/commit/33a9cb2fd9480755d51ef28db5ab0822e04bdd57))
-* **refactor:** simplify the short links by using new SDK types ([#1612](https://github.com/graasp/graasp/issues/1612)) ([4a9c365](https://github.com/graasp/graasp/commit/4a9c365b6c2b2c68bb10ed7cdae9a129389178be))
-* rename item tag to item visibility ([#1615](https://github.com/graasp/graasp/issues/1615)) ([91439c2](https://github.com/graasp/graasp/commit/91439c2a25674487c3bc4ace4ca5d92a9fe4ce18))
-
+- add tag and item to tag entities ([#1611](https://github.com/graasp/graasp/issues/1611)) ([1981576](https://github.com/graasp/graasp/commit/1981576d1473e0b6833fa7c84c78b3a91f6aa526))
+- add temperature in query params for chatbot API ([#1628](https://github.com/graasp/graasp/issues/1628)) ([6adf661](https://github.com/graasp/graasp/commit/6adf661211c617d32e97526ba993c739637a7855))
+- get item tags ([#1632](https://github.com/graasp/graasp/issues/1632)) ([33a9cb2](https://github.com/graasp/graasp/commit/33a9cb2fd9480755d51ef28db5ab0822e04bdd57))
+- **refactor:** simplify the short links by using new SDK types ([#1612](https://github.com/graasp/graasp/issues/1612)) ([4a9c365](https://github.com/graasp/graasp/commit/4a9c365b6c2b2c68bb10ed7cdae9a129389178be))
+- rename item tag to item visibility ([#1615](https://github.com/graasp/graasp/issues/1615)) ([91439c2](https://github.com/graasp/graasp/commit/91439c2a25674487c3bc4ace4ca5d92a9fe4ce18))
 
 ### Bug Fixes
 
-* fix password reset email content ([#1619](https://github.com/graasp/graasp/issues/1619)) ([7c6ab79](https://github.com/graasp/graasp/commit/7c6ab7974060dd3fd3e1ba81f8607a355fe2fa92))
+- # fix password reset email content ([#1619](https://github.com/graasp/graasp/issues/1619)) ([7c6ab79](https://github.com/graasp/graasp/commit/7c6ab7974060dd3fd3e1ba81f8607a355fe2fa92))
+
+## [1.54.2](https://github.com/graasp/graasp/compare/v1.54.1...v1.54.2) (2024-10-21)
+
+> > > > > > > 6a0642d8 (fix: remove unnecessary back end features (#12))
 
 ## [1.56.1](https://github.com/graasp/graasp/compare/v1.56.0...v1.56.1) (2024-11-04)
 
-
 ### Bug Fixes
+
+- allow guests in members app context, allow to get context as guest ([#1554](https://github.com/graasp/graasp/issues/1554)) ([0ef4047](https://github.com/graasp/graasp/commit/0ef4047cbf92df89057b0eed1a5bcbda55abcfb4))
+
 * Optimize slow GET own recycled items [1594](https://github.com/graasp/graasp/commit/1b9c3651c58b47c365492ec0ff996423aeed23c7)
 * **arabic:** update membership request translations ([#1605](https://github.com/graasp/graasp/issues/1605)) ([02ab379](https://github.com/graasp/graasp/commit/02ab379dca03e50271f59a18c6cd68c16f1ae99e))
 * **german:** update translations ([#1602](https://github.com/graasp/graasp/issues/1602)) ([bb4ce03](https://github.com/graasp/graasp/commit/bb4ce03a4b9476cee8321b23db6291da2f928439))
@@ -82,6 +80,8 @@ All notable changes to this project will be documented in this file. See [standa
 ### Features
 
 - add migration from item category to item lang ([#1567](https://github.com/graasp/graasp/issues/1567)) ([dcff750](https://github.com/graasp/graasp/commit/dcff750995ad0501ccd7ffe38deea62588f78938))
+
+## [1.54.1](https://github.com/graasp/graasp/compare/v1.54.0...v1.54.1) (2024-10-18)
 
 ## [1.55.0](https://github.com/graasp/graasp/compare/v1.54.2...v1.55.0) (2024-10-29)
 
@@ -95,6 +95,8 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
+- set html as optional for link metadata ([#1546](https://github.com/graasp/graasp/issues/1546)) ([1d87bce](https://github.com/graasp/graasp/commit/1d87bceb9f4ee81b3d4bbc61ef1b029c50a7dce1))
+- update schema for current account ([#1542](https://github.com/graasp/graasp/issues/1542)) ([417f397](https://github.com/graasp/graasp/commit/417f397bd235ef6e3bc818f20cabc40d50ffc00a))
 - add env var for account ([#1578](https://github.com/graasp/graasp/issues/1578)) ([04a6bee](https://github.com/graasp/graasp/commit/04a6bee13cf03605c2c1b5fac81e611fa798ff32))
 - add optional param for actions ([#1562](https://github.com/graasp/graasp/issues/1562)) ([e52f1aa](https://github.com/graasp/graasp/commit/e52f1aabf04f39cb038ef4e38a8ac41e6ee8f9b5))
 - allow local file in update schema ([#1570](https://github.com/graasp/graasp/issues/1570)) ([85b5ff1](https://github.com/graasp/graasp/commit/85b5ff17167f2daebf274529be75fcb509888c15))
