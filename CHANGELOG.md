@@ -2,6 +2,7 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<<<<<<< HEAD
 ## [1.58.0](https://github.com/graasp/graasp/compare/v1.57.0...v1.58.0) (2024-11-20)
 
 
@@ -32,11 +33,16 @@ All notable changes to this project will be documented in this file. See [standa
 ### Bug Fixes
 
 * fix password reset email content ([#1619](https://github.com/graasp/graasp/issues/1619)) ([7c6ab79](https://github.com/graasp/graasp/commit/7c6ab7974060dd3fd3e1ba81f8607a355fe2fa92))
+=======
+## [1.54.2](https://github.com/graasp/graasp/compare/v1.54.1...v1.54.2) (2024-10-21)
+>>>>>>> 6a0642d8 (fix: remove unnecessary back end features (#12))
 
 ## [1.56.1](https://github.com/graasp/graasp/compare/v1.56.0...v1.56.1) (2024-11-04)
 
-
 ### Bug Fixes
+
+- allow guests in members app context, allow to get context as guest ([#1554](https://github.com/graasp/graasp/issues/1554)) ([0ef4047](https://github.com/graasp/graasp/commit/0ef4047cbf92df89057b0eed1a5bcbda55abcfb4))
+
 * Optimize slow GET own recycled items [1594](https://github.com/graasp/graasp/commit/1b9c3651c58b47c365492ec0ff996423aeed23c7)
 * **arabic:** update membership request translations ([#1605](https://github.com/graasp/graasp/issues/1605)) ([02ab379](https://github.com/graasp/graasp/commit/02ab379dca03e50271f59a18c6cd68c16f1ae99e))
 * **german:** update translations ([#1602](https://github.com/graasp/graasp/issues/1602)) ([bb4ce03](https://github.com/graasp/graasp/commit/bb4ce03a4b9476cee8321b23db6291da2f928439))
@@ -48,6 +54,8 @@ All notable changes to this project will be documented in this file. See [standa
 ### Features
 
 - add migration from item category to item lang ([#1567](https://github.com/graasp/graasp/issues/1567)) ([dcff750](https://github.com/graasp/graasp/commit/dcff750995ad0501ccd7ffe38deea62588f78938))
+
+## [1.54.1](https://github.com/graasp/graasp/compare/v1.54.0...v1.54.1) (2024-10-18)
 
 ## [1.55.0](https://github.com/graasp/graasp/compare/v1.54.2...v1.55.0) (2024-10-29)
 
@@ -61,6 +69,8 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
+- set html as optional for link metadata ([#1546](https://github.com/graasp/graasp/issues/1546)) ([1d87bce](https://github.com/graasp/graasp/commit/1d87bceb9f4ee81b3d4bbc61ef1b029c50a7dce1))
+- update schema for current account ([#1542](https://github.com/graasp/graasp/issues/1542)) ([417f397](https://github.com/graasp/graasp/commit/417f397bd235ef6e3bc818f20cabc40d50ffc00a))
 - add env var for account ([#1578](https://github.com/graasp/graasp/issues/1578)) ([04a6bee](https://github.com/graasp/graasp/commit/04a6bee13cf03605c2c1b5fac81e611fa798ff32))
 - add optional param for actions ([#1562](https://github.com/graasp/graasp/issues/1562)) ([e52f1aa](https://github.com/graasp/graasp/commit/e52f1aabf04f39cb038ef4e38a8ac41e6ee8f9b5))
 - allow local file in update schema ([#1570](https://github.com/graasp/graasp/issues/1570)) ([85b5ff1](https://github.com/graasp/graasp/commit/85b5ff17167f2daebf274529be75fcb509888c15))
