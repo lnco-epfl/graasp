@@ -427,6 +427,17 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
+- allow to download raw file ([#1246](https://github.com/graasp/graasp/issues/1246)) ([f2c592f](https://github.com/graasp/graasp/commit/f2c592f8414f67571d4115e5238342d79109edc0))
+- **deps:** update dependency @graasp/translations to v1.33.0 ([#1257](https://github.com/graasp/graasp/issues/1257)) ([43206c2](https://github.com/graasp/graasp/commit/43206c2bbf06709497ca26b7525da38165eaf8be))
+- **deps:** update dependency archiver to v7 ([#1211](https://github.com/graasp/graasp/issues/1211)) ([d8c5741](https://github.com/graasp/graasp/commit/d8c57415be18577c1a1f55aefb20520044fbe889))
+- **deps:** update dependency bullmq to v5 ([#1212](https://github.com/graasp/graasp/issues/1212)) ([c55976c](https://github.com/graasp/graasp/commit/c55976c06c69c9f4ced04f1abbd723ff66ad5a95))
+- **deps:** update dependency fast-json-stringify to v6 ([#1213](https://github.com/graasp/graasp/issues/1213)) ([9efd55a](https://github.com/graasp/graasp/commit/9efd55a51791312290c8f9ce634bad35016d1188))
+- **deps:** update dependency i18next to v23.12.2 ([#1253](https://github.com/graasp/graasp/issues/1253)) ([0b5c8b2](https://github.com/graasp/graasp/commit/0b5c8b2ed5ec9be0665204d78f7ed3ae3b138e98))
+- fix where scope on search ([#1245](https://github.com/graasp/graasp/issues/1245)) ([6d6c2b9](https://github.com/graasp/graasp/commit/6d6c2b9d5d1b1408c0c0a525c89daf6295b3776a))
+- lift up Pagination types and use ones defined in sdk ([#1238](https://github.com/graasp/graasp/issues/1238)) ([b76f640](https://github.com/graasp/graasp/commit/b76f640b939008bc5235d020edc3a458f8145d86))
+- log group in dev should be `ecs/graasp` ([#1250](https://github.com/graasp/graasp/issues/1250)) ([b21c4d8](https://github.com/graasp/graasp/commit/b21c4d80ab2196c27fc70b072fdf14362dc9c8db))
+- release please workflow to use PAT ([#1240](https://github.com/graasp/graasp/issues/1240)) ([7446772](https://github.com/graasp/graasp/commit/7446772b219501e08e26ad469e21e9d6a8b46b46))
+- remove mock for datasource ([#1234](https://github.com/graasp/graasp/issues/1234)) ([cd0b079](https://github.com/graasp/graasp/commit/cd0b07997a6976f77b27f37c0cf7ac4f40b49723))
 - add alignment setting ([#1124](https://github.com/graasp/graasp/issues/1124)) ([7b428b4](https://github.com/graasp/graasp/commit/7b428b414baa6edec7271912572ea1ba2f4d9d82))
 - email regex for .swiss emails ([#1129](https://github.com/graasp/graasp/issues/1129)) ([eef770c](https://github.com/graasp/graasp/commit/eef770c8c6a5bef45f33477df3ed9dcfcedad24f))
 - eslint warnings ([#1126](https://github.com/graasp/graasp/issues/1126)) ([79cadc3](https://github.com/graasp/graasp/commit/79cadc3ddd560744a0d0a96181e9cb0ab01d4a34))
@@ -457,6 +468,16 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
+- **deps:** update dependency @fastify/busboy to v3 ([#1191](https://github.com/graasp/graasp/issues/1191)) ([5122592](https://github.com/graasp/graasp/commit/5122592babf4efa4b03f39ad0744530ba2dd621d))
+- **deps:** update dependency @fastify/cors to v9 ([#1183](https://github.com/graasp/graasp/issues/1183)) ([6db4212](https://github.com/graasp/graasp/commit/6db4212d7f6ff03fc80def4a43928b2dde18cf0e))
+- **deps:** update dependency @fastify/forwarded to v3 ([#1208](https://github.com/graasp/graasp/issues/1208)) ([fc71c98](https://github.com/graasp/graasp/commit/fc71c9830b112d431ebd82e7f04ea24e9690c3e9))
+- **deps:** update dependency @fastify/multipart to v8 ([#1192](https://github.com/graasp/graasp/issues/1192)) ([c055cf8](https://github.com/graasp/graasp/commit/c055cf8704c86020330d0011ab604f1c084e8466))
+- **deps:** update dependency @fastify/static to v7 ([#1193](https://github.com/graasp/graasp/issues/1193)) ([fd8ce4b](https://github.com/graasp/graasp/commit/fd8ce4b1c4e8c1d872715a2afe50d2d4a338b9a4))
+- **deps:** update dependency ajv to v8.17.1 ([#1201](https://github.com/graasp/graasp/issues/1201)) ([82a72af](https://github.com/graasp/graasp/commit/82a72af71635ca94ffa351448c148c9874a27181))
+- **deps:** update dependency fluent-json-schema to v5 ([#1214](https://github.com/graasp/graasp/issues/1214)) ([23a2f1b](https://github.com/graasp/graasp/commit/23a2f1b284a7135df7409277aa86f3b60523afc2))
+- **deps:** update dependency i18next to v23.12.1 ([#1206](https://github.com/graasp/graasp/issues/1206)) ([02285f6](https://github.com/graasp/graasp/commit/02285f65f8d11ff46cc16e6429cd8c97c8ea98f1))
+- remove leaked information and remove unused errors ([#1204](https://github.com/graasp/graasp/issues/1204)) ([312f6d6](https://github.com/graasp/graasp/commit/312f6d651662550e2118b0e157f75249da41ee2f))
+- sort descendants as number ([#1221](https://github.com/graasp/graasp/issues/1221)) ([2f1f7b4](https://github.com/graasp/graasp/commit/2f1f7b440a192fc6aee14c213938899a7d212886))
 - allow yearFrom and yearTo to be numbers as some editors save them like this ([#1111](https://github.com/graasp/graasp/issues/1111)) ([d872e9a](https://github.com/graasp/graasp/commit/d872e9aa980a047522957e722f812c3432e3edda))
 
 ## [1.42.0](https://github.com/graasp/graasp/compare/v1.41.0...v1.42.0) (2024-06-13)
@@ -522,6 +543,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Features
 
+- member edit email ([#1122](https://github.com/graasp/graasp/issues/1122)) ([39e5d7b](https://github.com/graasp/graasp/commit/39e5d7b4af9abc8e56ee8cd5166f005fd4dee85b))
 - restrict publication to folders only ([#1106](https://github.com/graasp/graasp/issues/1106)) ([9f61157](https://github.com/graasp/graasp/commit/9f611573b8feae3fd6d834a5e277e9edb20e689f))
 - member edit email ([#1122](https://github.com/graasp/graasp/issues/1122)) ([39e5d7b](https://github.com/graasp/graasp/commit/39e5d7b4af9abc8e56ee8cd5166f005fd4dee85b))
 
@@ -536,6 +558,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
+- allow yearFrom and yearTo to be numbers as some editors save them like this ([#1111](https://github.com/graasp/graasp/issues/1111)) ([d872e9a](https://github.com/graasp/graasp/commit/d872e9aa980a047522957e722f812c3432e3edda))
 - many tags items length ([#1108](https://github.com/graasp/graasp/issues/1108)) ([b74bd2c](https://github.com/graasp/graasp/commit/b74bd2c3d24c0eadc52a99d44d9800dbae974007))
 - allow yearFrom and yearTo to be numbers as some editors save them like this ([#1111](https://github.com/graasp/graasp/issues/1111)) ([d872e9a](https://github.com/graasp/graasp/commit/d872e9aa980a047522957e722f812c3432e3edda))
 
