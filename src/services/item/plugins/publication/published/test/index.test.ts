@@ -4,13 +4,7 @@ import waitForExpect from 'wait-for-expect';
 
 import { FastifyInstance } from 'fastify';
 
-import {
-  CategoryType,
-  HttpMethod,
-  ItemType,
-  ItemVisibilityType,
-  PermissionLevel,
-} from '@graasp/sdk';
+import { HttpMethod, ItemType, ItemVisibilityType, PermissionLevel } from '@graasp/sdk';
 
 import build, {
   clearDatabase,
