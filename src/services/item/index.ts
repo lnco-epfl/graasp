@@ -27,10 +27,8 @@ import graaspApps from './plugins/app';
 import graaspDocumentItem from './plugins/document';
 import graaspEmbeddedLinkItem from './plugins/embeddedLink';
 import { PREFIX_EMBEDDED_LINK } from './plugins/embeddedLink/service';
-import graaspEtherpadPlugin from './plugins/etherpad';
 import graaspFileItem from './plugins/file';
 import itemGeolocationPlugin from './plugins/geolocation/index';
-import graaspH5PPlugin from './plugins/html/h5p';
 import graaspZipPlugin from './plugins/importExport';
 import graaspInvitationsPlugin from './plugins/invitation';
 import graaspCategoryPlugin from './plugins/itemCategory';
@@ -104,11 +102,6 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       // core routes - require authentication
       fastify.register(async function (fastify) {
         fastify.register(itemWsHooks);
-
-        // H5P plugin must be registered before ZIP
-        fastify.register(graaspH5PPlugin);
-
-        fastify.register(graaspEtherpadPlugin);
 
         fastify.register(graaspZipPlugin);
 
