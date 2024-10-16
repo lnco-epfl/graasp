@@ -78,57 +78,15 @@ export const registerDependencies = (instance: FastifyInstance) => {
 
   // Register CachingService for the thumbnails urls.
   registerValue(
-    FILE_REPOSITORY_DI_KEY,
-    fileRepositoryFactory(FILE_ITEM_TYPE, {
-      s3: S3_FILE_ITEM_PLUGIN_OPTIONS,
-      local: FILE_ITEM_PLUGIN_OPTIONS,
-    }),
+    FILE_SERVICE_URLS_CACHING_DI_KEY,
+    new CachingService(resolveDependency(Redis), 'file_service_url_caching'),
   );
-
-  // register MeiliSearch and its wrapper.
-  registerValue(
-    MeiliSearch,
-    new MeiliSearch({
-      host: MEILISEARCH_URL,
-      apiKey: MEILISEARCH_MASTER_KEY,
-    }),
-  );
-  // Will be registered automatically when db will be injectable.
-  registerValue(
-    MeiliSearchWrapper,
-    new MeiliSearchWrapper(
-      db,
-      resolveDependency(MeiliSearch),
-      resolveDependency(FileService),
-      resolveDependency(BaseLogger),
-    ),
-  );
-
-  // Launch Job workers
-  const jobServiceBuilder = new JobServiceBuilder(resolveDependency(BaseLogger));
-  jobServiceBuilder
-    .registerTask('rebuild-index', {
-      handler: () => resolveDependency(SearchService).rebuildIndex(),
-      pattern: CRON_3AM_MONDAY,
-    })
-    .build();
-
-  // Register EtherPad
-  const etherPadConfig = resolveDependency(EtherpadServiceConfig);
-
-  // connect to etherpad server
-  registerValue(
-    Etherpad,
-    wrapEtherpadErrors(
-      new Etherpad({
-        url: etherPadConfig.url,
-        apiKey: etherPadConfig.apiKey,
-        apiVersion: etherPadConfig.apiVersion,
-      }),
-    ),
-  );
-
-  registerValue(ETHERPAD_NAME_FACTORY_DI_KEY, new RandomPadNameFactory());
+  // Register the FileService to inject the CacheService.
+  const fileRepository = fileRepositoryFactory(FILE_ITEM_TYPE, {
+    s3: S3_FILE_ITEM_PLUGIN_OPTIONS,
+    local: FILE_ITEM_PLUGIN_OPTIONS,
+  });
+  registerValue(FileService, new FileService(fileRepository, resolveDependency(BaseLogger)));
 
   registerValue(
     ImportExportService,
