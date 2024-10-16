@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import { PermissionLevel } from '@graasp/sdk';
+import { PermissionLevel, UUID } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../../di/utils';
 import { asDefined } from '../../../../../utils/assertions';
