@@ -1,9 +1,9 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 import { PermissionLevel, UUID } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../../di/utils';
-import { notUndefined } from '../../../../../utils/assertions';
+import { asDefined } from '../../../../../utils/assertions';
 import { buildRepositories } from '../../../../../utils/repositories';
 import { isAuthenticated, optionalIsAuthenticated } from '../../../../auth/plugins/passport';
 import { matchOne } from '../../../../authorization';
@@ -22,7 +22,7 @@ import {
 } from './schemas';
 import { ItemPublishedService } from './service';
 
-const plugin: FastifyPluginAsync = async (fastify) => {
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { db } = fastify;
   const itemPublishedService = resolveDependency(ItemPublishedService);
   const publicationService = resolveDependency(PublicationService);
@@ -39,7 +39,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.get<{ Params: { itemId: string } }>(
+  fastify.get(
     '/collections/:itemId/informations',
     {
       preHandler: optionalIsAuthenticated,
@@ -50,7 +50,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.get<{ Querystring: { itemId: string[] } }>(
+  fastify.get(
     '/collections/informations',
     {
       preHandler: optionalIsAuthenticated,
@@ -61,7 +61,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.get<{ Querystring: { limit?: number } }>(
+  fastify.get(
     '/collections/liked',
     {
       preHandler: optionalIsAuthenticated,
@@ -72,14 +72,14 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.post<{ Params: { itemId: string } }>(
+  fastify.post(
     '/collections/:itemId/publish',
     {
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
       schema: publishItem,
     },
     async ({ params, user }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);
@@ -97,14 +97,14 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.delete<{ Params: { itemId: string } }>(
+  fastify.delete(
     '/collections/:itemId/unpublish',
     {
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
       schema: unpublishItem,
     },
     async ({ params, user }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return db.transaction(async (manager) => {
         return itemPublishedService.delete(member, buildRepositories(manager), params.itemId);
@@ -112,7 +112,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.get<{ Querystring: { limit?: number } }>(
+  fastify.get(
     '/collections/recent',
     {
       preHandler: optionalIsAuthenticated,

@@ -15,6 +15,7 @@ import { Actor, Member, isMember } from '../../../../member/entities/member';
 import { ItemWrapper } from '../../../ItemWrapper';
 import { Item } from '../../../entities/Item';
 import { ItemService } from '../../../service';
+import { ItemThumbnailService } from '../../thumbnail/service';
 import { buildPublishedItemLink } from './constants';
 import {
   ItemIsNotValidated,
@@ -28,18 +29,25 @@ interface ActionCount {
 
 @singleton()
 export class ItemPublishedService {
-  private log: BaseLogger;
-  private itemService: ItemService;
-  private mailerService: MailerService;
+  private readonly log: BaseLogger;
+  private readonly itemService: ItemService;
+  private readonly itemThumbnailService: ItemThumbnailService;
+  private readonly mailerService: MailerService;
 
   hooks = new HookManager<{
     create: { pre: { item: Item }; post: { item: Item } };
     delete: { pre: { item: Item }; post: { item: Item } };
   }>();
 
-  constructor(itemService: ItemService, mailerService: MailerService, log: BaseLogger) {
+  constructor(
+    itemService: ItemService,
+    itemThumbnailService: ItemThumbnailService,
+    mailerService: MailerService,
+    log: BaseLogger,
+  ) {
     this.log = log;
     this.itemService = itemService;
+    this.itemThumbnailService = itemThumbnailService;
     this.mailerService = mailerService;
   }
 
@@ -82,7 +90,7 @@ export class ItemPublishedService {
     const item = await this.itemService.get(actor, repositories, itemId);
 
     // item should be public first
-    await itemTagRepository.getType(item, ItemTagType.Public, { shouldThrow: true });
+    await itemTagRepository.getType(item.path, ItemTagType.Public, { shouldThrow: true });
 
     // get item published entry
     const publishedItem = await itemPublishedRepository.getForItem(item);
@@ -171,7 +179,7 @@ export class ItemPublishedService {
     this.checkPublicationStatus(item, publicationStatus);
 
     // item should be public first
-    const tag = await itemTagRepository.getType(item, ItemTagType.Public, {
+    const tag = await itemTagRepository.getType(item.path, ItemTagType.Public, {
       shouldThrow: !canBePrivate,
     });
 
@@ -214,7 +222,7 @@ export class ItemPublishedService {
     const { itemRepository } = repositories;
     const items = await itemRepository.getPublishedItemsForMember(memberId);
 
-    return ItemWrapper.createPackedItems(actor, repositories, items);
+    return ItemWrapper.createPackedItems(actor, repositories, this.itemThumbnailService, items);
   }
 
   async getLikedItems(actor: Actor, repositories: Repositories, limit?: number) {

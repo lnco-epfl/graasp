@@ -1,134 +1,149 @@
-import { idParam } from '../../../../schemas/fluent-schema';
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
 
-const geolocation = {
-  type: 'object',
-  properties: {
-    id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    lat: { type: 'number' },
-    lng: { type: 'number' },
-    country: { type: ['string', 'null'] },
-    addressLabel: { type: ['string', 'null'] },
-    helperLabel: { type: ['string', 'null'] },
-    createdAt: { type: 'string' },
-    updatedAt: { type: 'string' },
-    item: {
-      $ref: 'https://graasp.org/items/#/definitions/item',
-    },
-  },
-  required: ['lat', 'lng'],
-  nullable: true,
-};
+import { FastifySchema } from 'fastify';
 
-const geolocationPacked = {
-  ...geolocation,
-  properties: {
-    ...geolocation.properties,
-    item: {
-      $ref: 'https://graasp.org/items/#/definitions/packedItem',
-    },
+import { customType } from '../../../../plugins/typebox';
+import { entityIdSchemaRef } from '../../../../schemas/global';
+import { itemSchemaRef, packedItemSchemaRef } from '../../schema';
+
+const geolocationMinimal = Type.Object(
+  {
+    id: customType.UUID(),
+    lat: Type.Number(),
+    lng: Type.Number(),
+    country: customType.Nullable(Type.String()),
+    addressLabel: customType.Nullable(Type.String()),
   },
-};
+  { additionalProperties: false },
+);
+
+const geolocation = customType.Nullable(
+  Type.Composite(
+    [
+      geolocationMinimal,
+      Type.Object(
+        {
+          helperLabel: customType.Nullable(Type.String()),
+          createdAt: customType.DateTime(),
+          updatedAt: customType.DateTime(),
+          item: itemSchemaRef,
+        },
+        { additionalProperties: false },
+      ),
+    ],
+    { additionalProperties: false },
+  ),
+);
+
+const geolocationPacked = Type.Composite([
+  geolocation,
+  Type.Object(
+    {
+      item: packedItemSchemaRef,
+    },
+    { additionalProperties: false },
+  ),
+]);
 
 export const getByItem = {
-  params: idParam,
+  params: entityIdSchemaRef,
   response: {
-    200: geolocationPacked,
+    [StatusCodes.OK]: customType.Nullable(geolocationPacked),
   },
 };
 
-const getItemsInBoxProps = {
-  type: 'object',
-  properties: {
-    parentItemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    lat1: { type: 'number' },
-    lat2: { type: 'number' },
-    lng1: { type: 'number' },
-    lng2: { type: 'number' },
-    keywords: { type: 'array', items: { type: 'string' } },
+const getItemsInBoxProps = Type.Object(
+  {
+    parentItemId: customType.UUID(),
+    lat1: Type.Number(),
+    lat2: Type.Number(),
+    lng1: Type.Number(),
+    lng2: Type.Number(),
+    keywords: Type.Array(Type.String()),
   },
-};
+  { additionalProperties: false },
+);
 
 export const getItemsInBox = {
-  query: {
-    anyOf: [
+  // Querystring is at least `parentItemId` or `lat1`, `lat2`, `lng1`, `lng2`. We can still use other properties since we respect one of the requirement.
+  // `keywords` are optional
+  querystring: Type.Union([
+    Type.Composite(
+      [
+        Type.Pick(getItemsInBoxProps, ['parentItemId']), // We pick `parentItemId` to make it required
+        Type.Partial(Type.Omit(getItemsInBoxProps, ['parentItemId'])), // Other properties are optional
+      ],
       {
-        ...getItemsInBoxProps,
-        required: ['parentItemId'],
+        additionalProperties: false,
       },
+    ),
+    Type.Composite(
+      [
+        Type.Pick(getItemsInBoxProps, ['lat1', 'lat2', 'lng1', 'lng2']), // We pick `lat1`, `lat2`, `lng1`, `lng2` to make them required
+        Type.Partial(Type.Omit(getItemsInBoxProps, ['lat1', 'lat2', 'lng1', 'lng2'])), // Other properties are optional
+      ],
       {
-        ...getItemsInBoxProps,
-        required: ['lat1', 'lat2', 'lng1', 'lng2'],
+        additionalProperties: false,
       },
-    ],
-  },
+    ),
+  ]),
   response: {
-    200: {
-      type: 'array',
-      items: geolocationPacked,
-    },
+    [StatusCodes.OK]: Type.Array(geolocationPacked),
   },
-};
+} as const satisfies FastifySchema;
 
 export const putGeolocation = {
-  params: idParam,
-  body: {
-    type: 'object',
-    properties: {
-      geolocation: {
-        type: 'object',
-        properties: {
-          lat: { type: 'number' },
-          lng: { type: 'number' },
-          addressLabel: { type: 'string' },
-          helperLabel: { type: 'string' },
+  params: entityIdSchemaRef,
+  body: Type.Object(
+    {
+      geolocation: Type.Object(
+        {
+          lat: Type.Number(),
+          lng: Type.Number(),
+          addressLabel: Type.Optional(Type.String()),
+          helperLabel: Type.Optional(Type.String()),
         },
-        required: ['lat', 'lng'],
-      },
+        { additionalProperties: false },
+      ),
     },
-    required: ['geolocation'],
-  },
-};
+    { additionalProperties: false },
+  ),
+} as const satisfies FastifySchema;
 
 export const deleteGeolocation = {
-  params: idParam,
-};
+  params: entityIdSchemaRef,
+} as const satisfies FastifySchema;
 
 export const geolocationReverse = {
-  querystring: {
-    type: 'object',
-    properties: {
-      lat: { type: 'number' },
-      lng: { type: 'number' },
-      lang: { type: 'string' },
+  querystring: Type.Object(
+    {
+      lat: Type.Number(),
+      lng: Type.Number(),
+      lang: Type.Optional(Type.String()),
     },
-    required: ['lat', 'lng'],
-  },
-
+    { additionalProperties: false },
+  ),
   response: {
-    200: {
-      type: 'object',
-      properties: {
-        addressLabel: { type: 'string' },
-        country: { type: 'string' },
+    [StatusCodes.OK]: Type.Object(
+      {
+        addressLabel: Type.String(),
+        country: Type.String(),
       },
-    },
+      { additionalProperties: false },
+    ),
   },
-};
+} as const satisfies FastifySchema;
 
 export const geolocationSearch = {
-  querystring: {
-    type: 'object',
-    properties: {
-      query: { type: 'string' },
-      lang: { type: 'string' },
+  querystring: Type.Object(
+    {
+      query: Type.String(),
+      lang: Type.Optional(Type.String()),
     },
-    required: ['query'],
-  },
-
+    { additionalProperties: false },
+  ),
   response: {
-    200: {
-      type: 'array',
-      items: geolocation,
-    },
+    [StatusCodes.OK]: Type.Array(geolocationMinimal),
   },
-};
+} as const satisfies FastifySchema;

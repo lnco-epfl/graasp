@@ -1,95 +1,63 @@
-export default {
-  $id: 'https://graasp.org/itemlikes/',
-  definitions: {
-    itemLike: {
-      type: 'object',
-      properties: {
-        id: {
-          $ref: 'https://graasp.org/#/definitions/uuid',
-        },
-        item: {
-          $ref: 'https://graasp.org/items/#/definitions/item',
-        },
-        // warning: do not include for privacy for now
-        // member: {
-        //   $ref: 'https://graasp.org/#/definitions/uuid',
-        // },
-        createdAt: {},
-      },
-      additionalProperties: false,
-    },
-    packedIemLike: {
-      type: 'object',
-      properties: {
-        id: {
-          $ref: 'https://graasp.org/#/definitions/uuid',
-        },
-        item: {
-          $ref: 'https://graasp.org/items/#/definitions/packedItem',
-        },
-        // warning: do not include for privacy for now
-        // member: {
-        //   $ref: 'https://graasp.org/#/definitions/uuid',
-        // },
-        createdAt: {},
-      },
-      additionalProperties: false,
-    },
-    likeCount: {
-      type: 'number',
-      additionalProperties: false,
-    },
-  },
-};
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
 
+import { customType, registerSchemaAsRef } from '../../../../plugins/typebox';
+import { itemIdSchemaRef, itemSchemaRef, packedItemSchemaRef } from '../../schema';
+
+export const itemLikeSchemaRef = registerSchemaAsRef(
+  'itemLike',
+  'Item Like',
+  Type.Object(
+    {
+      // Object Definition
+      id: customType.UUID(),
+      item: itemSchemaRef,
+    },
+    {
+      // Schema Options
+      additionalProperties: false,
+    },
+  ),
+);
+
+export const packedItemLikeSchemaRef = registerSchemaAsRef(
+  'packedItemLike',
+  'Packed Item Like',
+  Type.Object(
+    {
+      // Object Definition
+      id: Type.Optional(customType.UUID()),
+      item: packedItemSchemaRef,
+    },
+    {
+      // Schema Options
+      additionalProperties: false,
+    },
+  ),
+);
 export const getLikesForMember = {
-  querystring: {
-    type: 'object',
-    properties: {
-      memberId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-    additionalProperties: false,
-  },
   response: {
-    200: {
-      type: 'array',
-      items: {
-        $ref: 'https://graasp.org/itemlikes/#/definitions/packedIemLike',
-      },
-    },
+    [StatusCodes.OK]: Type.Array(packedItemLikeSchemaRef),
   },
 };
 
 export const getLikesForItem = {
-  params: {
-    itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-  },
+  params: itemIdSchemaRef,
   response: {
-    200: {
-      type: 'array',
-      items: {
-        $ref: 'https://graasp.org/itemlikes/#/definitions/itemLike',
-      },
-    },
+    [StatusCodes.OK]: Type.Array(itemLikeSchemaRef),
   },
 };
 
 export const create = {
-  params: {
-    itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-  },
+  params: itemIdSchemaRef,
   response: {
-    200: {
-      $ref: 'https://graasp.org/itemlikes/#/definitions/itemLike',
-    },
+    [StatusCodes.OK]: itemLikeSchemaRef,
   },
 };
 
 export const deleteOne = {
-  params: {
-    itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-  },
+  params: itemIdSchemaRef,
   response: {
-    200: { $ref: 'https://graasp.org/#/definitions/uuid' },
+    [StatusCodes.OK]: customType.UUID(),
   },
 };

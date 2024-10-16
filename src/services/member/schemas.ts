@@ -1,15 +1,13 @@
+import { Type } from '@sinclair/typebox';
 import { StatusCodes } from 'http-status-codes';
 
 import { FastifySchema } from 'fastify';
 
-import {
-  MAX_TARGETS_FOR_READ_REQUEST,
-  MAX_USERNAME_LENGTH,
-  MIN_USERNAME_LENGTH,
-} from '@graasp/sdk';
+import { AccountType, MAX_TARGETS_FOR_READ_REQUEST } from '@graasp/sdk';
 
+import { customType, registerSchemaAsRef } from '../../plugins/typebox';
 import { error } from '../../schemas/fluent-schema';
-import { NAME_REGEX, UUID_REGEX } from '../../schemas/global';
+import { UUID_REGEX, entityIdSchemaRef, errorSchemaRef } from '../../schemas/global';
 import { FILE_METADATA_DEFAULT_PAGE_SIZE, FILE_METADATA_MIN_PAGE } from './constants';
 
 /**
@@ -32,276 +30,258 @@ import { FILE_METADATA_DEFAULT_PAGE_SIZE, FILE_METADATA_MIN_PAGE } from './const
  */
 export const EMAIL_REGEX = '^[.-\\w]+@[.-\\w]+.[-\\w]{2,63}$';
 
-export default {
-  $id: 'https://graasp.org/members/',
-  definitions: {
-    member: {
-      type: 'object',
-      nullable: true,
-      properties: {
-        id: { type: 'string' },
-        name: { type: 'string' },
-        email: { type: 'string' },
-      },
-      additionalProperties: false,
-    },
-
-    currentMember: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        name: { type: 'string' },
-        email: { type: 'string' },
-        type: { type: 'string' },
-        createdAt: { type: 'string' },
-        updatedAt: { type: 'string' },
-        lastAuthenticatedAt: { type: 'string' },
-        isValidated: { type: 'boolean' },
-        userAgreementsDate: { type: 'string' },
-        enableSaveActions: { type: 'boolean' },
-        extra: { type: 'object', additionalProperties: true },
-      },
-      additionalProperties: false,
-    },
-
-    // member properties that can be modified with user input
-    partialMember: {
-      type: 'object',
-      properties: {
-        name: {
-          type: 'string',
-          minLength: MIN_USERNAME_LENGTH,
-          maxLength: MAX_USERNAME_LENGTH,
-          pattern: NAME_REGEX,
-        },
-        extra: { type: 'object', additionalProperties: true },
-        enableSaveActions: { type: 'boolean' },
-      },
-      additionalProperties: false,
-    },
-
-    // partialMember requiring one property to be defined
-    partialMemberRequireOne: {
-      allOf: [
-        { $ref: '#/definitions/partialMember' },
-        {
-          anyOf: [
-            { type: 'object', required: ['name'] },
-            { type: 'object', required: ['extra'] },
-            { type: 'object', required: ['enableSaveActions'] },
-          ],
-        },
-      ],
-    },
+const memberSchema = Type.Object(
+  {
+    // Object definition
+    id: customType.UUID(),
+    name: customType.Username(),
+    email: Type.String({ format: 'email' }),
   },
-};
-
-// schema for getting current member
-export const getCurrent: FastifySchema = {
-  response: {
-    200: { $ref: 'https://graasp.org/members/#/definitions/currentMember' },
-  },
-};
-
-// schema for getting current member's storage limits
-export const getStorage: FastifySchema = {
-  response: {
-    200: {
-      type: 'object',
-      properties: {
-        current: {
-          type: 'number',
-        },
-        maximum: {
-          type: 'number',
-        },
-      },
-      additionalProperties: false,
-      require: ['current', 'maximum'],
-    },
-  },
-};
-
-export const getStorageFiles: FastifySchema = {
-  querystring: {
-    type: 'object',
-    properties: {
-      page: { type: 'number', default: FILE_METADATA_MIN_PAGE },
-      pageSize: { type: 'number', default: FILE_METADATA_DEFAULT_PAGE_SIZE },
-    },
-  },
-  response: {
-    200: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'array',
-          items: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              id: { type: 'string' },
-              name: { type: 'string' },
-              size: { type: 'number' },
-              updatedAt: { type: 'string' },
-              path: { type: 'string' },
-              parent: {
-                type: 'object',
-                additionalProperties: false,
-                properties: {
-                  id: { type: 'string' },
-                  name: { type: 'string' },
-                },
-              },
-            },
-          },
-        },
-        totalCount: { type: 'number' },
-        pagination: {
-          type: 'object',
-          properties: {
-            page: { type: 'number' },
-            pageSize: { type: 'number' },
-          },
-        },
-      },
-    },
-    '4xx': error,
-  },
-};
-
-// schema for getting a member
-export const getOne: FastifySchema = {
-  params: { $ref: 'https://graasp.org/#/definitions/idParam' },
-  response: {
-    200: { $ref: 'https://graasp.org/members/#/definitions/member' },
-  },
-};
-
-// schema for getting >1 members
-export const getMany: FastifySchema = {
-  querystring: {
-    allOf: [
-      { $ref: 'https://graasp.org/#/definitions/idsQuery' },
-      {
-        type: 'object',
-        properties: { id: { type: 'array', maxItems: MAX_TARGETS_FOR_READ_REQUEST } },
-      },
-    ],
-  },
-  response: {
-    200: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'object',
-          patternProperties: {
-            [UUID_REGEX]: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                name: { type: 'string' },
-                email: { type: 'string' },
-              },
-            },
-          },
-        },
-        errors: {
-          type: 'array',
-          items: {
-            $ref: 'https://graasp.org/#/definitions/error',
-          },
-        },
-      },
-    },
-  },
-};
-
-// schema for getting members by
-export const getManyBy: FastifySchema = {
-  querystring: {
-    type: 'object',
-    properties: {
-      email: {
-        type: 'array',
-        items: { type: 'string', format: 'email' },
-      },
-      additionalProperties: false,
-    },
-  },
-  response: {
-    200: {
-      type: 'object',
-      // additionalProperties:true,
-      properties: {
-        data: {
-          type: 'object',
-          patternProperties: {
-            [EMAIL_REGEX]: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                name: { type: 'string' },
-                email: { type: 'string' },
-              },
-            },
-          },
-        },
-        errors: {
-          type: 'array',
-          items: {
-            $ref: 'https://graasp.org/#/definitions/error',
-          },
-        },
-      },
-    },
-  },
-};
-
-// schema for updating own member
-export const updateOne: FastifySchema = {
-  params: { $ref: 'https://graasp.org/#/definitions/idParam' },
-  body: { $ref: 'https://graasp.org/members/#/definitions/partialMemberRequireOne' },
-  response: {
-    [StatusCodes.OK]: { $ref: 'https://graasp.org/members/#/definitions/currentMember' },
-    [StatusCodes.FORBIDDEN]: error,
-  },
-};
-
-// schema for deleting a member
-export const deleteOne: FastifySchema = {
-  params: { $ref: 'https://graasp.org/#/definitions/idParam' },
-  response: {
-    [StatusCodes.NO_CONTENT]: {},
-  },
-};
-
-// schema for deleting the current member
-export const deleteCurrent: FastifySchema = {
-  response: {
-    [StatusCodes.NO_CONTENT]: {},
-  },
-};
-
-export const postChangeEmail: FastifySchema = {
-  body: {
-    type: 'object',
-    properties: {
-      email: { type: 'string', format: 'email' },
-    },
+  {
+    // Schema options
     additionalProperties: false,
   },
-  response: {
-    [StatusCodes.NO_CONTENT]: {},
-    [StatusCodes.CONFLICT]: error,
-    [StatusCodes.UNAUTHORIZED]: error,
-  },
-};
+);
 
-export const patchChangeEmail: FastifySchema = {
+export const memberSchemaRef = registerSchemaAsRef('member', 'Member', memberSchema);
+
+export const nullableMemberSchemaRef = registerSchemaAsRef(
+  'nullableMember',
+  'Nullable Member',
+  customType.Nullable(memberSchema),
+);
+
+const currentMemberSchema = Type.Object(
+  {
+    // Object definition
+    id: customType.UUID(),
+    name: customType.Username(),
+    email: Type.Optional(Type.String({ format: 'email' })),
+    type: Type.Enum(AccountType),
+    createdAt: customType.DateTime(),
+    updatedAt: customType.DateTime(),
+    lastAuthenticatedAt: customType.DateTime(),
+    isValidated: Type.Boolean(),
+    userAgreementsDate: customType.DateTime(),
+    enableSaveActions: Type.Boolean(),
+    extra: Type.Object({}, { additionalProperties: true }),
+  },
+  {
+    // Schema options
+    additionalProperties: false,
+  },
+);
+
+export const currentMemberSchemaRef = registerSchemaAsRef(
+  'currentMember',
+  'Current Member',
+  currentMemberSchema,
+);
+
+export const nullableCurrentMemberSchemaRef = registerSchemaAsRef(
+  'nullableCurrentMember',
+  'Nullable Current Member',
+  customType.Nullable(currentMemberSchema),
+);
+
+export const updateMemberRequiredOneSchemaRef = registerSchemaAsRef(
+  'updateMemberRequiredOne',
+  'Update Member Required One',
+  Type.Object(
+    {
+      // Object definition
+      name: Type.Optional(customType.Username()),
+      enableSaveActions: Type.Optional(Type.Boolean()),
+      extra: Type.Optional(Type.Object({}, { additionalProperties: true })),
+    },
+    { additionalProperties: false, minProperties: 1 },
+  ),
+);
+
+// schema for getting current member
+export const getCurrent = {
+  response: {
+    [StatusCodes.OK]: nullableCurrentMemberSchemaRef,
+  },
+} as const satisfies FastifySchema;
+
+// schema for getting current member's storage limits
+export const getStorage = {
+  response: {
+    [StatusCodes.OK]: Type.Object(
+      {
+        current: Type.Integer(),
+        maximum: Type.Integer(),
+      },
+      {
+        additionalProperties: false,
+      },
+    ),
+  },
+} as const satisfies FastifySchema;
+
+export const getStorageFiles = {
+  querystring: Type.Object(
+    {
+      page: Type.Integer({ minimum: FILE_METADATA_MIN_PAGE, default: FILE_METADATA_MIN_PAGE }),
+      pageSize: Type.Integer({ default: FILE_METADATA_DEFAULT_PAGE_SIZE }),
+    },
+    { additionalProperties: false },
+  ),
+  response: {
+    [StatusCodes.OK]: Type.Object(
+      {
+        data: Type.Array(
+          Type.Object(
+            {
+              id: customType.UUID(),
+              name: Type.String(),
+              size: Type.Integer(),
+              updatedAt: customType.DateTime(),
+              path: Type.String(),
+              parent: Type.Optional(
+                Type.Object(
+                  {
+                    id: customType.UUID(),
+                    name: Type.String(),
+                  },
+                  {
+                    additionalProperties: false,
+                  },
+                ),
+              ),
+            },
+            {
+              additionalProperties: false,
+            },
+          ),
+        ),
+        totalCount: Type.Integer(),
+        pagination: customType.Pagination({
+          page: {
+            minimum: FILE_METADATA_MIN_PAGE,
+            default: FILE_METADATA_MIN_PAGE,
+          },
+          pageSize: { default: FILE_METADATA_DEFAULT_PAGE_SIZE },
+        }),
+      },
+      { additionalProperties: false },
+    ),
+    '4xx': error,
+  },
+} as const satisfies FastifySchema;
+
+// schema for getting a member
+export const getOne = {
+  params: entityIdSchemaRef,
+  response: {
+    [StatusCodes.OK]: memberSchemaRef,
+  },
+} as const satisfies FastifySchema;
+
+// schema for getting >1 members
+export const getMany = {
+  querystring: Type.Object(
+    {
+      id: Type.Array(customType.UUID(), {
+        uniqueItems: true,
+        minItems: 1,
+        maxItems: MAX_TARGETS_FOR_READ_REQUEST,
+      }),
+    },
+    { additionalProperties: false },
+  ),
+
+  response: {
+    [StatusCodes.OK]: Type.Object({
+      data: Type.Record(
+        Type.String({ pattern: UUID_REGEX }),
+        Type.Object({
+          id: customType.UUID(),
+          name: customType.Username(),
+          email: Type.String(),
+        }),
+      ),
+      errors: Type.Array(errorSchemaRef),
+    }),
+  },
+} as const satisfies FastifySchema;
+
+// schema for getting members by
+export const getManyBy = {
+  querystring: Type.Object(
+    { email: Type.Array(Type.String({ format: 'email' }), { uniqueItems: true, minItems: 1 }) },
+    { additionalProperties: false },
+  ),
+  response: {
+    [StatusCodes.OK]: Type.Object(
+      {
+        data: Type.Record(
+          Type.String({ pattern: EMAIL_REGEX }),
+          Type.Object(
+            {
+              id: customType.UUID(),
+              name: customType.Username(),
+              email: Type.String({ format: 'email' }),
+            },
+            { additionalProperties: false },
+          ),
+        ),
+        errors: Type.Array(errorSchemaRef),
+      },
+      { additionalProperties: false },
+    ),
+  },
+} as const satisfies FastifySchema;
+
+// schema for updating a member
+export const updateOne = {
+  deprecated: true,
+  params: entityIdSchemaRef,
+  body: updateMemberRequiredOneSchemaRef,
+  response: {
+    [StatusCodes.OK]: currentMemberSchemaRef,
+    [StatusCodes.FORBIDDEN]: error,
+  },
+} as const satisfies FastifySchema;
+
+// schema for updating the current member
+export const updateCurrent = {
+  body: updateMemberRequiredOneSchemaRef,
+  response: {
+    [StatusCodes.OK]: currentMemberSchemaRef,
+    [StatusCodes.FORBIDDEN]: error,
+  },
+} as const satisfies FastifySchema;
+
+// schema for deleting a member
+export const deleteOne = {
+  params: entityIdSchemaRef,
+  response: {
+    [StatusCodes.NO_CONTENT]: {},
+  },
+} as const satisfies FastifySchema;
+
+// schema for deleting the current member
+export const deleteCurrent = {
+  response: {
+    [StatusCodes.NO_CONTENT]: Type.Null(),
+  },
+} as const satisfies FastifySchema;
+
+export const postChangeEmail = {
+  body: Type.Object({ email: Type.String({ format: 'email' }) }, { additionalProperties: false }),
   response: {
     [StatusCodes.NO_CONTENT]: {},
     [StatusCodes.CONFLICT]: error,
     [StatusCodes.UNAUTHORIZED]: error,
   },
-};
+} as const satisfies FastifySchema;
+
+export const patchChangeEmail = {
+  response: {
+    [StatusCodes.NO_CONTENT]: {},
+    [StatusCodes.CONFLICT]: error,
+    [StatusCodes.UNAUTHORIZED]: error,
+  },
+} as const satisfies FastifySchema;

@@ -1,40 +1,37 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 import { resolveDependency } from '../../../../di/utils';
-import { notUndefined } from '../../../../utils/assertions';
+import { asDefined } from '../../../../utils/assertions';
 import { buildRepositories } from '../../../../utils/repositories';
 import { isAuthenticated } from '../../../auth/plugins/passport';
 import { matchOne } from '../../../authorization';
 import { assertIsMember } from '../../../member/entities/member';
 import { memberAccountRole } from '../../../member/strategies/memberAccountRole';
 import { validatedMemberAccountRole } from '../../../member/strategies/validatedMemberAccountRole';
-import common, { create, deleteOne, getFavorite } from './schemas';
+import { create, deleteOne, getFavorite } from './schemas';
 import { FavoriteService } from './services/favorite';
 
-const plugin: FastifyPluginAsync = async (fastify) => {
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { db } = fastify;
   const favoriteService = resolveDependency(FavoriteService);
-
-  // schemas
-  fastify.addSchema(common);
 
   // get favorites
   fastify.get(
     '/favorite',
     { schema: getFavorite, preHandler: [isAuthenticated, matchOne(memberAccountRole)] },
     async ({ user }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return favoriteService.getOwn(member, buildRepositories());
     },
   );
 
   // insert favorite
-  fastify.post<{ Params: { itemId: string } }>(
+  fastify.post(
     '/favorite/:itemId',
     { schema: create, preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)] },
     async ({ user, params: { itemId } }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return db.transaction(async (manager) => {
         return favoriteService.post(member, buildRepositories(manager), itemId);
@@ -43,11 +40,11 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   // delete favorite
-  fastify.delete<{ Params: { itemId: string } }>(
+  fastify.delete(
     '/favorite/:itemId',
     { schema: deleteOne, preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)] },
     async ({ user, params: { itemId } }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return db.transaction(async (manager) => {
         return favoriteService.delete(member, buildRepositories(manager), itemId);

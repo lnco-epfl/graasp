@@ -1,29 +1,27 @@
 import { StatusCodes } from 'http-status-codes';
 
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import { notUndefined } from '../../../../utils/assertions';
+import { asDefined } from '../../../../utils/assertions';
 import { buildRepositories } from '../../../../utils/repositories';
 import { isAuthenticated, optionalIsAuthenticated } from '../../../auth/plugins/passport';
 import { matchOne } from '../../../authorization';
 import { assertIsMember } from '../../entities/member';
 import { validatedMemberAccountRole } from '../../strategies/validatedMemberAccountRole';
-import { MemberProfile } from './entities/profile';
 import { MemberProfileNotFound } from './errors';
 import { createProfile, getOwnProfile, getProfileForMember, updateMemberProfile } from './schemas';
 import { MemberProfileService } from './service';
-import { IMemberProfile } from './types';
 
-const plugin: FastifyPluginAsync = async (fastify) => {
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { db } = fastify;
 
   const memberProfileService = new MemberProfileService();
 
-  fastify.get<{ Params: { memberId: string } }>(
+  fastify.get(
     '/own',
     { schema: getOwnProfile, preHandler: isAuthenticated },
     async ({ user }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       const profile = await memberProfileService.getOwn(member, buildRepositories());
       if (!profile) {
@@ -34,7 +32,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.get<{ Params: { memberId: string } }>(
+  fastify.get(
     '/:memberId',
     { schema: getProfileForMember, preHandler: optionalIsAuthenticated },
     async ({ params: { memberId } }, reply) => {
@@ -47,7 +45,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.post<{ Body: IMemberProfile }>(
+  fastify.post(
     '/',
     {
       schema: createProfile,
@@ -55,7 +53,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
     async (request, reply) => {
       const { user, body: data } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);
@@ -67,15 +65,15 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.patch<{ Body: Partial<IMemberProfile> }>(
+  fastify.patch(
     '/',
     {
       schema: updateMemberProfile,
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
-    async ({ user, body }): Promise<MemberProfile> => {
+    async ({ user, body }) => {
       return db.transaction(async (manager) => {
-        const member = notUndefined(user?.account);
+        const member = asDefined(user?.account);
         assertIsMember(member);
         const profile = await memberProfileService.patch(member, buildRepositories(manager), body);
         if (!profile) {

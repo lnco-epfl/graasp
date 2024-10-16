@@ -14,19 +14,12 @@ import {
 import graaspChatbox from '../chat';
 import graaspItemLogin from '../itemLogin';
 import itemController from './controller';
-import itemSchema, {
-  baseItemCreate,
-  create,
-  folderExtra,
-  folderItemCreate,
-  shortcutItemCreate,
-  updateOne,
-} from './fluent-schema';
 import actionItemPlugin from './plugins/action';
 import graaspApps from './plugins/app';
 import graaspDocumentItem from './plugins/document';
 import graaspEmbeddedLinkItem from './plugins/embeddedLink';
 import { PREFIX_EMBEDDED_LINK } from './plugins/embeddedLink/service';
+import graaspEnrollPlugin from './plugins/enroll';
 import graaspFileItem from './plugins/file';
 import itemGeolocationPlugin from './plugins/geolocation/index';
 import graaspZipPlugin from './plugins/importExport';
@@ -43,11 +36,17 @@ import graaspRecycledItemData from './plugins/recycled';
 import ShortLinkService from './plugins/shortLink';
 import { SHORT_LINKS_ROUTE_PREFIX } from './plugins/shortLink/service';
 import thumbnailsPlugin from './plugins/thumbnail';
+import {
+  baseItemCreate,
+  create,
+  folderExtra,
+  folderItemCreate,
+  shortcutItemCreate,
+  updateOne,
+} from './schema';
 import { itemWsHooks } from './ws/hooks';
 
 const plugin: FastifyPluginAsync = async (fastify) => {
-  fastify.addSchema(itemSchema);
-
   fastify.decorate('file', {
     s3Config: S3_FILE_ITEM_PLUGIN_OPTIONS,
     localConfig: FILE_ITEM_PLUGIN_OPTIONS,
@@ -114,6 +113,8 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         await fastify.register(graaspDocumentItem);
 
         fastify.register(graaspInvitationsPlugin);
+
+        fastify.register(graaspEnrollPlugin);
 
         fastify.register(graaspItemFlags);
 

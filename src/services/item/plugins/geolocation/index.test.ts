@@ -1,31 +1,63 @@
 import { StatusCodes } from 'http-status-codes';
 import nock from 'nock';
-import { v4 } from 'uuid';
+import { v4 as uuid } from 'uuid';
 
 import { FastifyInstance } from 'fastify';
 
 import { HttpMethod } from '@graasp/sdk';
 
-import build, { clearDatabase } from '../../../../../test/app';
+import build, {
+  clearDatabase,
+  mockAuthenticate,
+  unmockAuthenticate,
+} from '../../../../../test/app';
 import { AppDataSource } from '../../../../plugins/datasource';
 import { GEOLOCATION_API_HOST, ITEMS_ROUTE_PREFIX } from '../../../../utils/config';
 import { MemberCannotAccess } from '../../../../utils/errors';
 import { saveMember } from '../../../member/test/fixtures/members';
 import { ItemWrapper, PackedItem } from '../../ItemWrapper';
-import { ItemTestUtils, expectPackedItem } from '../../test/fixtures/items';
-import { ItemGeolocation, PackedItemGeolocation } from './ItemGeolocation';
-import { expectPackedItemGeolocations } from './test/utils';
+import { ItemTestUtils, expectPackedItem, expectThumbnails } from '../../test/fixtures/items';
+import { ItemGeolocation } from './ItemGeolocation';
+import { expectPackedItemGeolocations, saveGeolocation } from './test/utils';
 
 const testUtils = new ItemTestUtils();
 
 const repository = AppDataSource.getRepository(ItemGeolocation);
 
-export const saveGeolocation = async (
-  args: Partial<PackedItemGeolocation> & Pick<PackedItemGeolocation, 'item'>,
-) => {
-  const geoloc = await repository.save(args);
-  return { geoloc, packed: { ...geoloc, item: args.item } };
-};
+// Mock S3 libraries
+const deleteObjectMock = jest.fn(async () => console.debug('deleteObjectMock'));
+const copyObjectMock = jest.fn(async () => console.debug('copyObjectMock'));
+const headObjectMock = jest.fn(async () => ({ ContentLength: 10 }));
+const uploadDoneMock = jest.fn(async () => console.debug('aws s3 storage upload'));
+const MOCK_SIGNED_URL = 'signed-url';
+
+jest.mock('@aws-sdk/client-s3', () => {
+  return {
+    GetObjectCommand: jest.fn(),
+    S3: function () {
+      return {
+        copyObject: copyObjectMock,
+        deleteObject: deleteObjectMock,
+        headObject: headObjectMock,
+      };
+    },
+  };
+});
+jest.mock('@aws-sdk/s3-request-presigner', () => {
+  const getSignedUrl = jest.fn(async () => MOCK_SIGNED_URL);
+  return {
+    getSignedUrl,
+  };
+});
+jest.mock('@aws-sdk/lib-storage', () => {
+  return {
+    Upload: jest.fn().mockImplementation(() => {
+      return {
+        done: uploadDoneMock,
+      };
+    }),
+  };
+});
 
 describe('Item Geolocation', () => {
   let app: FastifyInstance;
@@ -33,19 +65,26 @@ describe('Item Geolocation', () => {
   let item;
   let packedItem: PackedItem | null;
 
+  beforeAll(async () => {
+    ({ app } = await build({ member: null }));
+  });
+
+  afterAll(async () => {
+    await clearDatabase(app.db);
+    app.close();
+  });
+
   afterEach(async () => {
     jest.clearAllMocks();
-    await clearDatabase(app.db);
     actor = null;
     packedItem = null;
+    unmockAuthenticate();
     item = null;
-    app.close();
   });
 
   describe('GET /:id/geolocation', () => {
     describe('Signed out', () => {
       it('Get geolocation for public item', async () => {
-        ({ app } = await build({ member: null }));
         const member = await saveMember();
         ({ packedItem } = await testUtils.savePublicItem({ member }));
         const geoloc = await repository.save({ item: packedItem, lat: 1, lng: 2, country: 'de' });
@@ -60,7 +99,6 @@ describe('Item Geolocation', () => {
       });
 
       it('Throws for non public item', async () => {
-        ({ app } = await build({ member: null }));
         const member = await saveMember();
         ({ item } = await testUtils.saveItemAndMembership({ member }));
         await repository.save({ item, lat: 1, lng: 2, country: 'de' });
@@ -75,7 +113,8 @@ describe('Item Geolocation', () => {
     });
     describe('Signed in', () => {
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        actor = await saveMember();
+        mockAuthenticate(actor);
         ({ packedItem, item } = await testUtils.saveItemAndMembership({ member: actor }));
       });
 
@@ -93,6 +132,33 @@ describe('Item Geolocation', () => {
           country: geoloc.country,
         });
         expectPackedItem(result.item, packedItem!);
+      });
+
+      it('Get geolocation with thumbnails', async () => {
+        const { item: itemWithThumbnail, packedItem: packedWithThumbnail } =
+          await testUtils.saveItemAndMembership({
+            member: actor,
+            item: { settings: { hasThumbnail: true } },
+          });
+        const geoloc = await repository.save({
+          item: itemWithThumbnail,
+          lat: 1,
+          lng: 2,
+          country: 'de',
+        });
+        const res = await app.inject({
+          method: HttpMethod.Get,
+          url: `${ITEMS_ROUTE_PREFIX}/${itemWithThumbnail.id}/geolocation`,
+        });
+        expect(res.statusCode).toBe(StatusCodes.OK);
+        const result = res.json();
+        expect(result).toMatchObject({
+          lat: geoloc.lat,
+          lng: geoloc.lng,
+          country: geoloc.country,
+        });
+        expectPackedItem(result.item, packedWithThumbnail!);
+        expectThumbnails(result.item, MOCK_SIGNED_URL, true);
       });
 
       it('Get geolocation without country', async () => {
@@ -132,7 +198,6 @@ describe('Item Geolocation', () => {
   describe('GET /geolocation', () => {
     describe('Signed out', () => {
       it('Does not get public item geolocations on root', async () => {
-        ({ app } = await build({ member: null }));
         const member = await saveMember();
         const { packedItem } = await testUtils.savePublicItem({ member });
         await saveGeolocation({
@@ -166,7 +231,6 @@ describe('Item Geolocation', () => {
       });
 
       it('Get public item geolocations within public item', async () => {
-        ({ app } = await build({ member: null }));
         const member = await saveMember();
         const { item: parentItem, publicTag } = await testUtils.savePublicItem({ member });
 
@@ -204,7 +268,8 @@ describe('Item Geolocation', () => {
 
     describe('Signed in', () => {
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        actor = await saveMember();
+        mockAuthenticate(actor);
       });
 
       it('throws if missing one parameter', async () => {
@@ -235,21 +300,30 @@ describe('Item Geolocation', () => {
       });
 
       it('Get item geolocations', async () => {
-        const { packedItem: item1 } = await testUtils.saveItemAndMembership({ member: actor });
+        const { packedItem: item1 } = await testUtils.saveItemAndMembership({
+          member: actor,
+          item: { settings: { hasThumbnail: true } },
+        });
         const { packed: geoloc1 } = await saveGeolocation({
           item: item1,
           lat: 1,
           lng: 2,
           country: 'de',
         });
-        const { packedItem: item2 } = await testUtils.saveItemAndMembership({ member: actor });
+        const { packedItem: item2 } = await testUtils.saveItemAndMembership({
+          member: actor,
+          item: { settings: { hasThumbnail: true } },
+        });
         const { packed: geoloc2 } = await saveGeolocation({
           item: item2,
           lat: 1,
           lng: 2,
           country: 'de',
         });
-        const { packedItem: item3 } = await testUtils.saveItemAndMembership({ member: actor });
+        const { packedItem: item3 } = await testUtils.saveItemAndMembership({
+          member: actor,
+          item: { settings: { hasThumbnail: true } },
+        });
         const { packed: geoloc3 } = await saveGeolocation({
           item: item3,
           lat: 1,
@@ -262,8 +336,10 @@ describe('Item Geolocation', () => {
           url: `${ITEMS_ROUTE_PREFIX}/geolocation?lat1=1&lat2=1&lng1=1&lng2=2`,
         });
         expect(res.statusCode).toBe(StatusCodes.OK);
-        expect(res.json()).toHaveLength(3);
-        expectPackedItemGeolocations(res.json(), [geoloc1, geoloc2, geoloc3]);
+        const results = res.json();
+        expect(results).toHaveLength(3);
+        expectPackedItemGeolocations(results, [geoloc1, geoloc2, geoloc3]);
+        expectThumbnails(results[0].item, MOCK_SIGNED_URL, true);
       });
 
       it('Get item geolocations with search strings', async () => {
@@ -367,10 +443,9 @@ describe('Item Geolocation', () => {
   describe('PUT /:id/geolocation', () => {
     describe('Signed out', () => {
       it('Throw', async () => {
-        ({ app } = await build({ member: null }));
         const res = await app.inject({
           method: HttpMethod.Put,
-          url: `${ITEMS_ROUTE_PREFIX}/${v4()}/geolocation`,
+          url: `${ITEMS_ROUTE_PREFIX}/${uuid()}/geolocation`,
           body: {
             geolocation: {
               lat: 1,
@@ -384,7 +459,8 @@ describe('Item Geolocation', () => {
 
     describe('Signed in', () => {
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        actor = await saveMember();
+        mockAuthenticate(actor);
       });
       it('throw for invalid id', async () => {
         const res = await app.inject({
@@ -396,14 +472,14 @@ describe('Item Geolocation', () => {
       it('throw for no geolocation', async () => {
         await app.inject({
           method: HttpMethod.Put,
-          url: `${ITEMS_ROUTE_PREFIX}/${v4()}/geolocation`,
+          url: `${ITEMS_ROUTE_PREFIX}/${uuid()}/geolocation`,
           body: {},
         });
       });
       it('throw for invalid lat or lng', async () => {
         const res = await app.inject({
           method: HttpMethod.Put,
-          url: `${ITEMS_ROUTE_PREFIX}/${v4()}/geolocation`,
+          url: `${ITEMS_ROUTE_PREFIX}/${uuid()}/geolocation`,
           body: {
             geolocation: {
               lat: 1,
@@ -414,7 +490,7 @@ describe('Item Geolocation', () => {
         expect(res.statusCode).toBe(StatusCodes.BAD_REQUEST);
         const res1 = await app.inject({
           method: HttpMethod.Put,
-          url: `${ITEMS_ROUTE_PREFIX}/${v4()}/geolocation`,
+          url: `${ITEMS_ROUTE_PREFIX}/${uuid()}/geolocation`,
           body: {
             geolocation: {
               lat: 'lat',
@@ -427,7 +503,7 @@ describe('Item Geolocation', () => {
       it('throw for missing lat or lng', async () => {
         const res = await app.inject({
           method: HttpMethod.Put,
-          url: `${ITEMS_ROUTE_PREFIX}/${v4()}/geolocation`,
+          url: `${ITEMS_ROUTE_PREFIX}/${uuid()}/geolocation`,
           body: {
             geolocation: {
               lat: 1,
@@ -437,7 +513,7 @@ describe('Item Geolocation', () => {
         expect(res.statusCode).toBe(StatusCodes.BAD_REQUEST);
         const res1 = await app.inject({
           method: HttpMethod.Put,
-          url: `${ITEMS_ROUTE_PREFIX}/${v4()}/geolocation`,
+          url: `${ITEMS_ROUTE_PREFIX}/${uuid()}/geolocation`,
           body: {
             geolocation: {
               lng: 1,
@@ -467,10 +543,9 @@ describe('Item Geolocation', () => {
   describe('DELETE /:id/geolocation', () => {
     describe('Signed out', () => {
       it('Throw', async () => {
-        ({ app } = await build({ member: null }));
         const res = await app.inject({
           method: HttpMethod.Delete,
-          url: `${ITEMS_ROUTE_PREFIX}/${v4()}/geolocation`,
+          url: `${ITEMS_ROUTE_PREFIX}/${uuid()}/geolocation`,
         });
         expect(res.statusCode).toBe(StatusCodes.UNAUTHORIZED);
       });
@@ -478,7 +553,8 @@ describe('Item Geolocation', () => {
 
     describe('Signed in', () => {
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        actor = await saveMember();
+        mockAuthenticate(actor);
       });
       it('throw for invalid id', async () => {
         const res = await app.inject({
@@ -503,7 +579,6 @@ describe('Item Geolocation', () => {
   describe('GET /geolocation/reverse', () => {
     describe('Signed out', () => {
       it('Throw', async () => {
-        ({ app } = await build({ member: null }));
         const res = await app.inject({
           method: HttpMethod.Get,
           url: `${ITEMS_ROUTE_PREFIX}/geolocation/reverse`,
@@ -519,7 +594,8 @@ describe('Item Geolocation', () => {
 
     describe('Signed in', () => {
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        actor = await saveMember();
+        mockAuthenticate(actor);
       });
 
       it('get adress from coordinates', async () => {
@@ -570,7 +646,6 @@ describe('Item Geolocation', () => {
   describe('GET /geolocation/search', () => {
     describe('Signed out', () => {
       it('Throw', async () => {
-        ({ app } = await build({ member: null }));
         const res = await app.inject({
           method: HttpMethod.Get,
           url: `${ITEMS_ROUTE_PREFIX}/geolocation/search`,
@@ -585,21 +660,25 @@ describe('Item Geolocation', () => {
 
     describe('Signed in', () => {
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        actor = await saveMember();
+        mockAuthenticate(actor);
       });
 
       it('get address from search', async () => {
+        const id1 = uuid();
+        const id2 = uuid();
+
         if (GEOLOCATION_API_HOST) {
           nock(GEOLOCATION_API_HOST)
             .get('/search')
             .query(true)
             .reply(200, {
               results: [
-                { formatted: 'address', country_code: 'country', place_id: 'id', lat: 45, lon: 23 },
+                { formatted: 'address', country_code: 'country', place_id: id1, lat: 45, lon: 23 },
                 {
                   formatted: 'address1',
                   country_code: 'country1',
-                  place_id: 'id1',
+                  place_id: id2,
                   lat: 23,
                   lon: 12,
                 },
@@ -615,18 +694,19 @@ describe('Item Geolocation', () => {
           },
         });
 
+        expect(res.statusCode).toBe(StatusCodes.OK);
         expect(res.json()).toMatchObject([
           {
             addressLabel: 'address',
             country: 'country',
             lat: 45,
             lng: 23,
-            id: 'id',
+            id: id1,
           },
           {
             addressLabel: 'address1',
             country: 'country1',
-            id: 'id1',
+            id: id2,
             lat: 23,
             lng: 12,
           },

@@ -61,8 +61,9 @@ export class ActionItemService {
     const item = await this.itemService.get(actor, repositories, itemId, PermissionLevel.Read);
 
     // check permission
-    const permission = (await repositories.itemMembershipRepository.getInherited(item, actor, true))
-      ?.permission;
+    const permission = (
+      await repositories.itemMembershipRepository.getInherited(item.path, actor.id, true)
+    )?.permission;
 
     // Check validity of the requestSampleSize parameter (it is a number between min and max constants)
     let size = DEFAULT_ACTIONS_SAMPLE_SIZE;
@@ -101,7 +102,7 @@ export class ActionItemService {
       startDate?: string;
       endDate?: string;
     },
-  ): Promise<unknown[]> {
+  ) {
     // check rights
     const item = await this.itemService.get(
       actor,
@@ -156,7 +157,8 @@ export class ActionItemService {
 
     // check permission
     const permission = actor
-      ? (await repositories.itemMembershipRepository.getInherited(item, actor, true))?.permission
+      ? (await repositories.itemMembershipRepository.getInherited(item.path, actor.id, true))
+          ?.permission
       : null;
 
     if (payload.startDate && payload.endDate && isBefore(payload.endDate, payload.startDate)) {
@@ -174,7 +176,7 @@ export class ActionItemService {
     // get memberships
     const inheritedMemberships =
       (await repositories.itemMembershipRepository.getForManyItems([item])).data?.[item.id] ?? [];
-    const itemMemberships = await repositories.itemMembershipRepository.getAllBelow(item);
+    const itemMemberships = await repositories.itemMembershipRepository.getAllBelow(item.path);
     const allMemberships = [...inheritedMemberships, ...itemMemberships];
     // get members
     const members =
@@ -205,12 +207,12 @@ export class ActionItemService {
         actions: AppAction[];
       };
     } = {};
-    for (const { id: appId } of [item, ...descendants].filter(
-      ({ type }) => type === ItemType.APP,
-    )) {
+    const appItems = [item, ...descendants].filter(({ type }) => type === ItemType.APP);
+    for (const { id: appId } of appItems) {
       const appData = await repositories.appDataRepository.getForItem(
         appId,
         {},
+        // needs investigating: does this mean a reader could export the actions of an item and see all users responses ?
         PermissionLevel.Admin,
       );
       // TODO member id?
@@ -257,18 +259,6 @@ export class ActionItemService {
       extra: { itemId: item.id, body: request.body as any },
     };
     await this.actionService.postMany(user?.account, repositories, request, [action]);
-  }
-
-  async postManyPatchAction(request: FastifyRequest, repositories: Repositories, items: Item[]) {
-    const { user } = request;
-    const actions = items.map((item) => ({
-      item,
-      type: ItemActionType.Update,
-      // TODO: remove any
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      extra: { itemId: item.id, body: request.body as any },
-    }));
-    await this.actionService.postMany(user?.account, repositories, request, actions);
   }
 
   async postManyDeleteAction(request: FastifyRequest, repositories: Repositories, items: Item[]) {

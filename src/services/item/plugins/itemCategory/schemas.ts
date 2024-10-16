@@ -1,183 +1,142 @@
-export default {
-  $id: 'https://graasp.org/categories/',
-  definitions: {
-    category: {
-      type: 'object',
-      properties: {
-        id: {
-          $ref: 'https://graasp.org/#/definitions/uuid',
-        },
-        name: { type: 'string' },
-        type: {
-          $ref: 'https://graasp.org/#/definitions/uuid',
-        },
-      },
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
+
+import { customType, registerSchemaAsRef } from '../../../../plugins/typebox';
+import { entityIdSchemaRef } from '../../../../schemas/global';
+import { LIST_OF_UUID_V4_REGEX_PATTERN } from '../../../../utils/constants';
+import { nullableMemberSchemaRef } from '../../../member/schemas';
+import { itemIdSchemaRef, itemSchemaRef } from '../../schema';
+
+export const categorySchemaRef = registerSchemaAsRef(
+  'category',
+  'Category',
+  Type.Object(
+    {
+      // Object definition
+      id: customType.UUID(),
+      name: Type.String(),
+      type: customType.UUID(),
+    },
+    {
+      // Schema options
       additionalProperties: false,
     },
-    itemCategory: {
-      type: 'object',
-      properties: {
-        id: {
-          $ref: 'https://graasp.org/#/definitions/uuid',
-        },
-        category: {
-          $ref: 'https://graasp.org/categories/#/definitions/category',
-        },
-        createdAt: {},
-        item: {
-          $ref: 'https://graasp.org/items/#/definitions/item',
-        },
-        creator: {
-          $ref: 'https://graasp.org/members/#/definitions/member',
-        },
-      },
+  ),
+);
+
+export const itemCategorySchemaRef = registerSchemaAsRef(
+  'itemCategory',
+  'Item Category',
+  Type.Object(
+    {
+      // Object definition
+      id: customType.UUID(),
+      category: categorySchemaRef,
+      createdAt: customType.DateTime(),
+      creator: Type.Optional(nullableMemberSchemaRef),
+    },
+    {
+      // Schema options
       additionalProperties: false,
     },
-    itemIdParam: {
-      type: 'object',
-      required: ['itemId'],
-      properties: {
-        itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      },
-      additionalProperties: false,
-    },
-    concatenatedIds: {
-      type: 'string',
-      pattern:
-        '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}' +
-        '(,[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})*$',
-    },
-  },
-};
+  ),
+);
 
 export const getItemCategories = {
-  params: { $ref: 'https://graasp.org/categories/#/definitions/itemIdParam' },
+  params: itemIdSchemaRef,
   response: {
-    200: {
-      type: 'array',
-      items: {
-        $ref: 'https://graasp.org/categories/#/definitions/itemCategory',
-      },
-    },
+    [StatusCodes.OK]: Type.Array(itemCategorySchemaRef),
   },
 };
 
 export const getCategories = {
-  querystring: {
-    type: 'object',
-    properties: {
-      typeId: {
-        type: 'array',
-        items: { $ref: 'https://graasp.org/#/definitions/uuid' },
+  querystring: Type.Partial(
+    Type.Object(
+      {
+        typeId: Type.Array(customType.UUID()),
       },
-    },
-    additionalProperties: false,
-  },
+      {
+        additionalProperties: false,
+      },
+    ),
+  ),
   response: {
-    200: {
-      type: 'array',
-      items: { $ref: 'https://graasp.org/categories/#/definitions/category' },
-    },
+    [StatusCodes.OK]: Type.Array(categorySchemaRef),
   },
 };
 
 export const getCategory = {
-  params: {
-    type: 'object',
-    properties: {
-      categoryId: { $ref: 'https://graasp.org/#/definitions/uuid' },
+  params: Type.Object(
+    {
+      categoryId: customType.UUID(),
     },
-    additionalProperties: false,
-  },
-  response: {
-    200: { $ref: 'https://graasp.org/categories/#/definitions/category' },
-  },
-};
-
-export const getCategoryTypes = {
-  response: {
-    200: {
-      type: 'array',
-      items: {
-        $ref: 'https://graasp.org/categories/#/definitions/categoryType',
-      },
+    {
+      additionalProperties: false,
     },
+  ),
+  response: {
+    [StatusCodes.OK]: categorySchemaRef,
   },
 };
 
 export const create = {
-  params: { $ref: 'https://graasp.org/categories/#/definitions/itemIdParam' },
-  body: {
-    type: 'object',
-    properties: {
-      categoryId: { $ref: 'https://graasp.org/#/definitions/uuid' },
+  params: itemIdSchemaRef,
+  body: Type.Object(
+    {
+      categoryId: customType.UUID(),
     },
-  },
+    {
+      additionalProperties: false,
+    },
+  ),
   response: {
-    200: { $ref: 'https://graasp.org/categories/#/definitions/itemCategory' },
+    [StatusCodes.OK]: itemCategorySchemaRef,
   },
 };
 
 export const getByCategories = {
-  querystring: {
-    type: 'object',
-    required: ['categoryId'],
-    properties: {
-      categoryId: {
-        type: 'array',
-        items: {
-          $ref: 'https://graasp.org/categories/#/definitions/concatenatedIds',
-        },
-      },
+  querystring: Type.Object(
+    {
+      categoryId: Type.Array(
+        Type.String({
+          pattern: LIST_OF_UUID_V4_REGEX_PATTERN,
+        }),
+      ),
     },
-    additionalProperties: false,
-  },
+    {
+      additionalProperties: false,
+    },
+  ),
   response: {
-    200: {
-      type: 'array',
-      items: {
-        $ref: 'https://graasp.org/items/#/definitions/item',
-      },
-    },
+    [StatusCodes.OK]: Type.Array(itemSchemaRef),
   },
 };
 
 export const deleteOne = {
-  params: {
-    type: 'object',
-    required: ['itemId', 'itemCategoryId'],
-    properties: {
-      itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      itemCategoryId: { $ref: 'https://graasp.org/#/definitions/uuid' },
+  params: Type.Object(
+    {
+      itemId: customType.UUID(),
+      itemCategoryId: customType.UUID(),
     },
-    additionalProperties: false,
-  },
+    {
+      additionalProperties: false,
+    },
+  ),
   response: {
-    200: { $ref: 'https://graasp.org/#/definitions/uuid' },
+    [StatusCodes.OK]: customType.UUID(),
   },
 };
 
 export const createCategory = {
-  body: {
-    type: 'object',
-    required: ['name', 'type'],
-    properties: {
-      name: { type: 'string' },
-      type: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-  },
+  body: Type.Object({
+    name: Type.String(),
+    type: customType.UUID(),
+  }),
   response: {
-    200: { $ref: 'https://graasp.org/categories/#/definitions/category' },
+    [StatusCodes.OK]: categorySchemaRef,
   },
 };
 
 export const deleteById = {
-  params: {
-    type: 'object',
-    required: ['id'],
-    properties: {
-      id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-    additionalProperties: false,
-  },
+  params: entityIdSchemaRef,
 };

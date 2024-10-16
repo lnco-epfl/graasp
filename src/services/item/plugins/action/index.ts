@@ -1,22 +1,12 @@
 import { StatusCodes } from 'http-status-codes';
 
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import fp from 'fastify-plugin';
 
-import {
-  AggregateBy,
-  AggregateFunction,
-  AggregateMetric,
-  Context,
-  CountGroupBy,
-  ExportActionsFormatting,
-  FileItemType,
-  HttpMethod,
-} from '@graasp/sdk';
+import { ExportActionsFormatting, FileItemType } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../di/utils';
-import { IdParam } from '../../../../types';
-import { notUndefined } from '../../../../utils/assertions';
+import { asDefined } from '../../../../utils/assertions';
 import { CLIENT_HOSTS } from '../../../../utils/config';
 import { buildRepositories } from '../../../../utils/repositories';
 import { ActionService } from '../../../action/services/action';
@@ -41,7 +31,7 @@ export interface GraaspActionsOptions {
   fileConfigurations: { s3: S3FileConfiguration; local: LocalFileConfiguration };
 }
 
-const plugin: FastifyPluginAsync<GraaspActionsOptions> = async (fastify) => {
+const plugin: FastifyPluginAsyncTypebox<GraaspActionsOptions> = async (fastify) => {
   const { db, websockets } = fastify;
 
   const itemService = resolveDependency(ItemService);
@@ -52,15 +42,7 @@ const plugin: FastifyPluginAsync<GraaspActionsOptions> = async (fastify) => {
   const allowedOrigins = Object.values(CLIENT_HOSTS).map(({ url }) => url.origin);
 
   // get actions and more data matching the given `id`
-  fastify.get<{
-    Params: IdParam;
-    Querystring: {
-      requestedSampleSize?: number;
-      view?: Context;
-      startDate?: string;
-      endDate?: string;
-    };
-  }>(
+  fastify.get(
     '/:id/actions',
     {
       schema: getItemActions,
@@ -78,20 +60,7 @@ const plugin: FastifyPluginAsync<GraaspActionsOptions> = async (fastify) => {
   );
 
   // get actions aggregate data matching the given `id`
-  fastify.get<{
-    Params: IdParam;
-    Querystring: {
-      requestedSampleSize: number;
-      view: Context;
-      type?: string[];
-      countGroupBy: CountGroupBy[];
-      aggregateFunction: AggregateFunction;
-      aggregateMetric: AggregateMetric;
-      aggregateBy?: AggregateBy[];
-      startDate?: string;
-      endDate?: string;
-    };
-  }>(
+  fastify.get(
     '/:id/actions/aggregation',
     {
       schema: getAggregateActions,
@@ -115,12 +84,13 @@ const plugin: FastifyPluginAsync<GraaspActionsOptions> = async (fastify) => {
     },
   );
 
-  fastify.route<{ Params: IdParam; Body: { type: string; extra?: { [key: string]: unknown } } }>({
-    method: HttpMethod.Post,
-    url: '/:id/actions',
-    schema: postAction,
-    preHandler: optionalIsAuthenticated,
-    handler: async (request) => {
+  fastify.post(
+    '/:id/actions',
+    {
+      schema: postAction,
+      preHandler: optionalIsAuthenticated,
+    },
+    async (request) => {
       const {
         user,
         params: { id: itemId },
@@ -148,22 +118,23 @@ const plugin: FastifyPluginAsync<GraaspActionsOptions> = async (fastify) => {
         ]);
       });
     },
-  });
+  );
 
   // export actions matching the given `id`
-  fastify.route<{ Params: IdParam; Querystring: { format?: ExportActionsFormatting } }>({
-    method: 'POST',
-    url: '/:id/actions/export',
-    schema: exportAction,
-    preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
-    handler: async (request, reply) => {
+  fastify.post(
+    '/:id/actions/export',
+    {
+      schema: exportAction,
+      preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
+    },
+    async (request, reply) => {
       const {
         user,
         params: { id: itemId },
         query: { format = ExportActionsFormatting.JSON },
         log,
       } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);
@@ -187,7 +158,7 @@ const plugin: FastifyPluginAsync<GraaspActionsOptions> = async (fastify) => {
       // reply no content and let the server create the archive and send the mail
       reply.status(StatusCodes.NO_CONTENT);
     },
-  });
+  );
 };
 
 export default fp(plugin);

@@ -71,6 +71,15 @@ const iframelyResult = {
 describe('ZIP routes tests', () => {
   let app, actor;
 
+  beforeAll(async () => {
+    ({ app } = await build({ member: null }));
+  });
+
+  afterAll(async () => {
+    await clearDatabase(app.db);
+    app.close();
+  });
+
   beforeEach(() => {
     (fetch as jest.MockedFunction<typeof fetch>).mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,14 +88,14 @@ describe('ZIP routes tests', () => {
   });
 
   afterEach(async () => {
+    unmockAuthenticate();
     jest.clearAllMocks();
-    await clearDatabase(app.db);
-    app.close();
   });
 
   describe('POST /zip-import', () => {
-    it('Import successfully if signed in', async () => {
-      ({ app, actor } = await build());
+    it('Import successfully at root if signed in', async () => {
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const form = createFormData('archive.zip');
 
       const response = await app.inject({
@@ -99,7 +108,83 @@ describe('ZIP routes tests', () => {
       expect(response.statusCode).toBe(StatusCodes.ACCEPTED);
 
       await waitForExpect(async () => {
-        const items = await testUtils.rawItemRepository.find({ relations: { creator: true } });
+        // get actor's root items
+        const rootItemResponse = await app.inject({
+          method: HttpMethod.Get,
+          url: '/items/accessible',
+        });
+        const rootItems = rootItemResponse.json().data;
+        expect(rootItems).toHaveLength(7);
+
+        // get one imported child in folder
+        const parent = rootItems.find(({ name }) => name === ARCHIVE_CONTENT.folder.name);
+        const itemsResponse = await app.inject({
+          method: HttpMethod.Get,
+          url: `/items/${parent.id}/children`,
+        });
+        const children = itemsResponse.json();
+        expect(children).toHaveLength(1);
+
+        const items = [...rootItems, ...children];
+
+        for (const file of ARCHIVE_CONTENT.archive) {
+          const item = items.find(({ name }) => name === file.name);
+          if (!item) {
+            throw new Error('item was not created');
+          }
+          expect(item.type).toEqual(file.type);
+          expect(item.description).toContain(file.description);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          expect(item.creator!.id).toEqual(actor.id);
+
+          if (item.type === ItemType.S3_FILE) {
+            expect((item.extra[ItemType.S3_FILE] as { name: string }).name).toEqual(
+              (file.extra[ItemType.S3_FILE] as { name: string }).name,
+            );
+          } else if (item.type === ItemType.LINK) {
+            expect((item.extra[ItemType.LINK] as { url: string }).url).toEqual(
+              (file.extra[ItemType.LINK] as { url: string }).url,
+            );
+          } else if (item.type === ItemType.FOLDER) {
+            // loosely check the
+            expect(item.extra).toEqual({ [ItemType.FOLDER]: {} });
+          } else {
+            expect(item.extra).toEqual(file.extra);
+          }
+        }
+
+        const child = await testUtils.rawItemRepository.findOne({
+          where: { name: ARCHIVE_CONTENT.childContent.name },
+        });
+        const folderItem = await testUtils.rawItemRepository.findOne({
+          where: { name: ARCHIVE_CONTENT.folder.name },
+        });
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        expect(child!.path).toContain(folderItem!.path);
+      }, 5000);
+    });
+    it('Import successfully in folder if signed in', async () => {
+      actor = await saveMember();
+      mockAuthenticate(actor);
+      const form = createFormData('archive.zip');
+      const { item: parentItem } = await testUtils.saveItemAndMembership({ member: actor });
+
+      const response = await app.inject({
+        method: HttpMethod.Post,
+        url: '/items/zip-import',
+        payload: form,
+        query: { parentId: parentItem.id },
+        headers: form.getHeaders(),
+      });
+
+      expect(response.statusCode).toBe(StatusCodes.ACCEPTED);
+
+      await waitForExpect(async () => {
+        const items = await testUtils.rawItemRepository
+          .createQueryBuilder('item')
+          .leftJoinAndSelect('item.creator', 'creator')
+          .where('item.path <@ :path AND item.path != :path', { path: parentItem.path })
+          .getMany();
         expect(items).toHaveLength(8);
 
         for (const file of ARCHIVE_CONTENT.archive) {
@@ -138,39 +223,53 @@ describe('ZIP routes tests', () => {
         expect(child!.path).toContain(folderItem!.path);
       }, 5000);
     });
-    it('Import archive with empty folder', async () => {
-      ({ app } = await build());
+    it('Import archive in folder with empty folder', async () => {
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const form = createFormData('empty.zip');
+      const { item: parentItem } = await testUtils.saveItemAndMembership({ member: actor });
 
       const response = await app.inject({
         method: HttpMethod.Post,
         url: '/items/zip-import',
         payload: form,
         headers: form.getHeaders(),
+        query: { parentId: parentItem.id },
       });
 
       expect(response.statusCode).toBe(StatusCodes.ACCEPTED);
 
       await waitForExpect(async () => {
-        const items = await testUtils.rawItemRepository.count();
-        expect(items).toEqual(1);
+        const items = await testUtils.rawItemRepository
+          .createQueryBuilder('item')
+          .leftJoinAndSelect('item.creator', 'creator')
+          .where('item.path <@ :path AND item.path != :path', { path: parentItem.path })
+          .getMany();
+        expect(items).toHaveLength(1);
       }, 1000);
     });
-    it('Import and sanitize html, txt and description', async () => {
-      ({ app } = await build());
+    it('Import in folder and sanitize html, txt and description', async () => {
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const form = createFormData('htmlAndText.zip');
+      const { item: parentItem } = await testUtils.saveItemAndMembership({ member: actor });
 
       const response = await app.inject({
         method: HttpMethod.Post,
         url: '/items/zip-import',
         payload: form,
         headers: form.getHeaders(),
+        query: { parentId: parentItem.id },
       });
 
       expect(response.statusCode).toBe(StatusCodes.ACCEPTED);
 
       await waitForExpect(async () => {
-        const items = await testUtils.rawItemRepository.find();
+        const items = await testUtils.rawItemRepository
+          .createQueryBuilder('item')
+          .leftJoinAndSelect('item.creator', 'creator')
+          .where('item.path <@ :path AND item.path != :path', { path: parentItem.path })
+          .getMany();
         expect(items).toHaveLength(2);
 
         for (const item of items) {
@@ -206,7 +305,6 @@ describe('ZIP routes tests', () => {
       }, 1000);
     });
     it('Throws if signed out', async () => {
-      ({ app } = await build({ member: null }));
       const form = createFormData('archive.zip');
 
       const response = await app.inject({
@@ -221,7 +319,8 @@ describe('ZIP routes tests', () => {
 
   describe('POST /export', () => {
     it('Export successfully if signed in', async () => {
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const { item } = await testUtils.saveItemAndMembership({
         member: actor,
         item: { name: 'itemname' },

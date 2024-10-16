@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { beforeAll } from '@jest/globals';
-import { StatusCodes } from 'http-status-codes';
+import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import { sign as jwtSign } from 'jsonwebtoken';
 
 import { FastifyInstance } from 'fastify';
@@ -19,7 +19,7 @@ import {
   FILE_METADATA_MIN_PAGE,
   FILE_METADATA_MIN_PAGE_SIZE,
 } from './constants';
-import { Actor, Member } from './entities/member';
+import { Member } from './entities/member';
 import { saveMember } from './test/fixtures/members';
 
 jest.mock('node-fetch');
@@ -55,7 +55,7 @@ describe('Member Controller', () => {
   });
   beforeEach(async () => {
     member = await saveMember();
-    mockAuthenticate(member as Actor);
+    mockAuthenticate(member);
     mockSendEmail = jest.spyOn(resolveDependency(MailerService), 'sendEmail');
   });
   afterEach(async () => {
@@ -459,6 +459,21 @@ describe('Member Controller', () => {
           lastSize = data.size;
         }
       });
+    });
+  });
+
+  describe('PATCH /members/:id', () => {
+    it('username can not contain special characters', async () => {
+      const invalidName = '<divvy>%$^&';
+
+      const response = await app.inject({
+        method: HttpMethod.Patch,
+        url: `members/${member.id}`,
+        body: { name: invalidName },
+      });
+
+      expect(response.statusMessage).toEqual(ReasonPhrases.BAD_REQUEST);
+      expect(response.statusCode).toEqual(StatusCodes.BAD_REQUEST);
     });
   });
 });

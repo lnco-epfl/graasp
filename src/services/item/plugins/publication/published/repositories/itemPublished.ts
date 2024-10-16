@@ -1,11 +1,9 @@
 import { EntityManager } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 import { PermissionLevel } from '@graasp/sdk';
 
 import { AbstractRepository } from '../../../../../../repositories/AbstractRepository';
-import { Account as Member } from '../../../../../account/entities/account';
-import { Actor } from '../../../../../member/entities/member';
+import { Member } from '../../../../../member/entities/member';
 import { mapById } from '../../../../../utils';
 import { Item } from '../../../../entities/Item';
 import { ItemPublished } from '../entities/itemPublished';
@@ -93,11 +91,11 @@ export class ItemPublishedRepository extends AbstractRepository<ItemPublished> {
     return [items, total];
   }
 
-  async post(creator: Actor, item: Item) {
+  async post(creator: Member, item: Item) {
     const p = this.repository.create({
       item: item,
       creator,
-    }) as QueryDeepPartialEntity<ItemPublished>;
+    });
     await this.repository.insert(p);
     return p;
   }

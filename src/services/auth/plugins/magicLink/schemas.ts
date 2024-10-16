@@ -1,73 +1,46 @@
-import { MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH } from '@graasp/sdk';
+import { Type } from '@sinclair/typebox';
 
-import { NAME_REGEX } from '../../../../schemas/global';
+import { FastifySchema } from 'fastify';
+
+import { customType } from '../../../../plugins/typebox';
 import { SHORT_TOKEN_PARAM } from '../passport';
 
 export const register = {
-  body: {
-    type: 'object',
-    required: ['name', 'email', 'captcha'],
-    properties: {
-      name: {
-        type: 'string',
-        minLength: MIN_USERNAME_LENGTH,
-        maxLength: MAX_USERNAME_LENGTH,
-        pattern: NAME_REGEX,
-      },
-      email: { type: 'string', format: 'email' },
-      captcha: { type: 'string' },
-      url: {
-        type: 'string',
-        format: 'uri',
-      },
-      enableSaveActions: { type: 'boolean' },
+  body: Type.Object(
+    {
+      name: customType.Username(),
+      email: Type.String({ format: 'email' }),
+      captcha: Type.String(),
+      url: Type.Optional(Type.String({ format: 'uri' })),
+      enableSaveActions: Type.Optional(Type.Boolean()),
     },
-    additionalProperties: false,
-  },
-  querystring: {
-    type: 'object',
-    properties: {
-      lang: { type: 'string' },
+    { additionalProperties: false },
+  ),
+  querystring: Type.Object(
+    {
+      lang: Type.Optional(Type.String()),
     },
-    additionalProperties: false,
-  },
-};
+    { additionalProperties: false },
+  ),
+} as const satisfies FastifySchema;
+
 export const login = {
-  body: {
-    type: 'object',
-    required: ['email', 'captcha'],
-    properties: {
-      email: { type: 'string', format: 'email' },
-      captcha: { type: 'string' },
-      url: {
-        type: 'string',
-        format: 'uri',
-      },
+  body: Type.Object(
+    {
+      email: Type.String({ format: 'email' }),
+      captcha: Type.String(),
+      url: Type.Optional(Type.String({ format: 'uri' })),
     },
-    additionalProperties: false,
-  },
-  querystring: {
-    type: 'object',
-    properties: {
-      lang: { type: 'string' },
-    },
-    additionalProperties: false,
-  },
-};
+    { additionalProperties: false },
+  ),
+} as const satisfies FastifySchema;
+
 export const auth = {
-  querystring: {
-    type: 'object',
-    required: [SHORT_TOKEN_PARAM],
-    properties: {
-      [SHORT_TOKEN_PARAM]: {
-        type: 'string',
-        format: 'jwt',
-      },
-      url: {
-        type: 'string',
-        format: 'uri-reference',
-      },
+  querystring: Type.Object(
+    {
+      [SHORT_TOKEN_PARAM]: Type.String({ format: 'jwt' }),
+      url: Type.Optional(Type.String({ format: 'uri' })),
     },
-    additionalProperties: false,
-  },
-};
+    { additionalProperties: false },
+  ),
+} as const satisfies FastifySchema;

@@ -5,13 +5,18 @@ import { PermissionLevel, UUID } from '@graasp/sdk';
 import { MAIL } from '../../plugins/mailer/langs/constants';
 import { MailerService } from '../../plugins/mailer/service';
 import { PLAYER_HOST } from '../../utils/config';
-import { CannotDeleteOnlyAdmin, ItemMembershipNotFound } from '../../utils/errors';
+import {
+  CannotDeleteOnlyAdmin,
+  CannotModifyGuestItemMembership,
+  ItemMembershipNotFound,
+} from '../../utils/errors';
 import HookManager from '../../utils/hook';
 import { Repositories } from '../../utils/repositories';
 import { Account } from '../account/entities/account';
 import { validatePermission } from '../authorization';
 import { Item } from '../item/entities/Item';
 import { ItemService } from '../item/service';
+import { isGuest } from '../itemLogin/entities/guest';
 import { Actor, Member } from '../member/entities/member';
 import { ItemMembership } from './entities/ItemMembership';
 
@@ -75,7 +80,7 @@ export class ItemMembershipService {
     return { data: result.data, errors: [...items.errors, ...result.errors] };
   }
 
-  private async _post(
+  private async _create(
     account: Account,
     repositories: Repositories,
     item: Item,
@@ -89,10 +94,10 @@ export class ItemMembershipService {
 
     await this.hooks.runPreHooks('create', account, repositories, { item, account: member });
 
-    const result = await itemMembershipRepository.post({
-      item,
-      account: member,
-      creator: account,
+    const result = await itemMembershipRepository.addOne({
+      itemPath: item.path,
+      accountId: member.id,
+      creatorId: account.id,
       permission,
     });
 
@@ -106,10 +111,11 @@ export class ItemMembershipService {
     return result;
   }
 
-  async post(
+  async create(
     actor: Account,
     repositories: Repositories,
     membership: { permission: PermissionLevel; itemId: UUID; memberId: UUID },
+    throwOnForbiddenPermission?: boolean,
   ) {
     // check memberships
     const item = await this.itemService.get(
@@ -117,12 +123,13 @@ export class ItemMembershipService {
       repositories,
       membership.itemId,
       PermissionLevel.Admin,
+      throwOnForbiddenPermission,
     );
 
-    return this._post(actor, repositories, item, membership.memberId, membership.permission);
+    return this._create(actor, repositories, item, membership.memberId, membership.permission);
   }
 
-  async postMany(
+  async createMany(
     actor: Account,
     repositories: Repositories,
     memberships: { permission: PermissionLevel; accountId: UUID }[],
@@ -133,7 +140,7 @@ export class ItemMembershipService {
 
     return Promise.all(
       memberships.map(async ({ accountId, permission }) => {
-        return this._post(actor, repositories, item, accountId, permission);
+        return this._create(actor, repositories, item, accountId, permission);
       }),
     );
   }
@@ -147,11 +154,14 @@ export class ItemMembershipService {
     const { itemMembershipRepository } = repositories;
     // check memberships
     const membership = await itemMembershipRepository.get(itemMembershipId);
+    if (isGuest(membership.account)) {
+      throw new CannotModifyGuestItemMembership();
+    }
     await validatePermission(repositories, PermissionLevel.Admin, actor, membership.item);
 
     await this.hooks.runPreHooks('update', actor, repositories, membership);
 
-    const result = await itemMembershipRepository.patch(itemMembershipId, data);
+    const result = await itemMembershipRepository.updateOne(itemMembershipId, data);
 
     await this.hooks.runPostHooks('update', actor, repositories, result);
 

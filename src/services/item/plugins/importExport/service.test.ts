@@ -5,10 +5,16 @@ import { FastifyInstance, FastifyReply } from 'fastify';
 
 import { ItemTagType, ItemType } from '@graasp/sdk';
 
-import build, { MOCK_LOGGER, clearDatabase } from '../../../../../test/app';
+import build, {
+  MOCK_LOGGER,
+  clearDatabase,
+  mockAuthenticate,
+  unmockAuthenticate,
+} from '../../../../../test/app';
 import { resolveDependency } from '../../../../di/utils';
 import { BaseLogger } from '../../../../logger';
 import { buildRepositories } from '../../../../utils/repositories';
+import { saveMember } from '../../../member/test/fixtures/members';
 import { ItemService } from '../../service';
 import { ItemTestUtils } from '../../test/fixtures/items';
 import FileItemService from '../file/service';
@@ -21,15 +27,24 @@ describe('ZIP routes tests', () => {
   let app: FastifyInstance;
   let actor;
 
-  afterEach(async () => {
-    jest.clearAllMocks();
+  beforeAll(async () => {
+    ({ app } = await build({ member: null }));
+  });
+
+  afterAll(async () => {
     await clearDatabase(app.db);
     app.close();
   });
 
+  afterEach(async () => {
+    unmockAuthenticate();
+    jest.clearAllMocks();
+  });
+
   describe('export', () => {
     it('Do not include hidden children', async () => {
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const mock = jest.spyOn(ZipFile.prototype, 'addEmptyDirectory');
       const { item } = await testUtils.saveItemAndMembership({
         member: actor,
@@ -68,7 +83,8 @@ describe('ZIP routes tests', () => {
           }) as unknown as nodeFetch.Response,
       );
 
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const { item } = await testUtils.saveItemAndMembership({
         member: actor,
         item: {
@@ -100,7 +116,8 @@ describe('ZIP routes tests', () => {
       expect(res.mimetype).toEqual('image/png');
     });
     it('fetch app data', async () => {
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const { item } = await testUtils.saveItemAndMembership({
         member: actor,
         item: {
@@ -121,7 +138,8 @@ describe('ZIP routes tests', () => {
       expect(res.mimetype).toEqual('text/plain');
     });
     it('fetch link data', async () => {
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const { item } = await testUtils.saveItemAndMembership({
         member: actor,
         item: {
@@ -142,7 +160,8 @@ describe('ZIP routes tests', () => {
       expect(res.mimetype).toEqual('text/plain');
     });
     it('fetch document data', async () => {
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const { item } = await testUtils.saveItemAndMembership({
         member: actor,
         item: {
@@ -163,7 +182,8 @@ describe('ZIP routes tests', () => {
       expect(res.mimetype).toEqual('text/plain');
     });
     it('fetch document-html data', async () => {
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const { item } = await testUtils.saveItemAndMembership({
         member: actor,
         item: {
@@ -190,7 +210,8 @@ describe('ZIP routes tests', () => {
       expect(res.mimetype).toEqual('text/html');
     });
     it('throw for folder', async () => {
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const { item } = await testUtils.saveItemAndMembership({
         member: actor,
       });

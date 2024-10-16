@@ -1,14 +1,14 @@
 import { StatusCodes } from 'http-status-codes';
 
 import { fastifyMultipart } from '@fastify/multipart';
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import fp from 'fastify-plugin';
 
 import { resolveDependency } from '../../../../di/utils';
-import { MailerService } from '../../../../plugins/mailer/service';
+import { FastifyInstanceTypebox } from '../../../../plugins/typebox';
 import { EntryNotFoundBeforeDeleteException } from '../../../../repositories/errors';
-import { IdParam, isNonEmptyArray } from '../../../../types';
-import { notUndefined } from '../../../../utils/assertions';
+import { isNonEmptyArray } from '../../../../types';
+import { asDefined } from '../../../../utils/assertions';
 import { Repositories, buildRepositories } from '../../../../utils/repositories';
 import { isAuthenticated, optionalIsAuthenticated } from '../../../auth/plugins/passport';
 import { matchOne } from '../../../authorization';
@@ -17,22 +17,23 @@ import { MemberService } from '../../../member/service';
 import { memberAccountRole } from '../../../member/strategies/memberAccountRole';
 import { validatedMemberAccountRole } from '../../../member/strategies/validatedMemberAccountRole';
 import { MAX_FILE_SIZE } from './constants';
-import { Invitation } from './entity';
 import { NoFileProvidedForInvitations, NoInvitationReceivedFound } from './errors';
-import definitions, { deleteOne, getById, getForItem, invite, sendOne, updateOne } from './schema';
+import {
+  deleteOne,
+  getById,
+  getForItem,
+  invite,
+  inviteFromCSV,
+  sendOne,
+  updateOne,
+} from './schema';
 import { InvitationService } from './service';
 
-const plugin: FastifyPluginAsync = async (fastify) => {
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { db } = fastify;
-  const mailerService = resolveDependency(MailerService);
   const memberService = resolveDependency(MemberService);
   const invitationService = resolveDependency(InvitationService);
 
-  if (!mailerService) {
-    throw new Error('Mailer plugin is not defined');
-  }
-
-  fastify.addSchema(definitions);
   // register multipart plugin for use in the invitations API
 
   // post hook: remove invitations on member creation
@@ -51,7 +52,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
 
   // get an invitation by id
   // does not require authentication
-  fastify.get<{ Params: IdParam }>(
+  fastify.get(
     '/invitations/:id',
     { schema: getById, preHandler: optionalIsAuthenticated },
     async ({ user, params }) => {
@@ -65,10 +66,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
    * If the email already exists in the database (a member exists) then a membership is created
    * If the email is not in the database, then we save and send an invitation to this email
    */
-  fastify.post<{
-    Params: IdParam;
-    Body: { invitations: Pick<Invitation, 'email' | 'permission'>[] };
-  }>(
+  fastify.post(
     '/:id/invite',
     {
       schema: invite,
@@ -76,7 +74,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
     async ({ user, body, params }) => {
       const { invitations } = body;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
 
       if (!isNonEmptyArray(invitations)) {
@@ -91,16 +89,19 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.register(async (fastify) => {
+  fastify.register(async (fastify: FastifyInstanceTypebox) => {
     fastify.register(fastifyMultipart);
 
     // post invitations from a csv file
-    fastify.post<{ Params: IdParam; Querystring: { templateId: string } }>(
+    fastify.post(
       '/:id/invitations/upload-csv',
-      { preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)] },
+      {
+        schema: inviteFromCSV,
+        preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
+      },
       async (request) => {
         const { query, params, user } = request;
-        const member = notUndefined(user?.account);
+        const member = asDefined(user?.account);
         assertIsMember(member);
 
         // get uploaded file
@@ -144,22 +145,22 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   });
 
   // get all invitations for an item
-  fastify.get<{ Params: IdParam }>(
+  fastify.get(
     '/:id/invitations',
     { schema: getForItem, preHandler: [isAuthenticated, matchOne(memberAccountRole)] },
     async ({ user, params: { id: itemId } }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return invitationService.getForItem(member, buildRepositories(), itemId);
     },
   );
 
   // update invitation
-  fastify.patch<{ Params: { id: string; invitationId: string }; Body: Partial<Invitation> }>(
+  fastify.patch(
     '/:id/invitations/:invitationId',
     { schema: updateOne, preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)] },
     async ({ user, params: { invitationId }, body }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return db.transaction(async (manager) => {
         return invitationService.patch(member, buildRepositories(manager), invitationId, body);
@@ -168,11 +169,11 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   // delete invitation
-  fastify.delete<{ Params: { id: string; invitationId: string } }>(
+  fastify.delete(
     '/:id/invitations/:invitationId',
     { schema: deleteOne, preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)] },
     async ({ user, params: { invitationId } }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       await db.transaction(async (manager) => {
         await invitationService.delete(member, buildRepositories(manager), invitationId);
@@ -182,11 +183,11 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   // resend invitation mail
-  fastify.post<{ Params: { id: string; invitationId: string } }>(
+  fastify.post(
     '/:id/invitations/:invitationId/send',
     { schema: sendOne, preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)] },
     async ({ user, params: { invitationId } }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       await invitationService.resend(member, buildRepositories(), invitationId);
       reply.status(StatusCodes.NO_CONTENT);

@@ -1,161 +1,143 @@
+import { Type } from '@sinclair/typebox';
 import { StatusCodes } from 'http-status-codes';
 
-export default {
-  $id: 'https://graasp.org/invitations/',
-  definitions: {
-    invitation: {
-      type: 'object',
-      properties: {
-        id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-        email: { type: 'string', format: 'email' },
-        name: { type: ['string', 'null'] },
-        permission: { type: 'string' },
-        item: { $ref: 'https://graasp.org/items/#/definitions/item' },
+import { FastifySchema } from 'fastify';
 
-        /**
-         * for some reason setting these date fields as "type: 'string'"
-         * makes the serialization fail using the anyOf. Following the same
-         * logic from above, here it's also safe to just remove that specification.
-         */
-        createdAt: { format: 'date-time' },
-        updatedAt: { format: 'date-time' },
-      },
+import { PermissionLevel } from '@graasp/sdk';
+
+import { customType, registerSchemaAsRef } from '../../../../plugins/typebox';
+import { entityIdSchemaRef, errorSchemaRef } from '../../../../schemas/global';
+import { itemMembershipSchemaRef } from '../../../itemMembership/schemas';
+import { itemSchemaRef } from '../../schema';
+
+export const invitationSchemaRef = registerSchemaAsRef(
+  'invitation',
+  'Invitation',
+  Type.Object(
+    {
+      // Object Definition
+      id: customType.UUID(),
+      email: Type.String({ format: 'email' }),
+      name: Type.Optional(customType.Nullable(Type.String())),
+      permission: Type.Enum(PermissionLevel),
+      item: itemSchemaRef,
+      createdAt: customType.DateTime(),
+      updatedAt: customType.DateTime(),
+    },
+    {
+      // Schema Options
       additionalProperties: false,
     },
+  ),
+);
 
-    // partial invitation requiring some properties to be defined
-    // item id is defined from the param of the endpoint
-    partialInvitation: {
-      type: 'object',
-      required: ['email', 'permission'],
-      properties: {
-        email: { type: 'string', format: 'email' },
-        permission: { type: 'string' },
-        name: { type: 'string' },
-      },
+export const minimalInvitationSchemaRef = registerSchemaAsRef(
+  'minimalInvitation',
+  'Minimal Invitation',
+  Type.Object(
+    {
+      // Object Definition
+      email: Type.String({ format: 'email' }),
+      name: Type.Optional(customType.Nullable(Type.String())),
+      permission: Type.Enum(PermissionLevel),
+    },
+    {
+      // Schema Options
       additionalProperties: false,
     },
+  ),
+);
 
-    // partial invitation for update
-    // item id is defined from the param of the endpoint
-    partialInvitationForUpdate: {
-      type: 'object',
-      properties: {
-        permission: { type: 'string' },
-        name: { type: 'string' },
-      },
-      anyOf: [
-        {
-          required: ['permission'],
-        },
-        {
-          required: ['name'],
-        },
-      ],
-      additionalProperties: false,
+export const updateInvitationSchemaRef = registerSchemaAsRef(
+  'updateInvitation',
+  'Update Invitation',
+  // Object Definition
+  Type.Object(
+    {
+      name: Type.Optional(Type.String()),
+      permission: Type.Optional(Type.Enum(PermissionLevel)),
     },
-  },
-};
+    { additionalProperties: true, minProperties: 1 },
+  ),
+);
 
 export const invite = {
-  params: { $ref: 'https://graasp.org/#/definitions/idParam' },
-  body: {
-    type: 'object',
-    properties: {
-      invitations: {
-        type: 'array',
-        items: {
-          type: 'object',
-          required: ['email', 'permission'],
-          properties: {
-            email: { type: 'string', format: 'email' },
-            permission: { type: 'string' },
-          },
-        },
-      },
+  params: entityIdSchemaRef,
+  body: Type.Object(
+    {
+      invitations: Type.Array(
+        Type.Object({
+          email: Type.String({ format: 'email' }),
+          permission: Type.Enum(PermissionLevel),
+        }),
+      ),
     },
-    additionalProperties: false,
-  },
+    { additionalProperties: false },
+  ),
   response: {
-    200: {
+    [StatusCodes.OK]: {
       type: 'object',
       properties: {
-        memberships: {
-          type: 'array',
-          items: {
-            $ref: 'https://graasp.org/item-memberships/#/definitions/itemMembership',
-          },
-        },
-        invitations: {
-          type: 'array',
-          items: {
-            $ref: 'https://graasp.org/invitations/#/definitions/invitation',
-          },
-        },
+        memberships: Type.Array(itemMembershipSchemaRef),
+        invitations: Type.Array(invitationSchemaRef),
       },
     },
-    '4xx': {
-      $ref: 'https://graasp.org/#/definitions/error',
-    },
-    [StatusCodes.INTERNAL_SERVER_ERROR]: {
-      $ref: 'https://graasp.org/#/definitions/error',
-    },
+    '4xx': errorSchemaRef,
+    [StatusCodes.INTERNAL_SERVER_ERROR]: errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
+
+export const inviteFromCSV = {
+  params: entityIdSchemaRef,
+  querystring: Type.Object({
+    templateId: customType.UUID(),
+  }),
+  response: {
+    [StatusCodes.OK]: Type.Union([
+      Type.Array(
+        Type.Object({
+          groupName: Type.String(),
+          memberships: Type.Array(itemMembershipSchemaRef),
+          invitations: Type.Array(invitationSchemaRef),
+        }),
+      ),
+      Type.Object({
+        memberships: Type.Array(itemMembershipSchemaRef),
+        invitations: Type.Array(invitationSchemaRef),
+      }),
+    ]),
+  },
+} as const satisfies FastifySchema;
 
 export const getForItem = {
-  params: { $ref: 'https://graasp.org/#/definitions/idParam' },
+  params: entityIdSchemaRef,
   response: {
-    200: {
-      type: 'array',
-      items: { $ref: 'https://graasp.org/invitations/#/definitions/invitation' },
-    },
+    [StatusCodes.OK]: Type.Array(invitationSchemaRef),
   },
-};
+} as const satisfies FastifySchema;
 
 export const getById = {
-  params: { $ref: 'https://graasp.org/#/definitions/idParam' },
+  params: entityIdSchemaRef,
   response: {
-    200: { $ref: 'https://graasp.org/invitations/#/definitions/invitation' },
+    [StatusCodes.OK]: invitationSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
 export const updateOne = {
-  params: {
-    type: 'object',
-    required: ['id', 'invitationId'],
-    properties: {
-      id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      invitationId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-  },
-  body: { $ref: 'https://graasp.org/invitations/#/definitions/partialInvitationForUpdate' },
+  params: Type.Object({ id: customType.UUID(), invitationId: customType.UUID() }),
+  body: updateInvitationSchemaRef,
   response: {
-    200: { $ref: 'https://graasp.org/invitations/#/definitions/invitation' },
+    [StatusCodes.OK]: invitationSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
 export const deleteOne = {
-  params: {
-    type: 'object',
-    required: ['id', 'invitationId'],
-    properties: {
-      id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      invitationId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-  },
+  params: Type.Object({ id: customType.UUID(), invitationId: customType.UUID() }),
   response: {
-    200: { type: 'string' },
+    [StatusCodes.OK]: Type.String(),
   },
-};
+} as const satisfies FastifySchema;
 
 export const sendOne = {
-  params: {
-    type: 'object',
-    required: ['id', 'invitationId'],
-    properties: {
-      id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      invitationId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-  },
-};
+  params: Type.Object({ id: customType.UUID(), invitationId: customType.UUID() }),
+} as const satisfies FastifySchema;

@@ -9,8 +9,13 @@ import { FastifyInstance } from 'fastify';
 
 import { HttpMethod, ItemType, MaxWidth, PermissionLevel, S3FileItemExtra } from '@graasp/sdk';
 
-import build, { clearDatabase } from '../../../../../../test/app';
+import build, {
+  clearDatabase,
+  mockAuthenticate,
+  unmockAuthenticate,
+} from '../../../../../../test/app';
 import { MULTIPLE_ITEMS_LOADING_TIME } from '../../../../../../test/constants';
+import { AppDataSource } from '../../../../../plugins/datasource';
 import { FILE_ITEM_TYPE, ITEMS_ROUTE_PREFIX } from '../../../../../utils/config';
 import { MemberCannotAccess, MemberCannotWriteItem } from '../../../../../utils/errors';
 import {
@@ -21,7 +26,7 @@ import {
   UploadFileUnexpectedError,
 } from '../../../../file/utils/errors';
 import { ItemTestUtils, expectItem, expectManyItems } from '../../../../item/test/fixtures/items';
-import { ItemMembershipRepository } from '../../../../itemMembership/repository';
+import { ItemMembership } from '../../../../itemMembership/entities/ItemMembership';
 import { saveMember } from '../../../../member/test/fixtures/members';
 import { ThumbnailSizeFormat } from '../../../../thumbnail/constants';
 import { Item } from '../../../entities/Item';
@@ -32,6 +37,7 @@ import { StorageExceeded } from '../utils/errors';
 // TODO: LOCAL FILE TESTS
 
 const testUtils = new ItemTestUtils();
+const itemMembershipRawRepository = AppDataSource.getRepository(ItemMembership);
 
 const deleteObjectMock = jest.fn(async () => console.debug('deleteObjectMock'));
 const copyObjectMock = jest.fn(async () => console.debug('copyObjectMock'));
@@ -79,17 +85,24 @@ describe('File Item routes tests', () => {
   let app: FastifyInstance;
   let actor;
 
+  beforeAll(async () => {
+    ({ app } = await build({ member: null }));
+  });
+
+  afterAll(async () => {
+    await clearDatabase(app.db);
+    app.close();
+  });
+
   afterEach(async () => {
     jest.clearAllMocks();
-    await clearDatabase(app.db);
     actor = null;
-    app.close();
+    unmockAuthenticate();
   });
 
   describe('POST /upload', () => {
     it('Throws if signed out', async () => {
       const form = createFormData();
-      ({ app } = await build({ member: null }));
 
       const response = await app.inject({
         method: HttpMethod.Post,
@@ -104,7 +117,8 @@ describe('File Item routes tests', () => {
     describe('Signed In', () => {
       describe('Without error', () => {
         beforeEach(async () => {
-          ({ app, actor } = await build());
+          actor = await saveMember();
+          mockAuthenticate(actor);
         });
 
         it('Upload successfully one file', async () => {
@@ -134,7 +148,9 @@ describe('File Item routes tests', () => {
           expect(item?.extra[FILE_ITEM_TYPE]).toBeTruthy();
 
           // a membership is created for this item
-          const membership = await ItemMembershipRepository.findOneBy({ item: { id: newItem.id } });
+          const membership = await itemMembershipRawRepository.findOneBy({
+            item: { id: newItem.id },
+          });
           expect(membership?.permission).toEqual(PermissionLevel.Admin);
         });
 
@@ -152,7 +168,7 @@ describe('File Item routes tests', () => {
           expect(response.statusCode).toBe(StatusCodes.OK);
 
           // check item exists in db
-          const item = await testUtils.rawItemRepository.findOneBy({ type: FILE_ITEM_TYPE });
+          const item = await testUtils.rawItemRepository.findOneBy({ id: newItem.id });
           expectItem(item, newItem);
 
           // s3 upload function: We expect on pdf and the thumbnails
@@ -178,7 +194,9 @@ describe('File Item routes tests', () => {
           expect(response.statusCode).toBe(StatusCodes.OK);
 
           // check item exists in db
-          const newItems = await testUtils.rawItemRepository.findBy({ type: FILE_ITEM_TYPE });
+          const newItems = await testUtils.rawItemRepository.findBy({
+            id: In(items.map(({ id }) => id)),
+          });
           expectManyItems(items, newItems);
 
           // s3 upload function: We expect on image AND the thumbnails
@@ -192,7 +210,7 @@ describe('File Item routes tests', () => {
             expect(item?.extra[FILE_ITEM_TYPE]).toBeTruthy();
           }
           // a membership is created for this item
-          const memberships = await ItemMembershipRepository.findBy({
+          const memberships = await itemMembershipRawRepository.findBy({
             item: { id: In(items.map((i) => i.id)) },
           });
           for (const m of memberships) {
@@ -215,7 +233,7 @@ describe('File Item routes tests', () => {
           expect(response.statusCode).toBe(StatusCodes.OK);
 
           // check item exists in db
-          const item = await testUtils.rawItemRepository.findOneBy({ type: FILE_ITEM_TYPE });
+          const item = await testUtils.rawItemRepository.findOneBy({ id: newItem.id });
           expectItem(item, newItem);
 
           // s3 upload function: We expect on image AND the thumbnails
@@ -229,7 +247,9 @@ describe('File Item routes tests', () => {
           expect(item?.path).toContain(parentItem.path);
 
           // a membership is not created for new item because it inherits parent
-          const membership = await ItemMembershipRepository.findOneBy({ item: { id: newItem.id } });
+          const membership = await itemMembershipRawRepository.findOneBy({
+            item: { id: newItem.id },
+          });
           expect(membership).toBeNull();
         });
 
@@ -251,17 +271,13 @@ describe('File Item routes tests', () => {
 
           expect(response.json()).toMatchObject(new MemberCannotWriteItem(expect.anything()));
 
-          // check item exists in db
-          const item = await testUtils.rawItemRepository.findOneBy({ type: FILE_ITEM_TYPE });
-          expect(item).toBeNull();
-
           // s3 upload function
           expect(uploadDoneMock).not.toHaveBeenCalled();
         });
 
         it('Cannot upload with storage exceeded', async () => {
           const form = createFormData();
-          await testUtils.saveItemAndMembership({
+          const { item } = await testUtils.saveItemAndMembership({
             member: actor,
             item: {
               type: ItemType.S3_FILE,
@@ -278,8 +294,8 @@ describe('File Item routes tests', () => {
 
           expect(response.json().errors[0]).toMatchObject(new StorageExceeded(expect.anything()));
 
-          // check item exists in db
-          const items = await testUtils.rawItemRepository.findBy({ type: FILE_ITEM_TYPE });
+          // check previous item still exists in db
+          const items = await testUtils.rawItemRepository.findBy({ id: item.id });
           expect(items).toHaveLength(1);
         });
 
@@ -300,10 +316,6 @@ describe('File Item routes tests', () => {
 
           expect(response.json().errors[0].message).toEqual(new UploadEmptyFileError().message);
           expect(deleteObjectMock).toHaveBeenCalled();
-
-          // check item exists in db
-          const item = await testUtils.rawItemRepository.findOneBy({ type: FILE_ITEM_TYPE });
-          expect(item).toBeNull();
         });
       });
 
@@ -322,7 +334,8 @@ describe('File Item routes tests', () => {
 
           const form1 = createFormData(form);
 
-          ({ app, actor } = await build());
+          actor = await saveMember();
+          mockAuthenticate(actor);
           const response = await app.inject({
             method: HttpMethod.Post,
             url: `${ITEMS_ROUTE_PREFIX}/upload`,
@@ -353,7 +366,8 @@ describe('File Item routes tests', () => {
             throw new Error('putObject throws');
           });
 
-          ({ app, actor } = await build());
+          actor = await saveMember();
+          mockAuthenticate(actor);
           const form = createFormData();
 
           const response = await app.inject({
@@ -366,10 +380,6 @@ describe('File Item routes tests', () => {
           expect(response.json().errors[0]).toMatchObject(
             new UploadFileUnexpectedError(expect.anything()),
           );
-
-          // check item exists in db
-          const item = await testUtils.rawItemRepository.findOneBy({ type: FILE_ITEM_TYPE });
-          expect(item).toBeNull();
         });
       });
     });
@@ -380,7 +390,6 @@ describe('File Item routes tests', () => {
       let item, member;
 
       beforeEach(async () => {
-        ({ app } = await build({ member: null }));
         member = await saveMember();
         ({ item } = await testUtils.saveItemAndMembership({
           item: { type: ItemType.S3_FILE },
@@ -414,7 +423,8 @@ describe('File Item routes tests', () => {
       let item;
 
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        actor = await saveMember();
+        mockAuthenticate(actor);
         ({ item } = await testUtils.saveItemAndMembership({
           item: { type: ItemType.S3_FILE },
           member: actor,
@@ -506,7 +516,8 @@ describe('File Item routes tests', () => {
     let item, actor;
 
     beforeEach(async () => {
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
       ({ item } = await testUtils.saveItemAndMembership({
         item: { type: ItemType.S3_FILE },
         member: actor,
@@ -543,7 +554,8 @@ describe('File Item routes tests', () => {
 
   describe('Hooks', () => {
     beforeEach(async () => {
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
     });
     describe('Delete Post Hook', () => {
       it('Do not trigger file delete if item is not a file item', async () => {

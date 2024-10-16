@@ -7,14 +7,18 @@ import { FastifyInstance } from 'fastify';
 
 import { HttpMethod, PermissionLevel, RecaptchaAction } from '@graasp/sdk';
 
-import build, { clearDatabase } from '../../../../../../test/app';
+import build, {
+  clearDatabase,
+  mockAuthenticate,
+  unmockAuthenticate,
+} from '../../../../../../test/app';
 import { resolveDependency } from '../../../../../di/utils';
 import { AppDataSource } from '../../../../../plugins/datasource';
 import { MailerService } from '../../../../../plugins/mailer/service';
 import { ITEMS_ROUTE_PREFIX } from '../../../../../utils/config';
 import { MOCK_CAPTCHA } from '../../../../auth/plugins/captcha/test/utils';
 import { Item } from '../../../../item/entities/Item';
-import { ItemMembershipRepository } from '../../../../itemMembership/repository';
+import { ItemMembership } from '../../../../itemMembership/entities/ItemMembership';
 import { Member } from '../../../../member/entities/member';
 import { saveMember } from '../../../../member/test/fixtures/members';
 import { ItemTestUtils } from '../../../test/fixtures/items';
@@ -22,6 +26,7 @@ import { Invitation } from '../entity';
 
 const testUtils = new ItemTestUtils();
 const invitationRawRepository = AppDataSource.getRepository(Invitation);
+const itemMembershipRawRepository = AppDataSource.getRepository(ItemMembership);
 
 // mock captcha
 // bug: cannot reuse mockCaptchaValidation
@@ -74,16 +79,23 @@ describe('Invitation Plugin', () => {
   let app: FastifyInstance;
   let actor;
 
+  beforeAll(async () => {
+    ({ app } = await build({ member: null }));
+  });
+
+  afterAll(async () => {
+    await clearDatabase(app.db);
+    app.close();
+  });
+
   afterEach(async () => {
     jest.clearAllMocks();
-    await clearDatabase(app.db);
     actor = null;
-    app.close();
+    unmockAuthenticate();
   });
 
   describe('POST /invite', () => {
     it('throws if signed out', async () => {
-      ({ app } = await build({ member: null }));
       const member = await saveMember();
       const { item, invitations } = await saveInvitations({ member });
 
@@ -98,7 +110,8 @@ describe('Invitation Plugin', () => {
 
     describe('Signed In', () => {
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        actor = await saveMember();
+        mockAuthenticate(actor);
       });
 
       it('create invitations successfully', async () => {
@@ -217,7 +230,6 @@ describe('Invitation Plugin', () => {
 
   describe('GET /:itemId/invitations', () => {
     it('throws if signed out', async () => {
-      ({ app } = await build({ member: null }));
       const member = await saveMember();
       const { item } = await saveInvitations({ member });
 
@@ -233,7 +245,8 @@ describe('Invitation Plugin', () => {
       let item, invitations;
 
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        actor = await saveMember();
+        mockAuthenticate(actor);
         ({ item, invitations } = await saveInvitations({ member: actor }));
       });
       it('get invitations for item successfully', async () => {
@@ -292,7 +305,6 @@ describe('Invitation Plugin', () => {
 
   describe('GET /invitations/:id', () => {
     it('get invitation by id successfully if signed out', async () => {
-      ({ app } = await build({ member: null }));
       const member = await saveMember();
 
       const { invitations } = await saveInvitations({ member });
@@ -309,7 +321,8 @@ describe('Invitation Plugin', () => {
       let invitations;
 
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        const actor = await saveMember();
+        mockAuthenticate(actor);
         ({ invitations } = await saveInvitations({ member: actor }));
       });
 
@@ -346,7 +359,6 @@ describe('Invitation Plugin', () => {
 
   describe('PATCH /:itemId/invitations/:id', () => {
     it('throws if signed out', async () => {
-      ({ app } = await build({ member: null }));
       const member = await saveMember();
       const { item, invitations } = await saveInvitations({ member });
 
@@ -366,7 +378,8 @@ describe('Invitation Plugin', () => {
       let item, invitations;
 
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        const actor = await saveMember();
+        mockAuthenticate(actor);
         ({ item, invitations } = await saveInvitations({ member: actor }));
       });
       it('update invitation successfully', async () => {
@@ -423,7 +436,6 @@ describe('Invitation Plugin', () => {
 
   describe('DELETE /:itemId/invitations/:id', () => {
     it('throws if signed out', async () => {
-      ({ app } = await build({ member: null }));
       const member = await saveMember();
       const { item, invitations } = await saveInvitations({ member });
 
@@ -439,7 +451,8 @@ describe('Invitation Plugin', () => {
       let item, invitations;
 
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        const actor = await saveMember();
+        mockAuthenticate(actor);
         ({ item, invitations } = await saveInvitations({ member: actor }));
       });
       it('delete invitation successfully', async () => {
@@ -474,7 +487,6 @@ describe('Invitation Plugin', () => {
 
   describe('POST /:itemId/invitations/:id/send', () => {
     it('throws if signed out', async () => {
-      ({ app } = await build({ member: null }));
       const member = await saveMember();
       const { item, invitations } = await saveInvitations({ member });
 
@@ -490,7 +502,8 @@ describe('Invitation Plugin', () => {
       let item, invitations;
 
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        const actor = await saveMember();
+        mockAuthenticate(actor);
         ({ item, invitations } = await saveInvitations({ member: actor }));
       });
       it('resend invitation successfully', async () => {
@@ -530,7 +543,8 @@ describe('Invitation Plugin', () => {
     let invitations;
 
     beforeEach(async () => {
-      ({ app, actor } = await build());
+      const actor = await saveMember();
+      mockAuthenticate(actor);
       ({ invitations } = await saveInvitations({ member: actor }));
     });
 
@@ -550,7 +564,7 @@ describe('Invitation Plugin', () => {
         setTimeout(async () => {
           const savedInvitation = await invitationRawRepository.findOneBy({ id });
           expect(savedInvitation).toBeFalsy();
-          const membership = await ItemMembershipRepository.findOne({
+          const membership = await itemMembershipRawRepository.findOne({
             where: { permission, account: { id: member!.id }, item: { id: item.id } },
             relations: { account: true, item: true },
           });
@@ -563,7 +577,7 @@ describe('Invitation Plugin', () => {
     it('does not throw if no invitation found', async () => {
       const email = 'random@email.org';
       const allInvitationsCount = await invitationRawRepository.count();
-      const allMembershipsCount = await ItemMembershipRepository.count();
+      const allMembershipsCount = await itemMembershipRawRepository.count();
 
       // register
       await app.inject({
@@ -576,7 +590,7 @@ describe('Invitation Plugin', () => {
         setTimeout(async () => {
           // all invitations and memberships should exist
           expect(await invitationRawRepository.count()).toEqual(allInvitationsCount);
-          expect(await ItemMembershipRepository.count()).toEqual(allMembershipsCount);
+          expect(await itemMembershipRawRepository.count()).toEqual(allMembershipsCount);
 
           done(true);
         }, 1000);

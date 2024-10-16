@@ -1,69 +1,71 @@
-export default {
-  $id: 'https://graasp.org/favorite/',
-  definitions: {
-    favorite: {
-      type: 'object',
-      properties: {
-        id: {
-          $ref: 'https://graasp.org/#/definitions/uuid',
-        },
-        item: {
-          $ref: 'https://graasp.org/items/#/definitions/item',
-        },
-        createdAt: { type: 'string' },
-      },
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
+
+import { FastifySchema } from 'fastify';
+
+import { customType, registerSchemaAsRef } from '../../../../plugins/typebox';
+import { itemIdSchemaRef, itemSchemaRef, packedItemSchemaRef } from '../../schema';
+
+export const favoriteSchemaRef = registerSchemaAsRef(
+  'favorite',
+  'Favorite',
+  Type.Object(
+    {
+      // Object definition
+      id: customType.UUID(),
+      item: itemSchemaRef,
+      createdAt: customType.DateTime(),
+    },
+    {
+      // Schema options
       additionalProperties: false,
     },
-    packedFavorite: {
-      type: 'object',
-      properties: {
-        id: {
-          $ref: 'https://graasp.org/#/definitions/uuid',
-        },
-        item: {
-          $ref: 'https://graasp.org/items/#/definitions/packedItem',
-        },
-        createdAt: { type: 'string' },
-      },
+  ),
+);
+
+export const packedFavoriteSchemaRef = registerSchemaAsRef(
+  'packedFavorite',
+  'Packed Favorite',
+  Type.Object(
+    {
+      // Object definition
+      id: customType.UUID(),
+      item: packedItemSchemaRef,
+      createdAt: customType.DateTime(),
+    },
+    {
+      // Schema options
       additionalProperties: false,
     },
-  },
-};
+  ),
+);
 
 export const getFavorite = {
-  querystring: {
-    type: 'object',
-    properties: {
-      memberId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-    additionalProperties: false,
-  },
-  response: {
-    200: {
-      type: 'array',
-      items: {
-        $ref: 'https://graasp.org/favorite/#/definitions/packedFavorite',
+  querystring: Type.Partial(
+    Type.Object(
+      {
+        memberId: customType.UUID(),
       },
-    },
+      {
+        additionalProperties: false,
+      },
+    ),
+  ),
+  response: {
+    [StatusCodes.OK]: Type.Array(packedFavoriteSchemaRef),
   },
-};
+} as const satisfies FastifySchema;
 
 export const create = {
-  params: {
-    itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-  },
+  params: itemIdSchemaRef,
   response: {
-    200: {
-      $ref: 'https://graasp.org/favorite/#/definitions/favorite',
-    },
+    [StatusCodes.OK]: favoriteSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
 export const deleteOne = {
-  params: {
-    itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-  },
+  params: itemIdSchemaRef,
   response: {
-    200: { $ref: 'https://graasp.org/#/definitions/uuid' },
+    [StatusCodes.OK]: customType.UUID(),
   },
-};
+} as const satisfies FastifySchema;

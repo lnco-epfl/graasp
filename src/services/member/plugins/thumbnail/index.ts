@@ -1,18 +1,16 @@
 import { StatusCodes } from 'http-status-codes';
 
 import { fastifyMultipart } from '@fastify/multipart';
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import { ThumbnailSizeType } from '@graasp/sdk';
+import { MAX_THUMBNAIL_SIZE } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../di/utils';
-import { IdParam } from '../../../../types';
-import { notUndefined } from '../../../../utils/assertions';
+import { asDefined } from '../../../../utils/assertions';
 import { buildRepositories } from '../../../../utils/repositories';
 import { isAuthenticated, optionalIsAuthenticated } from '../../../auth/plugins/passport';
 import { matchOne } from '../../../authorization';
 import FileService from '../../../file/service';
-import { DEFAULT_MAX_FILE_SIZE } from '../../../file/utils/constants';
 import { UploadEmptyFileError, UploadFileUnexpectedError } from '../../../file/utils/errors';
 import { assertIsMember } from '../../entities/member';
 import { validatedMemberAccountRole } from '../../strategies/validatedMemberAccountRole';
@@ -25,8 +23,8 @@ type GraaspThumbnailsOptions = {
   maxFileSize?: number; // max size for an uploaded file in bytes
 };
 
-const plugin: FastifyPluginAsync<GraaspThumbnailsOptions> = async (fastify, options) => {
-  const { maxFileSize = DEFAULT_MAX_FILE_SIZE } = options;
+const plugin: FastifyPluginAsyncTypebox<GraaspThumbnailsOptions> = async (fastify, options) => {
+  const { maxFileSize = MAX_THUMBNAIL_SIZE } = options;
   const { db } = fastify;
   const fileService = resolveDependency(FileService);
   const thumbnailService = resolveDependency(MemberThumbnailService);
@@ -43,14 +41,14 @@ const plugin: FastifyPluginAsync<GraaspThumbnailsOptions> = async (fastify, opti
     },
   });
 
-  fastify.post<{ Params: IdParam }>(
+  fastify.post(
     '/avatar',
     {
       schema: upload,
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async (request, reply) => {
-      const member = notUndefined(request.user?.account);
+      const member = asDefined(request.user?.account);
       assertIsMember(member);
       return db
         .transaction(async (manager) => {
@@ -81,10 +79,7 @@ const plugin: FastifyPluginAsync<GraaspThumbnailsOptions> = async (fastify, opti
     },
   );
 
-  fastify.get<{
-    Params: IdParam & { size: ThumbnailSizeType };
-    Querystring: { replyUrl?: boolean };
-  }>(
+  fastify.get(
     '/:id/avatar/:size',
     {
       schema: download,

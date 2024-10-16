@@ -1,9 +1,9 @@
 import { StatusCodes } from 'http-status-codes';
 
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 import { resolveDependency } from '../../../../di/utils';
-import { notUndefined } from '../../../../utils/assertions';
+import { asDefined } from '../../../../utils/assertions';
 import { buildRepositories } from '../../../../utils/repositories';
 import { isAuthenticated } from '../../../auth/plugins/passport';
 import { matchOne } from '../../../authorization';
@@ -12,7 +12,7 @@ import { memberAccountRole } from '../../strategies/memberAccountRole';
 import { exportMemberData } from './schemas/schemas';
 import { ExportMemberDataService } from './service';
 
-const plugin: FastifyPluginAsync = async (fastify) => {
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { db } = fastify;
   const exportMemberDataService = resolveDependency(ExportMemberDataService);
 
@@ -24,7 +24,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       preHandler: [isAuthenticated, matchOne(memberAccountRole)],
     },
     async ({ user }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);

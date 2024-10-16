@@ -42,7 +42,7 @@ export class AuthService {
     const domain = challenge ? MOBILE_AUTH_URL : PUBLIC_URL;
     const destination = new URL('/auth', domain);
     destination.searchParams.set(SHORT_TOKEN_PARAM, token);
-    destination.searchParams.set('url', encodeURIComponent(redirectionUrl));
+    destination.searchParams.set('url', redirectionUrl);
     const link = destination.toString();
 
     const lang = member.lang;
@@ -86,7 +86,7 @@ export class AuthService {
     const domain = challenge ? MOBILE_AUTH_URL : PUBLIC_URL;
     const destination = new URL('/auth', domain);
     destination.searchParams.set(SHORT_TOKEN_PARAM, token);
-    destination.searchParams.set('url', encodeURIComponent(redirectionUrl));
+    destination.searchParams.set('url', redirectionUrl);
     const link = destination.toString();
 
     const memberLang = member.lang ?? lang;
@@ -98,7 +98,7 @@ export class AuthService {
     ${this.mailerService.buildButton(link, translated(MAIL.SIGN_IN_BUTTON_TEXT))}
     ${this.mailerService.buildText(translated(MAIL.SIGN_IN_NOT_REQUESTED))}`;
 
-    const footer = this.mailerService.buildFooter(lang);
+    const footer = this.mailerService.buildFooter(memberLang);
 
     // don't wait for mailerService's response; log error and link if it fails.
     this.mailerService

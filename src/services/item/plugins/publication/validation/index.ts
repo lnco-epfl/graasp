@@ -1,11 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
 
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 import { PermissionLevel, PublicationStatus } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../../di/utils';
-import { notUndefined } from '../../../../../utils/assertions';
+import { asDefined } from '../../../../../utils/assertions';
 import { buildRepositories } from '../../../../../utils/repositories';
 import { isAuthenticated } from '../../../../auth/plugins/passport';
 import { matchOne } from '../../../../authorization';
@@ -23,7 +23,7 @@ import { itemValidation, itemValidationGroup } from './schemas';
 import { ItemValidationService } from './service';
 import { assertItemIsFolder } from './utils';
 
-const plugin: FastifyPluginAsync = async (fastify) => {
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { db, websockets } = fastify;
 
   const validationService = resolveDependency(ItemValidationService);
@@ -31,7 +31,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   const itemService = resolveDependency(ItemService);
 
   // get validation status of given itemId
-  fastify.get<{ Params: { itemId: string } }>(
+  fastify.get(
     '/:itemId/validations/latest',
     {
       schema: itemValidation,
@@ -39,7 +39,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       preHandler: [isAuthenticated, matchOne(memberAccountRole)],
     },
     async ({ user, params: { itemId } }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       const item = await itemService.get(member, buildRepositories(), itemId);
       return validationService.getLastItemValidationGroupForItem(member, buildRepositories(), item);
@@ -47,14 +47,14 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   // get validation group
-  fastify.get<{ Params: { itemValidationGroupId: string } }>(
+  fastify.get(
     '/:itemId/validations/:itemValidationGroupId',
     {
       schema: itemValidationGroup,
       preHandler: [isAuthenticated, matchOne(memberAccountRole)],
     },
     async ({ user, params: { itemValidationGroupId } }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return validationService.getItemValidationGroup(
         member,
@@ -65,7 +65,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   // validate item with given itemId in param
-  fastify.post<{ Params: { itemId: string } }>(
+  fastify.post(
     '/:itemId/validate',
     {
       schema: itemValidation,
@@ -77,7 +77,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         params: { itemId },
         log,
       } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
 
       db.transaction(async (manager) => {

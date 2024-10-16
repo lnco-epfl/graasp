@@ -6,7 +6,8 @@ import HookManager from '../../utils/hook';
 import { Repositories } from '../../utils/repositories';
 import { Account } from '../account/entities/account';
 import { ItemService } from '../item/service';
-import { Actor } from '../member/entities/member';
+import { Guest } from '../itemLogin/entities/guest';
+import { Actor, Member } from '../member/entities/member';
 import { ChatMessage } from './chatMessage';
 import { MemberCannotDeleteMessage, MemberCannotEditMessage } from './errors';
 import { MentionService } from './plugins/mentions/service';
@@ -32,15 +33,14 @@ export class ChatMessageService {
     // check permission
     await this.itemService.get(actor, repositories, itemId);
 
-    const messages = await chatMessageRepository.getByItem(itemId);
-    return messages;
+    return await chatMessageRepository.getByItem(itemId);
   }
 
   async postOne(
-    actor: Account,
+    actor: Guest | Member,
     repositories: Repositories,
     itemId: string,
-    data: { body: string; mentions: string[] },
+    data: { body: string; mentions?: string[] },
   ) {
     const { chatMessageRepository } = repositories;
 

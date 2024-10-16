@@ -1,11 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
 
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 import { ActionTriggers, Context, RecaptchaAction } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../di/utils';
-import { notUndefined } from '../../../../utils/assertions';
+import { asDefined } from '../../../../utils/assertions';
 import { LOGIN_TOKEN_EXPIRATION_IN_MINUTES, PUBLIC_URL } from '../../../../utils/config';
 import { buildRepositories } from '../../../../utils/repositories';
 import { ActionService } from '../../../action/services/action';
@@ -32,15 +32,13 @@ import { MemberPasswordService } from './service';
 const REDIRECTION_URL_PARAM = 'url';
 const AUTHENTICATION_FALLBACK_ROUTE = '/auth';
 
-const plugin: FastifyPluginAsync = async (fastify) => {
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { db } = fastify;
   const actionService = resolveDependency(ActionService);
   const memberPasswordService = resolveDependency(MemberPasswordService);
 
   // login with password
-  fastify.post<{
-    Body: { email: string; password: string; captcha: string; url?: string };
-  }>(
+  fastify.post(
     '/login-password',
     {
       schema: passwordLogin,
@@ -54,7 +52,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const { body, log, user } = request;
       const { url } = body;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       const token = await memberPasswordService.generateToken(
         { sub: member.id },
         `${LOGIN_TOKEN_EXPIRATION_IN_MINUTES}m`,
@@ -77,11 +75,11 @@ const plugin: FastifyPluginAsync = async (fastify) => {
    * @param password - The new password.
    * @returns 204 No Content if the request was successful.
    */
-  fastify.post<{ Body: { password: string } }>(
+  fastify.post(
     '/password',
     { schema: setPassword, preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)] },
     async ({ user, body: { password } }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       return db.transaction(async (manager) => {
         await memberPasswordService.post(member, buildRepositories(manager), password);
         reply.status(StatusCodes.NO_CONTENT);
@@ -96,11 +94,11 @@ const plugin: FastifyPluginAsync = async (fastify) => {
    * @param password - The new password.
    * @returns 204 No Content if the request was successful.
    */
-  fastify.patch<{ Body: { currentPassword: string; password: string } }>(
+  fastify.patch(
     '/password',
     { schema: updatePassword, preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)] },
     async ({ user, body: { currentPassword, password } }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       return db.transaction(async (manager) => {
         await memberPasswordService.patch(
           member,
@@ -124,7 +122,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
    * @param captcha - Recaptcha response token.
    * @returns 204 No Content if the request was successful.
    */
-  fastify.post<{ Body: { email: string; captcha: string } }>(
+  fastify.post(
     '/password/reset',
     {
       schema: postResetPasswordRequest,
@@ -135,7 +133,8 @@ const plugin: FastifyPluginAsync = async (fastify) => {
 
       // We can already return to avoid leaking timing information.
       reply.status(StatusCodes.NO_CONTENT);
-      reply.send();
+      // need to await this
+      await reply.send();
 
       const repositories = buildRepositories();
 
@@ -166,7 +165,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
    * @param password - New password.
    * @returns 204 No Content if the request was successful.
    */
-  fastify.patch<{ Body: { password: string }; User: { uuid: string } }>(
+  fastify.patch(
     '/password/reset',
     {
       schema: patchResetPasswordRequest,
@@ -178,7 +177,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         user,
         body: { password },
       } = request;
-      const uuid = notUndefined(user?.passwordResetRedisKey);
+      const uuid = asDefined(user?.passwordResetRedisKey);
       await memberPasswordService.applyReset(repositories, password, uuid);
       const member = await memberPasswordService.getMemberByPasswordResetUuid(repositories, uuid);
       reply.status(StatusCodes.NO_CONTENT);
@@ -205,7 +204,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       preHandler: [isAuthenticated],
     },
     async ({ user }) => {
-      const account = notUndefined(user?.account);
+      const account = asDefined(user?.account);
       const repositories = buildRepositories();
       const hasPassword = await memberPasswordService.hasPassword(repositories, account.id);
       return { hasPassword };

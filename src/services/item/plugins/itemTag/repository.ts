@@ -3,6 +3,8 @@ import { Brackets, EntityManager } from 'typeorm';
 import { ItemTagType, ResultOf, getChildFromPath } from '@graasp/sdk';
 
 import { AbstractRepository } from '../../../../repositories/AbstractRepository';
+import { EntryNotFoundAfterInsertException } from '../../../../repositories/errors';
+import { AncestorOf } from '../../../../utils/typeorm/treeOperators';
 import { Member } from '../../../member/entities/member';
 import { mapById } from '../../../utils';
 import { Item } from '../../entities/Item';
@@ -22,16 +24,15 @@ export class ItemTagRepository extends AbstractRepository<ItemTag> {
     super(ItemTag, manager);
   }
 
-  async getType(item: Item, tagType: ItemTagType, { shouldThrow = false } = {}) {
+  async getType(itemPath: Item['path'], tagType: ItemTagType, { shouldThrow = false } = {}) {
     const hasTag = await this.repository
       .createQueryBuilder('itemTag')
       .leftJoinAndSelect('itemTag.item', 'item')
-      .where('item.path @> :path', { path: item.path })
+      .where('item.path @> :path', { path: itemPath })
       .andWhere('itemTag.type = :type', { type: tagType })
       .getOne();
 
     if (shouldThrow && !hasTag) {
-      // TODO
       throw new ItemTagNotFound(tagType);
     }
 
@@ -173,14 +174,18 @@ export class ItemTagRepository extends AbstractRepository<ItemTag> {
    * @param  {ItemTagType} type
    */
   async post(creator: Member, item: Item, type: ItemTagType) {
-    const existingTag = await this.getType(item, type);
+    const existingTag = await this.getType(item.path, type);
     if (existingTag) {
       throw new ConflictingTagsInTheHierarchy({ item, type });
     }
 
     const entry = { item: { path: item.path }, type, creator };
     const created = await this.repository.insert(entry);
-    return this.repository.findOneBy({ id: created.identifiers[0].id });
+    const result = await this.repository.findOneBy({ id: created.identifiers[0].id });
+    if (!result) {
+      throw new EntryNotFoundAfterInsertException(ItemTag);
+    }
+    return result;
   }
 
   /**
@@ -212,7 +217,7 @@ export class ItemTagRepository extends AbstractRepository<ItemTag> {
   }
 
   async isNotInherited(item: Item, type: ItemTagType, { shouldThrow = true } = {}) {
-    const entry = await this.getType(item, type);
+    const entry = await this.getType(item.path, type);
     if (entry && entry.item.path !== item.path && shouldThrow) {
       throw new CannotModifyParentTag(entry);
     }
@@ -231,12 +236,11 @@ export class ItemTagRepository extends AbstractRepository<ItemTag> {
    * Get all tags for one item
    * @param  {Item} item
    */
-  async getForItem(item: Item) {
-    return this.repository
-      .createQueryBuilder('itemTag')
-      .leftJoinAndSelect('itemTag.item', 'item')
-      .where('item.path @> :path', { path: item.path })
-      .getMany();
+  async getByItemPath(itemPath: string) {
+    return this.repository.find({
+      where: { item: { path: AncestorOf(itemPath) } },
+      relations: { item: true },
+    });
   }
 
   /**
@@ -289,7 +293,7 @@ export class ItemTagRepository extends AbstractRepository<ItemTag> {
    */
   async copyAll(creator: Member, original: Item, copy: Item, excludeTypes?: ItemTagType[]) {
     // delete from parent only
-    const itemTags = await this.getForItem(original);
+    const itemTags = await this.getByItemPath(original.path);
     if (itemTags) {
       await this.repository.insert(
         itemTags

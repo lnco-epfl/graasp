@@ -1,139 +1,101 @@
-import { MAX_TARGETS_FOR_READ_REQUEST } from '@graasp/sdk';
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
 
-import { UUID_REGEX } from '../../../../schemas/global';
-import { itemTag, itemTagType } from '../../fluent-schema';
+import { ItemTagType, MAX_TARGETS_FOR_READ_REQUEST } from '@graasp/sdk';
 
-export default {
-  $id: 'https://graasp.org/item-tags/',
-  definitions: {
-    itemIdParam: {
-      type: 'object',
-      required: ['itemId'],
-      properties: {
-        itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      },
+import { customType, registerSchemaAsRef } from '../../../../plugins/typebox';
+import { UUID_REGEX, errorSchemaRef } from '../../../../schemas/global';
+import { nullableMemberSchemaRef } from '../../../member/schemas';
+import { itemIdSchemaRef, itemTagSchemaRef } from '../../schema';
+
+export const tagSchemaRef = registerSchemaAsRef(
+  'tag',
+  'Tag',
+  Type.Object(
+    {
+      // Object definition
+      id: customType.UUID(),
+      name: Type.String(),
+      nested: Type.String(),
+      createdAt: customType.DateTime(),
     },
-
-    idParam: {
-      type: 'object',
-      required: ['id'],
-      properties: {
-        id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      },
-    },
-
-    // item tag properties to be returned to the client
-    itemTagType,
-
-    // item tag properties to be returned to the client
-    itemTag,
-
-    // item tag properties required at creation
-    createPartialItemTag: {
-      type: 'object',
-      required: ['tagId'],
-      properties: {
-        tagId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      },
+    {
+      // Schema options
       additionalProperties: false,
     },
-
-    // tag
-    tag: {
-      type: 'object',
-      properties: {
-        id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-        name: { type: 'string' },
-        nested: { type: 'string' },
-        createdAt: { type: 'string' },
-      },
-      additionalProperties: false,
-    },
-  },
-};
+  ),
+);
 
 // schema for creating an item tag
 const create = {
-  params: {
-    type: 'object',
-    properties: {
-      itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      type: { $ref: 'https://graasp.org/item-tags/#/definitions/itemTagType' },
+  params: Type.Object(
+    {
+      itemId: customType.UUID(),
+      type: Type.Enum(ItemTagType),
     },
-  },
+    { additionalProperties: false },
+  ),
   response: {
-    201: { $ref: 'https://graasp.org/item-tags/#/definitions/itemTag' },
+    [StatusCodes.CREATED]: Type.Object(
+      {
+        id: customType.UUID(),
+        type: Type.Enum(ItemTagType),
+        item: Type.Object({ path: Type.String() }),
+        creator: Type.Optional(nullableMemberSchemaRef),
+        createdAt: customType.DateTime(),
+      },
+      {
+        additionalProperties: false,
+      },
+    ),
   },
 };
 
 // schema for getting an item's tags
 const getItemTags = {
-  params: { $ref: 'https://graasp.org/item-tags/#/definitions/itemIdParam' },
+  params: itemIdSchemaRef,
   response: {
-    200: {
-      type: 'array',
-      items: { $ref: 'https://graasp.org/item-tags/#/definitions/itemTag' },
-    },
+    [StatusCodes.OK]: Type.Array(itemTagSchemaRef),
   },
 };
 
 const getMany = {
-  querystring: {
-    allOf: [
-      { $ref: 'https://graasp.org/#/definitions/idsQuery' },
-      {
-        type: 'object',
-        properties: { id: { type: 'array', minItems: 1, maxItems: MAX_TARGETS_FOR_READ_REQUEST } },
-      },
-    ],
-  },
+  querystring: Type.Object({
+    id: Type.Array(customType.UUID(), {
+      uniqueItems: true,
+      minItems: 1,
+      maxItems: MAX_TARGETS_FOR_READ_REQUEST,
+    }),
+  }),
   response: {
-    200: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'object',
-          patternProperties: {
-            [UUID_REGEX]: {
-              type: 'array',
-              items: {
-                $ref: 'https://graasp.org/item-tags/#/definitions/itemTag',
-              },
-            },
-          },
-        },
-        errors: {
-          type: 'array',
-          items: {
-            $ref: 'https://graasp.org/#/definitions/error',
-          },
-        },
+    [StatusCodes.OK]: Type.Object(
+      {
+        data: Type.Record(Type.String({ pattern: UUID_REGEX }), Type.Array(itemTagSchemaRef)),
+        errors: Type.Array(errorSchemaRef),
       },
-    },
+      { additionalProperties: false },
+    ),
   },
 };
 
 // schema for deleting an item tag
 const deleteOne = {
-  params: {
-    type: 'object',
-    properties: {
-      itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      type: { $ref: 'https://graasp.org/item-tags/#/definitions/itemTagType' },
+  params: Type.Object(
+    {
+      itemId: customType.UUID(),
+      type: Type.Enum(ItemTagType),
     },
-  },
+    { additionalProperties: false },
+  ),
   response: {
-    200: { $ref: 'https://graasp.org/item-tags/#/definitions/itemTag' },
+    [StatusCodes.OK]: Type.Object({ item: Type.Object({ path: Type.String() }) }),
   },
 };
 
 // schema for getting available tags
 const getTags = {
   response: {
-    200: {
-      type: 'array',
-      items: { $ref: 'https://graasp.org/item-tags/#/definitions/tag' },
-    },
+    [StatusCodes.OK]: Type.Array(tagSchemaRef),
   },
 };
 

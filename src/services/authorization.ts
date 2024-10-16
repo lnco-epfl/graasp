@@ -1,6 +1,12 @@
 import { FastifyRequest, RouteGenericInterface, RouteHandlerMethod } from 'fastify';
 
-import { ItemTagType, PermissionLevel, PermissionLevelCompare, ResultOf } from '@graasp/sdk';
+import {
+  ItemTagType,
+  PermissionLevel,
+  PermissionLevelCompare,
+  ResultOf,
+  getChildFromPath,
+} from '@graasp/sdk';
 
 import {
   InsufficientPermission,
@@ -14,8 +20,11 @@ import { ItemWrapper, PackedItem } from './item/ItemWrapper';
 import { Item } from './item/entities/Item';
 import { ItemTag } from './item/plugins/itemTag/ItemTag';
 import { ItemTagRepository } from './item/plugins/itemTag/repository';
+import { ItemTagService } from './item/plugins/itemTag/service';
+import { ItemsThumbnails } from './item/plugins/thumbnail/types';
 import { ItemMembership } from './itemMembership/entities/ItemMembership';
 import { ItemMembershipRepository } from './itemMembership/repository';
+import { ItemMembershipService } from './itemMembership/service';
 import { Actor } from './member/entities/member';
 
 const permissionMapping = {
@@ -38,7 +47,7 @@ export const validatePermissionMany = async (
     itemMembershipRepository,
     itemTagRepository,
   }: {
-    itemMembershipRepository: typeof ItemMembershipRepository;
+    itemMembershipRepository: ItemMembershipRepository;
     itemTagRepository: ItemTagRepository;
   },
   permission: PermissionLevel,
@@ -58,7 +67,7 @@ export const validatePermissionMany = async (
 
   // batch request for all items
   const inheritedMemberships = actor
-    ? await itemMembershipRepository.getInheritedMany(items, actor, true)
+    ? await itemMembershipRepository.getInheritedMany(items, actor.id, true)
     : null;
   const tags = await itemTagRepository.getManyForMany(items, [
     ItemTagType.Public,
@@ -126,12 +135,29 @@ export const validatePermissionMany = async (
   return { itemMemberships: resultOfMemberships, tags };
 };
 
+export const hasPermission = async (
+  repositories: {
+    itemMembershipRepository: ItemMembershipRepository;
+    itemTagRepository: ItemTagRepository;
+  },
+  permission: PermissionLevel,
+  actor: Actor,
+  item: Item,
+) => {
+  try {
+    await validatePermission(repositories, permission, actor, item);
+    return true;
+  } catch (err: unknown) {
+    return false;
+  }
+};
+
 export const validatePermission = async (
   {
     itemMembershipRepository,
     itemTagRepository,
   }: {
-    itemMembershipRepository: typeof ItemMembershipRepository;
+    itemMembershipRepository: ItemMembershipRepository;
     itemTagRepository: ItemTagRepository;
   },
   permission: PermissionLevel,
@@ -142,12 +168,12 @@ export const validatePermission = async (
   // but do not fetch membership for signed out member
 
   const inheritedMembership = actor
-    ? await itemMembershipRepository.getInherited(item, actor, true)
+    ? await itemMembershipRepository.getInherited(item.path, actor.id, true)
     : null;
   const highest = inheritedMembership?.permission;
   const isValid = highest && permissionMapping[highest].includes(permission);
   let isPublic = false;
-  const tags = await itemTagRepository.getForItem(item);
+  const tags = await itemTagRepository.getByItemPath(item.path);
   if (highest === PermissionLevel.Read || permission === PermissionLevel.Read) {
     isPublic = Boolean(tags.find((t) => t.type === ItemTagType.Public));
   }
@@ -237,7 +263,7 @@ const _filterOutItems = async (
  *  */
 export const filterOutItems = async (
   actor: Actor,
-  repositories,
+  repositories: Repositories,
   items: Item[],
 ): Promise<Item[]> => {
   return (await _filterOutItems(actor, repositories, items)).items;
@@ -248,8 +274,9 @@ export const filterOutItems = async (
  *  */
 export const filterOutPackedItems = async (
   actor: Actor,
-  repositories,
+  repositories: Repositories,
   items: Item[],
+  itemsThumbnails?: ItemsThumbnails,
   options?: { showHidden?: boolean },
 ): Promise<PackedItem[]> => {
   const {
@@ -261,11 +288,13 @@ export const filterOutPackedItems = async (
     const permission = PermissionLevelCompare.getHighest(
       memberships[item.id]?.map(({ permission }) => permission),
     );
+    const thumbnails = itemsThumbnails?.[item.id];
     // return packed item
     return new ItemWrapper(
       item,
       permission ? { permission } : undefined,
       tags?.data[item.id],
+      thumbnails,
     ).packed();
   });
 };
@@ -277,9 +306,10 @@ export const filterOutPackedItems = async (
  *  */
 export const filterOutPackedDescendants = async (
   actor: Actor,
-  repositories,
+  repositories: Repositories,
   item: Item,
   descendants: Item[],
+  itemsThumbnails?: ItemsThumbnails,
   options?: { showHidden?: boolean },
 ): Promise<PackedItem[]> => {
   const { itemMembershipRepository, itemTagRepository } = repositories;
@@ -290,7 +320,7 @@ export const filterOutPackedDescendants = async (
   }
 
   const allMemberships = actor
-    ? await itemMembershipRepository.getAllBelow(item, actor.id, {
+    ? await itemMembershipRepository.getAllBelow(item.path, actor.id, {
         considerLocal: true,
         selectItem: true,
       })
@@ -310,7 +340,12 @@ export const filterOutPackedDescendants = async (
         const permission = PermissionLevelCompare.getHighest(permissions);
         const itemTags = tags.filter((t) => item.path.includes(t.item.path));
 
-        return new ItemWrapper(item, permission ? { permission } : undefined, itemTags).packed();
+        return new ItemWrapper(
+          item,
+          permission ? { permission } : undefined,
+          itemTags,
+          itemsThumbnails?.[item.id],
+        ).packed();
       })
       .filter((i) => {
         if (i.hidden && !showHidden) {
@@ -372,3 +407,34 @@ export type RessourceAuthorizationStrategy<
   test: (req: FastifyRequest<R>) => boolean;
   error?: new () => Error;
 };
+
+export async function isItemVisible(
+  actor: Actor,
+  repositories: Repositories,
+  {
+    itemTagService,
+    itemMembershipService,
+  }: { itemTagService: ItemTagService; itemMembershipService: ItemMembershipService },
+  itemPath: Item['path'],
+) {
+  const isHidden = await itemTagService.has(repositories, itemPath, ItemTagType.Hidden);
+  // If the item is hidden AND there is no membership with the user, then throw an error
+  if (isHidden) {
+    if (!actor) {
+      // If actor is not provided, then there is no membership
+      return false;
+    }
+
+    // Check if the actor has at least write permission
+    const membership = await itemMembershipService.getByAccountAndItem(
+      repositories,
+      actor?.id,
+      getChildFromPath(itemPath),
+    );
+    if (!membership || PermissionLevelCompare.lt(membership.permission, PermissionLevel.Write)) {
+      return false;
+    }
+  }
+
+  return true;
+}

@@ -24,7 +24,6 @@ import {
   CannotReorderRootItem,
   InvalidMembership,
   ItemNotFolder,
-  MemberCannotWriteItem,
   MissingNameOrTypeForItemError,
   TooManyChildren,
   TooManyDescendants,
@@ -50,12 +49,14 @@ import { FolderItem, Item, isItemType } from './entities/Item';
 import { ItemGeolocation } from './plugins/geolocation/ItemGeolocation';
 import { PartialItemGeolocation } from './plugins/geolocation/errors';
 import { ItemTag } from './plugins/itemTag/ItemTag';
+import { ItemThumbnailService } from './plugins/thumbnail/service';
 import { ItemChildrenParams, ItemSearchParams } from './types';
 
 @singleton()
 export class ItemService {
-  private log: BaseLogger;
-  private thumbnailService: ThumbnailService;
+  private readonly log: BaseLogger;
+  private readonly thumbnailService: ThumbnailService;
+  private readonly itemThumbnailService: ItemThumbnailService;
 
   hooks = new HookManager<{
     create: { pre: { item: Partial<Item> }; post: { item: Item } };
@@ -80,8 +81,13 @@ export class ItemService {
     };
   }>();
 
-  constructor(thumbnailService: ThumbnailService, log: BaseLogger) {
+  constructor(
+    thumbnailService: ThumbnailService,
+    itemThumbnailService: ItemThumbnailService,
+    log: BaseLogger,
+  ) {
     this.thumbnailService = thumbnailService;
+    this.itemThumbnailService = itemThumbnailService;
     this.log = log;
   }
 
@@ -121,7 +127,11 @@ export class ItemService {
     if (parentId) {
       this.log.debug(`verify parent ${parentId} exists and has permission over it`);
       parentItem = await this.get(member, repositories, parentId, PermissionLevel.Write);
-      inheritedMembership = await itemMembershipRepository.getInherited(parentItem, member, true);
+      inheritedMembership = await itemMembershipRepository.getInherited(
+        parentItem.path,
+        member.id,
+        true,
+      );
 
       // quick check, necessary for ts
       if (!isItemType(parentItem, ItemType.FOLDER)) {
@@ -159,10 +169,10 @@ export class ItemService {
       PermissionLevelCompare.lt(inheritedMembership?.permission, PermissionLevel.Admin)
     ) {
       this.log.debug(`create membership for ${createdItem.id}`);
-      await itemMembershipRepository.post({
-        item: createdItem,
-        account: member,
-        creator: member,
+      await itemMembershipRepository.addOne({
+        itemPath: createdItem.path,
+        accountId: member.id,
+        creatorId: member.id,
         permission: PermissionLevel.Admin,
       });
     }
@@ -258,8 +268,9 @@ export class ItemService {
     permission: PermissionLevel = PermissionLevel.Read,
   ) {
     const { item, itemMembership, tags } = await this._get(actor, repositories, id, permission);
+    const thumbnails = await this.itemThumbnailService.getUrlsByItems([item]);
 
-    return new ItemWrapper(item, itemMembership, tags).packed();
+    return new ItemWrapper(item, itemMembership, tags, thumbnails[item.id]).packed();
   }
 
   /**
@@ -322,7 +333,9 @@ export class ItemService {
   async getManyPacked(actor: Actor, repositories: Repositories, ids: string[]) {
     const { items, itemMemberships, tags } = await this._getMany(actor, repositories, ids);
 
-    return ItemWrapper.mergeResult(items, itemMemberships, tags);
+    const thumbnails = await this.itemThumbnailService.getUrlsByItems(Object.values(items.data));
+
+    return ItemWrapper.mergeResult(items, itemMemberships, tags, thumbnails);
   }
 
   async getAccessible(
@@ -346,6 +359,7 @@ export class ItemService {
     const packedItems = await ItemWrapper.createPackedItems(
       member,
       repositories,
+      this.itemThumbnailService,
       memberships.map(({ item }) => item),
       resultOfMembership,
     );
@@ -393,9 +407,10 @@ export class ItemService {
     params?: ItemChildrenParams,
   ) {
     const children = await this._getChildren(actor, repositories, itemId, params);
+    const thumbnails = await this.itemThumbnailService.getUrlsByItems(children);
 
     // TODO optimize?
-    return filterOutPackedItems(actor, repositories, children);
+    return filterOutPackedItems(actor, repositories, children, thumbnails);
   }
 
   private async getDescendants(
@@ -433,7 +448,8 @@ export class ItemService {
     if (!descendants.length) {
       return [];
     }
-    return filterOutPackedDescendants(actor, repositories, item, descendants, options);
+    const thumbnails = await this.itemThumbnailService.getUrlsByItems(descendants);
+    return filterOutPackedDescendants(actor, repositories, item, descendants, thumbnails, options);
   }
 
   async getParents(actor: Actor, repositories: Repositories, itemId: UUID) {
@@ -450,7 +466,8 @@ export class ItemService {
     // remove parents actor does not have access
     const parentsIds = Object.keys(itemMemberships.data);
     const items = parents.filter((p) => parentsIds.includes(p.id));
-    return ItemWrapper.merge(items, itemMemberships, tags);
+    const thumbnails = await this.itemThumbnailService.getUrlsByItems(items);
+    return ItemWrapper.merge(items, itemMemberships, tags, thumbnails);
   }
 
   async patch(member: Member, repositories: Repositories, itemId: UUID, body: Partial<Item>) {
@@ -469,24 +486,6 @@ export class ItemService {
     await this.hooks.runPostHooks('update', member, repositories, { item: updated });
 
     return updated;
-  }
-
-  async patchMany(
-    member: Member,
-    repositories: Repositories,
-    itemIds: UUID[],
-    body: Partial<Item>,
-  ): Promise<ResultOf<Item>> {
-    // TODO: extra + settings
-    const ops = await Promise.all(
-      itemIds.map(async (id) => this.patch(member, repositories, id, body)),
-    );
-
-    return mapById({
-      keys: itemIds,
-      findElement: (id) => ops.find(({ id: thisId }) => id === thisId),
-      buildError: (id) => new MemberCannotWriteItem(id),
-    });
   }
 
   // QUESTION? DELETE BY PATH???
@@ -651,10 +650,10 @@ export class ItemService {
 
     // adjust memberships to keep the constraints
     if (inserts.length) {
-      await itemMembershipRepository.createMany(inserts);
+      await itemMembershipRepository.addMany(inserts);
     }
     if (deletes.length) {
-      await itemMembershipRepository.deleteMany(deletes);
+      await itemMembershipRepository.deleteManyByItemPathAndAccount(deletes);
     }
 
     return result;
@@ -705,10 +704,10 @@ export class ItemService {
 
     // create a membership if needed
     await itemMembershipRepository
-      .post({
-        item: copyRoot,
-        account: member,
-        creator: member,
+      .addOne({
+        itemPath: copyRoot.path,
+        accountId: member.id,
+        creatorId: member.id,
         permission: PermissionLevel.Admin,
       })
       .catch((e) => {

@@ -6,16 +6,17 @@
  * Implements back-end functionalities for chatboxes
  * in Graasp as a fastify server plugin
  */
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import fp from 'fastify-plugin';
 
 import { resolveDependency } from '../../di/utils';
+import { FastifyInstanceTypebox } from '../../plugins/typebox';
 import {
   EntityNotFound,
   EntryNotFoundAfterUpdateException,
   EntryNotFoundBeforeDeleteException,
 } from '../../repositories/errors';
-import { notUndefined } from '../../utils/assertions';
+import { asDefined, assertIsMemberOrGuest } from '../../utils/assertions';
 import { buildRepositories } from '../../utils/repositories';
 import { isAuthenticated, optionalIsAuthenticated } from '../auth/plugins/passport';
 import { matchOne } from '../authorization';
@@ -25,13 +26,7 @@ import { validatedMemberAccountRole } from '../member/strategies/validatedMember
 import { ChatMessageNotFound } from './errors';
 import { ActionChatService } from './plugins/action/service';
 import mentionPlugin from './plugins/mentions';
-import commonChat, {
-  clearChat,
-  deleteMessage,
-  getChat,
-  patchMessage,
-  publishMessage,
-} from './schemas';
+import { clearChat, deleteMessage, getChat, patchMessage, publishMessage } from './schemas';
 import { ChatMessageService } from './service';
 import { registerChatWsHooks } from './ws/hooks';
 
@@ -42,9 +37,7 @@ export interface GraaspChatPluginOptions {
   prefix?: string;
 }
 
-const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
-  fastify.addSchema(commonChat);
-
+const plugin: FastifyPluginAsyncTypebox<GraaspChatPluginOptions> = async (fastify) => {
   await fastify.register(fp(mentionPlugin));
 
   const { db, websockets: websockets } = fastify;
@@ -55,24 +48,21 @@ const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
 
   // isolate plugin content using fastify.register to ensure that the hooks will not be called when other routes match
   // routes associated with mentions should not trigger the action hook
-  fastify.register(async function (fastify) {
+  fastify.register(async (fastify: FastifyInstanceTypebox) => {
     // register websocket behaviours for chats
     if (websockets) {
       registerChatWsHooks(buildRepositories(), websockets, chatService, itemService);
     }
 
-    fastify.get<{ Params: { itemId: string } }>(
+    fastify.get(
       '/:itemId/chat',
       { schema: getChat, preHandler: optionalIsAuthenticated },
       async ({ user, params: { itemId } }) => {
-        return chatService.getForItem(user?.account, buildRepositories(), itemId);
+        return await chatService.getForItem(user?.account, buildRepositories(), itemId);
       },
     );
 
-    fastify.post<{
-      Params: { itemId: string };
-      Body: { body: string; mentions: string[] };
-    }>(
+    fastify.post(
       '/:itemId/chat',
       {
         schema: publishMessage,
@@ -84,10 +74,11 @@ const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
           params: { itemId },
           body,
         } = request;
-        const member = notUndefined(user?.account);
+        const account = asDefined(user?.account);
+        assertIsMemberOrGuest(account);
         return await db.transaction(async (manager) => {
           const repositories = buildRepositories(manager);
-          const message = await chatService.postOne(member, repositories, itemId, body);
+          const message = await chatService.postOne(account, repositories, itemId, body);
           await actionChatService.postPostMessageAction(request, repositories, message);
           return message;
         });
@@ -98,10 +89,7 @@ const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
      * Patch Chat Message
      * ignore mentions
      *  */
-    fastify.patch<{
-      Params: { itemId: string; messageId: string };
-      Body: { body: string };
-    }>(
+    fastify.patch(
       '/:itemId/chat/:messageId',
       {
         schema: patchMessage,
@@ -115,7 +103,7 @@ const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
         } = request;
         try {
           return await db.transaction(async (manager) => {
-            const member = notUndefined(user?.account);
+            const member = asDefined(user?.account);
             const repositories = buildRepositories(manager);
             const message = await chatService.patchOne(
               member,
@@ -137,7 +125,7 @@ const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
     );
 
     // delete message
-    fastify.delete<{ Params: { itemId: string; messageId: string } }>(
+    fastify.delete(
       '/:itemId/chat/:messageId',
       {
         schema: deleteMessage,
@@ -148,7 +136,7 @@ const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
           user,
           params: { itemId, messageId },
         } = request;
-        const member = notUndefined(user?.account);
+        const member = asDefined(user?.account);
         try {
           return await db.transaction(async (manager) => {
             const repositories = buildRepositories(manager);
@@ -166,7 +154,7 @@ const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
     );
 
     // clear chat
-    fastify.delete<{ Params: { itemId: string } }>(
+    fastify.delete(
       '/:itemId/chat',
       {
         schema: clearChat,
@@ -177,7 +165,7 @@ const plugin: FastifyPluginAsync<GraaspChatPluginOptions> = async (fastify) => {
           user,
           params: { itemId },
         } = request;
-        const member = notUndefined(user?.account);
+        const member = asDefined(user?.account);
         await db.transaction(async (manager) => {
           const repositories = buildRepositories(manager);
           await chatService.clear(member, repositories, itemId);

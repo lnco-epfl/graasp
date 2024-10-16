@@ -1,4 +1,5 @@
 import { fastifyHelmet } from '@fastify/helmet';
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { fastify } from 'fastify';
 
 import registerAppPlugins from './app';
@@ -27,10 +28,12 @@ const start = async () => {
         // This allow routes that take array to correctly interpret single values as an array
         // https://github.com/fastify/fastify/blob/main/docs/Validation-and-Serialization.md
         coerceTypes: 'array',
+        // This enables the use of discriminator keyword in oneof or anyof in schemas so it optimizes validation.
+        discriminator: true,
       },
       plugins: [ajvFormats],
     },
-  });
+  }).withTypeProvider<TypeBoxTypeProvider>();
 
   const { Sentry } = initSentry(instance);
 

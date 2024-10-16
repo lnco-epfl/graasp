@@ -1,51 +1,38 @@
+import { Type } from '@sinclair/typebox';
+
+import { FastifySchema } from 'fastify';
+
 import { ThumbnailSize } from '@graasp/sdk';
 
-const upload = {
-  params: {
-    type: 'object',
-    properties: {
-      id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-    additionalProperties: false,
-  },
-};
+import { customType } from '../../../../plugins/typebox';
+import { entityIdSchemaRef } from '../../../../schemas/global';
 
-const download = {
-  params: {
-    allOf: [
-      { $ref: 'https://graasp.org/#/definitions/idParam' },
-      {
-        type: 'object',
-        properties: {
-          size: {
-            enum: Object.values(ThumbnailSize),
-            default: ThumbnailSize.Medium,
-          },
-        },
-        required: ['size'],
-      },
-    ],
-  },
-  querystring: {
-    type: 'object',
-    properties: {
-      replyUrl: {
-        type: 'boolean',
-        default: false,
-      },
-    },
-    additionalProperties: false,
-  },
-};
+export const upload = {
+  params: entityIdSchemaRef,
+} as const satisfies FastifySchema;
 
-const deleteSchema = {
-  params: {
-    type: 'object',
-    properties: {
-      id: { $ref: 'https://graasp.org/#/definitions/uuid' },
+export const download = {
+  params: Type.Object(
+    {
+      // Object Definition
+      id: customType.UUID(),
+      size: Type.Enum(ThumbnailSize, { default: ThumbnailSize.Medium }),
     },
-    additionalProperties: false,
-  },
-};
+    {
+      // Schema Options
+      additionalProperties: false,
+    },
+  ),
+  querystring: Type.Object(
+    {
+      replyUrl: Type.Boolean({ default: false }),
+    },
+    {
+      additionalProperties: false,
+    },
+  ),
+} as const satisfies FastifySchema;
 
-export { upload, download, deleteSchema };
+export const deleteSchema = {
+  params: entityIdSchemaRef,
+} as const satisfies FastifySchema;

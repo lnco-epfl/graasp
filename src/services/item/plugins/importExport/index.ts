@@ -1,13 +1,14 @@
 import { StatusCodes } from 'http-status-codes';
+import { default as sanitize } from 'sanitize-filename';
 
 import { fastifyMultipart } from '@fastify/multipart';
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import { ActionTriggers, ItemType } from '@graasp/sdk';
+import { ActionTriggers, ItemType, MAX_ZIP_FILE_SIZE } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../di/utils';
 import { BaseLogger } from '../../../../logger';
-import { notUndefined } from '../../../../utils/assertions';
+import { asDefined } from '../../../../utils/assertions';
 import { buildRepositories } from '../../../../utils/repositories';
 import { ActionService } from '../../../action/services/action';
 import { isAuthenticated, optionalIsAuthenticated } from '../../../auth/plugins/passport';
@@ -15,14 +16,17 @@ import { matchOne } from '../../../authorization';
 import { assertIsMember } from '../../../member/entities/member';
 import { validatedMemberAccountRole } from '../../../member/strategies/validatedMemberAccountRole';
 import { ItemService } from '../../service';
-import { DEFAULT_MAX_FILE_SIZE } from '../file/utils/constants';
 import { ZIP_FILE_MIME_TYPES } from './constants';
 import { FileIsInvalidArchiveError } from './errors';
 import { zipExport, zipImport } from './schema';
 import { ImportExportService } from './service';
 import { prepareZip } from './utils';
 
-const plugin: FastifyPluginAsync = async (fastify) => {
+function encodeFilename(name: string) {
+  return encodeURI(sanitize(name, { replacement: '_' }));
+}
+
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const log = resolveDependency(BaseLogger);
   const itemService = resolveDependency(ItemService);
   const actionService = resolveDependency(ActionService);
@@ -33,13 +37,13 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       // fieldNameSize: 0,             // Max field name size in bytes (Default: 100 bytes).
       // fieldSize: 1000000,           // Max field value size in bytes (Default: 1MB).
       fields: 0, // Max number of non-file fields (Default: Infinity).
-      fileSize: DEFAULT_MAX_FILE_SIZE, // For multipart forms, the max file size (Default: Infinity).
+      fileSize: MAX_ZIP_FILE_SIZE, // For multipart forms, the max file size (Default: Infinity).
       files: 1, // Max number of file fields (Default: Infinity).
       // headerPairs: 2000             // Max number of header key=>value pairs (Default: 2000 - same as node's http).
     },
   });
 
-  fastify.post<{ Querystring: { parentId?: string } }>(
+  fastify.post(
     '/zip-import',
     { schema: zipImport, preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)] },
     async (request, reply) => {
@@ -48,7 +52,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         log,
         query: { parentId },
       } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
 
       log.debug('Import zip content');
@@ -84,12 +88,13 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   // download item
-  fastify.route<{ Params: { itemId: string } }>({
-    method: 'GET',
-    url: '/:itemId/export',
-    schema: zipExport,
-    preHandler: optionalIsAuthenticated,
-    handler: async (request, reply) => {
+  fastify.get(
+    '/:itemId/export',
+    {
+      schema: zipExport,
+      preHandler: optionalIsAuthenticated,
+    },
+    async (request, reply) => {
       const {
         user,
         params: { itemId },
@@ -119,7 +124,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
 
         reply.raw.setHeader(
           'Content-Disposition',
-          `attachment; filename="${encodeURIComponent(name)}"`,
+          `attachment; filename="${encodeFilename(name)}"`,
         );
         reply.type(mimetype);
 
@@ -138,10 +143,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       );
 
       try {
-        reply.raw.setHeader(
-          'Content-Disposition',
-          `filename="${encodeURIComponent(item.name)}.zip"`,
-        );
+        reply.raw.setHeader('Content-Disposition', `filename="${encodeFilename(item.name)}.zip"`);
       } catch (e) {
         // TODO: send sentry error
         log?.error(e);
@@ -150,7 +152,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       reply.type('application/octet-stream');
       return archiveStream.outputStream;
     },
-  });
+  );
 };
 
 export default plugin;

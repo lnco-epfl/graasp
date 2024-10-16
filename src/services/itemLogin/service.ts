@@ -1,49 +1,44 @@
-import { FastifyInstance } from 'fastify';
+import { singleton } from 'tsyringe';
 
-import { ItemLoginSchemaType, PermissionLevel, UUID } from '@graasp/sdk';
+import { ItemLoginSchemaStatus, PermissionLevel, UUID } from '@graasp/sdk';
 
-import { assertNonNull, notUndefined } from '../../utils/assertions';
+import { asDefined, assertIsDefined } from '../../utils/assertions';
 import { InvalidPassword } from '../../utils/errors';
 import { Repositories } from '../../utils/repositories';
 import { verifyCurrentPassword } from '../auth/plugins/password/utils';
-import { ItemService } from '../item/service';
-import { Actor, Member } from '../member/entities/member';
+import { Actor } from '../member/entities/member';
 import { Guest } from './entities/guest';
 import { ItemLoginSchema } from './entities/itemLoginSchema';
-import { MissingCredentialsForLoginSchema } from './errors';
+import {
+  CannotRegisterOnFrozenItemLoginSchema,
+  ItemLoginSchemaNotFound,
+  MissingCredentialsForLoginSchema,
+} from './errors';
 import { ItemLoginMemberCredentials } from './interfaces/item-login';
 import { loginSchemaRequiresPassword } from './utils';
 
+@singleton()
 export class ItemLoginService {
-  fastify: FastifyInstance;
-  private itemService: ItemService;
-
-  constructor(fastify: FastifyInstance, itemService: ItemService) {
-    this.fastify = fastify;
-    this.itemService = itemService;
-  }
-
-  async get(actor: Actor, repositories: Repositories, itemId: string) {
-    const item = await this.itemService.get(actor, repositories, itemId, PermissionLevel.Admin);
-    const itemLoginSchema = await repositories.itemLoginSchemaRepository.getForItemPath(item.path, {
-      shouldExist: true,
-    });
-    return itemLoginSchema;
-  }
-
-  async getSchemaType(actor: Actor, repositories: Repositories, itemId: string) {
-    const item = await repositories.itemRepository.getOneOrThrow(itemId);
+  async getSchemaType(actor: Actor, repositories: Repositories, itemPath: string) {
     // do not need permission to get item login schema
     // we need to know the schema to display the correct form
-    const itemLoginSchema = await repositories.itemLoginSchemaRepository.getForItemPath(item.path);
+    const itemLoginSchema = await repositories.itemLoginSchemaRepository.getOneByItemPath(itemPath);
     return itemLoginSchema?.type;
   }
 
-  async login(repositories: Repositories, itemId: string, credentials: ItemLoginMemberCredentials) {
+  async getByItemPath({ itemLoginSchemaRepository }: Repositories, itemPath: string) {
+    return await itemLoginSchemaRepository.getOneByItemPath(itemPath);
+  }
+
+  async logInOrRegister(
+    repositories: Repositories,
+    itemId: string,
+    credentials: ItemLoginMemberCredentials,
+  ) {
     const { username, password } = credentials; // TODO: allow for "empty" username and generate one (anonymous, anonymous+password)
     let bondMember: Guest | undefined = undefined;
     if (username) {
-      bondMember = await this.loginWithUsername(repositories, itemId, {
+      bondMember = await this.logInOrRegisterWithUsername(repositories, itemId, {
         username,
         password,
       });
@@ -53,19 +48,11 @@ export class ItemLoginService {
       // TODO
       throw new Error();
     }
-    // TODO: mobile ???
-    // app client
-    // if (m) {
-    //   // TODO: can this be dangerous? since it's available in the fastify scope?
-    //   // can this be done better with decorators on request/reply?
-    //   const tokens = this.fastify.generateAuthTokensPair(id);
-    //   return Object.assign({ id, name }, { tokens });
-    // }
 
     return bondMember;
   }
 
-  async loginWithUsername(
+  async logInOrRegisterWithUsername(
     repositories: Repositories,
     itemId: UUID,
     { username, password }: { username: string; password?: string },
@@ -82,15 +69,21 @@ export class ItemLoginService {
 
     // initial validation
     // this throws if does not exist
-    const itemLoginSchema = (await itemLoginSchemaRepository.getForItemPath(item.path, {
-      shouldExist: true,
-    })) as ItemLoginSchema;
+    const itemLoginSchema = await itemLoginSchemaRepository.getOneByItemPathOrThrow(
+      item.path,
+      ItemLoginSchemaNotFound,
+      { itemPath: item.path },
+    );
+
+    if (itemLoginSchema.status === ItemLoginSchemaStatus.Disabled) {
+      throw new ItemLoginSchemaNotFound();
+    }
 
     let guestAccount = await guestRepository.getForItemAndUsername(item, username);
 
     // reuse existing item login for this user
     if (guestAccount && loginSchemaRequiresPassword(itemLoginSchema.type)) {
-      password = notUndefined(password, new MissingCredentialsForLoginSchema());
+      password = asDefined(password, MissingCredentialsForLoginSchema);
       const accountPassword = await guestPasswordRepository.getForGuestId(guestAccount.id);
       if (accountPassword) {
         if (!(await verifyCurrentPassword(accountPassword, password))) {
@@ -103,6 +96,10 @@ export class ItemLoginService {
     }
     // create a new item login
     else if (!guestAccount) {
+      if (itemLoginSchema.status === ItemLoginSchemaStatus.Freeze) {
+        throw new CannotRegisterOnFrozenItemLoginSchema();
+      }
+
       // create member w/ `username`
       const data: Partial<Guest> & Pick<Guest, 'name'> = {
         name: username,
@@ -111,22 +108,22 @@ export class ItemLoginService {
 
       if (loginSchemaRequiresPassword(itemLoginSchema.type)) {
         // Check before creating account, so we don't create an account w/o password if it's required
-        notUndefined(password, new MissingCredentialsForLoginSchema());
+        asDefined(password, MissingCredentialsForLoginSchema);
       }
 
       // create account
       guestAccount = await guestRepository.addOne(data);
-      assertNonNull(guestAccount);
+      assertIsDefined(guestAccount);
       if (loginSchemaRequiresPassword(itemLoginSchema.type)) {
-        password = notUndefined(password, new MissingCredentialsForLoginSchema());
+        password = asDefined(password, MissingCredentialsForLoginSchema);
         await guestPasswordRepository.patch(guestAccount.id, password);
       }
 
       // create membership
-      await itemMembershipRepository.post({
-        item,
-        account: guestAccount,
-        creator: guestAccount,
+      await itemMembershipRepository.addOne({
+        itemPath: itemLoginSchema.item.path,
+        accountId: guestAccount.id,
+        creatorId: guestAccount.id,
         permission: PermissionLevel.Read,
       });
     }
@@ -134,24 +131,25 @@ export class ItemLoginService {
     return guestAccount;
   }
 
-  async put(
-    member: Member,
-    repositories: Repositories,
-    itemId: string,
-    type?: ItemLoginSchemaType,
+  async create(
+    { itemLoginSchemaRepository }: Repositories,
+    itemPath: string,
+    type?: ItemLoginSchema['type'],
   ) {
-    const { itemLoginSchemaRepository } = repositories;
-
-    const item = await this.itemService.get(member, repositories, itemId, PermissionLevel.Admin);
-
-    return itemLoginSchemaRepository.put(item, type);
+    return itemLoginSchemaRepository.addOne({ itemPath, type });
   }
 
-  async delete(member: Member, repositories: Repositories, itemId: string) {
+  async update(
+    { itemLoginSchemaRepository }: Repositories,
+    itemId: string,
+    type?: ItemLoginSchema['type'],
+    status?: ItemLoginSchema['status'],
+  ) {
+    return itemLoginSchemaRepository.updateOne(itemId, { type, status });
+  }
+
+  async getOneByItem(repositories: Repositories, itemId: string) {
     const { itemLoginSchemaRepository } = repositories;
-
-    const item = await this.itemService.get(member, repositories, itemId, PermissionLevel.Admin);
-
-    return itemLoginSchemaRepository.deleteForItem(item);
+    return await itemLoginSchemaRepository.getOneByItem(itemId);
   }
 }
