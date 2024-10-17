@@ -187,9 +187,9 @@ services:
     #   - 8061:8061
 
   # necessary for validation
-  nudenet:
-    container_name: graasp-nudenet
-    image: notaitech/nudenet:classifier
+  #nudenet:
+    #container_name: graasp-nudenet
+    #image: notaitech/nudenet:classifier
     # exposing these ports is not necessary
     # ports:
     #   - 8080:8080
