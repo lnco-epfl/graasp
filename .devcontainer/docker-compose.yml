@@ -186,14 +186,6 @@ services:
     # ports:
     #   - 8061:8061
 
-  # necessary for validation
-  nudenet:
-    container_name: graasp-nudenet
-    image: notaitech/nudenet:classifier
-    # exposing these ports is not necessary
-    # ports:
-    #   - 8080:8080
-
   # a mock mailbox on port 1025 (web UI at http://localhost:1080)
   mailer:
     container_name: mailer
