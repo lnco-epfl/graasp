@@ -69,11 +69,13 @@ All notable changes to this project will be documented in this file. See [standa
 ### Features
 
 - add thumbnails urls in PackedItem ([#1398](https://github.com/graasp/graasp/issues/1398)) ([ed473b0](https://github.com/graasp/graasp/commit/ed473b0a813dbbf903060c89832802697f56f140))
+- add thumbnails urls in PackedItem ([#1398](https://github.com/graasp/graasp/issues/1398)) ([ed473b0](https://github.com/graasp/graasp/commit/ed473b0a813dbbf903060c89832802697f56f140))
 
 ## [1.51.0](https://github.com/graasp/graasp/compare/v1.50.2...v1.51.0) (2024-09-27)
 
 ### Features
 
+- freeze or disable item login schema ([#1422](https://github.com/graasp/graasp/issues/1422)) ([2473342](https://github.com/graasp/graasp/commit/24733420e6efa6b09f0ce131b7a041c916836aba))
 - freeze or disable item login schema ([#1422](https://github.com/graasp/graasp/issues/1422)) ([2473342](https://github.com/graasp/graasp/commit/24733420e6efa6b09f0ce131b7a041c916836aba))
 
 ## [1.50.2](https://github.com/graasp/graasp/compare/v1.50.1...v1.50.2) (2024-09-26)
@@ -81,11 +83,13 @@ All notable changes to this project will be documented in this file. See [standa
 ### Bug Fixes
 
 - guest account migration ([#1426](https://github.com/graasp/graasp/issues/1426)) ([4ccec91](https://github.com/graasp/graasp/commit/4ccec9198cbd762c784130f30e49b46df35b9da4))
+- guest account migration ([#1426](https://github.com/graasp/graasp/issues/1426)) ([4ccec91](https://github.com/graasp/graasp/commit/4ccec9198cbd762c784130f30e49b46df35b9da4))
 
 ## [1.50.1](https://github.com/graasp/graasp/compare/v1.50.0...v1.50.1) (2024-09-24)
 
 ### Bug Fixes
 
+- migrate guest account ([#1417](https://github.com/graasp/graasp/issues/1417)) ([306e4fa](https://github.com/graasp/graasp/commit/306e4fa3fc79127e9245e954d77698ff69d189f6))
 - migrate guest account ([#1417](https://github.com/graasp/graasp/issues/1417)) ([306e4fa](https://github.com/graasp/graasp/commit/306e4fa3fc79127e9245e954d77698ff69d189f6))
 
 ## [1.50.0](https://github.com/graasp/graasp/compare/v1.49.0...v1.50.0) (2024-09-23)
@@ -96,9 +100,15 @@ All notable changes to this project will be documented in this file. See [standa
 - item like with typebox ([#1402](https://github.com/graasp/graasp/issues/1402)) ([bb1e057](https://github.com/graasp/graasp/commit/bb1e05728102aae814a5c3b4eab01010215abf89))
 - sanitize filename ([#1374](https://github.com/graasp/graasp/issues/1374)) ([2523506](https://github.com/graasp/graasp/commit/2523506233921ace19c7d9697c3ede0fa9295fa4))
 - **schema refactor:** service account ([#1408](https://github.com/graasp/graasp/issues/1408)) ([63477df](https://github.com/graasp/graasp/commit/63477df8a364761e08957dfd965e40c202a191f4))
+- can create a permission on item login without admin's confirmation ([#1364](https://github.com/graasp/graasp/issues/1364)) ([a2e9f0c](https://github.com/graasp/graasp/commit/a2e9f0c4f0c2223e1a4241927e409972ad73b304))
+- item like with typebox ([#1402](https://github.com/graasp/graasp/issues/1402)) ([bb1e057](https://github.com/graasp/graasp/commit/bb1e05728102aae814a5c3b4eab01010215abf89))
+- sanitize filename ([#1374](https://github.com/graasp/graasp/issues/1374)) ([2523506](https://github.com/graasp/graasp/commit/2523506233921ace19c7d9697c3ede0fa9295fa4))
+- **schema refactor:** service account ([#1408](https://github.com/graasp/graasp/issues/1408)) ([63477df](https://github.com/graasp/graasp/commit/63477df8a364761e08957dfd965e40c202a191f4))
 
 ### Bug Fixes
 
+- deprecate patch member use current member instead ([#1399](https://github.com/graasp/graasp/issues/1399)) ([21ece6c](https://github.com/graasp/graasp/commit/21ece6c133adb8d0e55ea566c60b85f3092589f8))
+- set jest extension to run on-demand instead of watch ([#1401](https://github.com/graasp/graasp/issues/1401)) ([ec14145](https://github.com/graasp/graasp/commit/ec14145aca703c2630df65e7374bc83fbe0b4a8e))
 - deprecate patch member use current member instead ([#1399](https://github.com/graasp/graasp/issues/1399)) ([21ece6c](https://github.com/graasp/graasp/commit/21ece6c133adb8d0e55ea566c60b85f3092589f8))
 - set jest extension to run on-demand instead of watch ([#1401](https://github.com/graasp/graasp/issues/1401)) ([ec14145](https://github.com/graasp/graasp/commit/ec14145aca703c2630df65e7374bc83fbe0b4a8e))
 
@@ -109,9 +119,19 @@ All notable changes to this project will be documented in this file. See [standa
 - add back member key in app endpoints ([#1389](https://github.com/graasp/graasp/issues/1389)) ([2cb9fa3](https://github.com/graasp/graasp/commit/2cb9fa38f771078edd8abe0feed0a2444e764b2e))
 - cannot get item login schema type of hidden item ([#1365](https://github.com/graasp/graasp/issues/1365)) ([1a66c71](https://github.com/graasp/graasp/commit/1a66c71786d5b82b6fd396ecf44ad9ae3d843f45))
 - use max ZIP file size from SDK ([#1373](https://github.com/graasp/graasp/issues/1373)) ([895dce3](https://github.com/graasp/graasp/commit/895dce37937d75ce6effa9cd65774ab00b27b1c1))
+- add back member key in app endpoints ([#1389](https://github.com/graasp/graasp/issues/1389)) ([2cb9fa3](https://github.com/graasp/graasp/commit/2cb9fa38f771078edd8abe0feed0a2444e764b2e))
+- cannot get item login schema type of hidden item ([#1365](https://github.com/graasp/graasp/issues/1365)) ([1a66c71](https://github.com/graasp/graasp/commit/1a66c71786d5b82b6fd396ecf44ad9ae3d843f45))
+- use max ZIP file size from SDK ([#1373](https://github.com/graasp/graasp/issues/1373)) ([895dce3](https://github.com/graasp/graasp/commit/895dce37937d75ce6effa9cd65774ab00b27b1c1))
 
 ### Bug Fixes
 
+- **deps:** update dependency @graasp/translations to v1.36.1 ([#1378](https://github.com/graasp/graasp/issues/1378)) ([e13e75b](https://github.com/graasp/graasp/commit/e13e75be4c8f6c3bfa05b161a823622579a1cee2))
+- **deps:** update dependency bullmq to v5.13.0 ([#1265](https://github.com/graasp/graasp/issues/1265)) ([04bf9fc](https://github.com/graasp/graasp/commit/04bf9fce0256c233a13337cd5a1d295037c7113c))
+- **deps:** update dependency h5p-standalone to v3.7.0 ([#1260](https://github.com/graasp/graasp/issues/1260)) ([e4d81a6](https://github.com/graasp/graasp/commit/e4d81a6ceaeb9e736ffacc7ab07c0896e5b5093f))
+- **deps:** update dependency i18next to v23.12.7 ([#1353](https://github.com/graasp/graasp/issues/1353)) ([9c03393](https://github.com/graasp/graasp/commit/9c033931548336cd031bc2e99a1bba8c96138a43))
+- **deps:** update dependency pdf2pic to v3.1.3 ([#1382](https://github.com/graasp/graasp/issues/1382)) ([69dad6c](https://github.com/graasp/graasp/commit/69dad6cd6bcde843c8a8f1cd32367f9df9bbe4fa))
+- **deps:** update dependency sharp to v0.33.5 ([#1354](https://github.com/graasp/graasp/issues/1354)) ([d172146](https://github.com/graasp/graasp/commit/d17214696f9b2a86c932fe920259e93c97b433bc))
+- **deps:** update dependency uuid to v10 ([#1263](https://github.com/graasp/graasp/issues/1263)) ([13fa2d4](https://github.com/graasp/graasp/commit/13fa2d41cadb2d25233e65457d5ac74ac779c4c6))
 - **deps:** update dependency @graasp/translations to v1.36.1 ([#1378](https://github.com/graasp/graasp/issues/1378)) ([e13e75b](https://github.com/graasp/graasp/commit/e13e75be4c8f6c3bfa05b161a823622579a1cee2))
 - **deps:** update dependency bullmq to v5.13.0 ([#1265](https://github.com/graasp/graasp/issues/1265)) ([04bf9fc](https://github.com/graasp/graasp/commit/04bf9fce0256c233a13337cd5a1d295037c7113c))
 - **deps:** update dependency h5p-standalone to v3.7.0 ([#1260](https://github.com/graasp/graasp/issues/1260)) ([e4d81a6](https://github.com/graasp/graasp/commit/e4d81a6ceaeb9e736ffacc7ab07c0896e5b5093f))
@@ -127,9 +147,19 @@ All notable changes to this project will be documented in this file. See [standa
 - allow exporting etherpad ([#1343](https://github.com/graasp/graasp/issues/1343)) ([df38327](https://github.com/graasp/graasp/commit/df383279160091a00e298fe421f8576860c912a9))
 - item login users are different than members ([#1131](https://github.com/graasp/graasp/issues/1131)) ([48342d4](https://github.com/graasp/graasp/commit/48342d4919f4c1e5652ed8f8b520f53eab984d7d))
 - restrict guest's membership modifications ([#1363](https://github.com/graasp/graasp/issues/1363)) ([9f71c0e](https://github.com/graasp/graasp/commit/9f71c0e9a77d942ba3ab8abbc52d991787b09035))
+- allow exporting etherpad ([#1343](https://github.com/graasp/graasp/issues/1343)) ([df38327](https://github.com/graasp/graasp/commit/df383279160091a00e298fe421f8576860c912a9))
+- item login users are different than members ([#1131](https://github.com/graasp/graasp/issues/1131)) ([48342d4](https://github.com/graasp/graasp/commit/48342d4919f4c1e5652ed8f8b520f53eab984d7d))
+- restrict guest's membership modifications ([#1363](https://github.com/graasp/graasp/issues/1363)) ([9f71c0e](https://github.com/graasp/graasp/commit/9f71c0e9a77d942ba3ab8abbc52d991787b09035))
 
 ### Bug Fixes
 
+- **deps:** update aws-sdk-js-v3 monorepo to v3.637.0 ([#1255](https://github.com/graasp/graasp/issues/1255)) ([2545aed](https://github.com/graasp/graasp/commit/2545aedafba37539a026553f820d657144aaf6ea))
+- **deps:** update dependency @fastify/swagger-ui to v4.0.1 ([#1321](https://github.com/graasp/graasp/issues/1321)) ([d5fccbe](https://github.com/graasp/graasp/commit/d5fccbef9672305a22ad2db7f2fcd850d745dc0f))
+- **deps:** update dependency openai to v4.56.0 ([#1261](https://github.com/graasp/graasp/issues/1261)) ([f0a65c8](https://github.com/graasp/graasp/commit/f0a65c894bb7a51cc304d4ef7dec759ebefc0ce0))
+- **french:** update translations ([#1329](https://github.com/graasp/graasp/issues/1329)) ([ab861b8](https://github.com/graasp/graasp/commit/ab861b86f704bfc3720756e7928d0268ef0b8efd))
+- membership request out of fastify cors scope ([#1352](https://github.com/graasp/graasp/issues/1352)) ([f02c593](https://github.com/graasp/graasp/commit/f02c593b85e74960979689bd6ef8b14ee55716dd))
+- **MutableRepository:** use getOne in updateOne ([#1346](https://github.com/graasp/graasp/issues/1346)) ([55f1730](https://github.com/graasp/graasp/commit/55f1730f1051c38d22a0a4bef968ab8f7497ca00))
+- remove deprecated packages ([#1259](https://github.com/graasp/graasp/issues/1259)) ([8f6f26a](https://github.com/graasp/graasp/commit/8f6f26a08b857e2e231b3fee95affebf4c6fc1a7))
 - **deps:** update aws-sdk-js-v3 monorepo to v3.637.0 ([#1255](https://github.com/graasp/graasp/issues/1255)) ([2545aed](https://github.com/graasp/graasp/commit/2545aedafba37539a026553f820d657144aaf6ea))
 - **deps:** update dependency @fastify/swagger-ui to v4.0.1 ([#1321](https://github.com/graasp/graasp/issues/1321)) ([d5fccbe](https://github.com/graasp/graasp/commit/d5fccbef9672305a22ad2db7f2fcd850d745dc0f))
 - **deps:** update dependency openai to v4.56.0 ([#1261](https://github.com/graasp/graasp/issues/1261)) ([f0a65c8](https://github.com/graasp/graasp/commit/f0a65c894bb7a51cc304d4ef7dec759ebefc0ce0))
@@ -157,6 +187,21 @@ All notable changes to this project will be documented in this file. See [standa
 - **storage files metadata:** default ordering by size ([#1279](https://github.com/graasp/graasp/issues/1279)) ([8e75760](https://github.com/graasp/graasp/commit/8e75760415ec2cd867e18fb33d18cb44be6aade5))
 - update invite invitation to include membership creation ([#1274](https://github.com/graasp/graasp/issues/1274)) ([117a409](https://github.com/graasp/graasp/commit/117a409000137c46ec56f615a51684349ee2afbe))
 - validate the thumbnail of items ([#1277](https://github.com/graasp/graasp/issues/1277)) ([4a276ba](https://github.com/graasp/graasp/commit/4a276ba0e4a9200a9aa5dd864ce4c0b5bb26f6c6))
+- api route to check if password is defined ([#1284](https://github.com/graasp/graasp/issues/1284)) ([46ac230](https://github.com/graasp/graasp/commit/46ac2304976b4c9a9b39da86cf8ecf88412f0fde))
+- convert SVG to PNG and send it to nudenet ([#1272](https://github.com/graasp/graasp/issues/1272)) ([c0533cc](https://github.com/graasp/graasp/commit/c0533cc542b6854c5d60c555c72804f77509a4e0))
+- copy suffix is determined by siblings ([#1222](https://github.com/graasp/graasp/issues/1222)) ([90c6501](https://github.com/graasp/graasp/commit/90c6501752f1975682b53f92ace5761950929487))
+- implement fastify swagger ([#1225](https://github.com/graasp/graasp/issues/1225)) ([3f54c96](https://github.com/graasp/graasp/commit/3f54c9680f867917c608e14e2099dec1f356d6ed))
+- **membership request:** create entity and base structure ([#1281](https://github.com/graasp/graasp/issues/1281)) ([aed2b5a](https://github.com/graasp/graasp/commit/aed2b5aafe3533f37e9537ba79e498f7f670988e))
+- **membership request:** delete request route ([#1299](https://github.com/graasp/graasp/issues/1299)) ([66149fd](https://github.com/graasp/graasp/commit/66149fd95818e9530e2cc40836d5680a310821cf))
+- **membership request:** get all requests from an item ([#1293](https://github.com/graasp/graasp/issues/1293)) ([904e647](https://github.com/graasp/graasp/commit/904e647cb5e242e52c993a1fcedb219af13bb885))
+- **membership request:** get status of you own request ([#1300](https://github.com/graasp/graasp/issues/1300)) ([27333ea](https://github.com/graasp/graasp/commit/27333eaca86ec59ee6efe833db642145bf972f0e))
+- **membership request:** request creation api route ([#1290](https://github.com/graasp/graasp/issues/1290)) ([2968a67](https://github.com/graasp/graasp/commit/2968a67f43eb1378a8c49149e298d7cf49ce4aa1))
+- pdf thumbnail ([#1307](https://github.com/graasp/graasp/issues/1307)) ([8ae0c23](https://github.com/graasp/graasp/commit/8ae0c23884976e961cce5bc05cc3f9169a7ec9ef))
+- save publication progress in Redis ([#1247](https://github.com/graasp/graasp/issues/1247)) ([deb892d](https://github.com/graasp/graasp/commit/deb892d3107e1d5dfe33aafc8868b842a91c6780))
+- storage details route ([#1271](https://github.com/graasp/graasp/issues/1271)) ([792b347](https://github.com/graasp/graasp/commit/792b3476d81a92ef0b10389081983fbf6356a133))
+- **storage files metadata:** default ordering by size ([#1279](https://github.com/graasp/graasp/issues/1279)) ([8e75760](https://github.com/graasp/graasp/commit/8e75760415ec2cd867e18fb33d18cb44be6aade5))
+- update invite invitation to include membership creation ([#1274](https://github.com/graasp/graasp/issues/1274)) ([117a409](https://github.com/graasp/graasp/commit/117a409000137c46ec56f615a51684349ee2afbe))
+- validate the thumbnail of items ([#1277](https://github.com/graasp/graasp/issues/1277)) ([4a276ba](https://github.com/graasp/graasp/commit/4a276ba0e4a9200a9aa5dd864ce4c0b5bb26f6c6))
 
 ## [1.46.0](https://github.com/graasp/graasp/compare/v1.45.0...v1.46.0) (2024-07-31)
 
@@ -167,9 +212,25 @@ All notable changes to this project will be documented in this file. See [standa
 - improve search for accessible and children ([#1244](https://github.com/graasp/graasp/issues/1244)) ([fe76981](https://github.com/graasp/graasp/commit/fe7698109f9cb7f129ef66ae9d0681728aab09d2))
 - modify get actions and get actions aggregate to have a start and end date ([#1239](https://github.com/graasp/graasp/issues/1239)) ([3c5ad2c](https://github.com/graasp/graasp/commit/3c5ad2c8c65751c777a07aeb148cb8ef54efd037))
 - update the unpublsihed state ([#1226](https://github.com/graasp/graasp/issues/1226)) ([d976dea](https://github.com/graasp/graasp/commit/d976dea6329baa6a3d405f6af01c2435038d5217))
+- add member password routes (POST and update PATCH) ([#1236](https://github.com/graasp/graasp/issues/1236)) ([510cb8b](https://github.com/graasp/graasp/commit/510cb8b9d5603d4e3d9cdabe80c2c116e7d40cea))
+- allow publishing only for validated items ([#1230](https://github.com/graasp/graasp/issues/1230)) ([ccfe668](https://github.com/graasp/graasp/commit/ccfe6687e9e7c2303efa42d50a4d5525b88c1660))
+- improve search for accessible and children ([#1244](https://github.com/graasp/graasp/issues/1244)) ([fe76981](https://github.com/graasp/graasp/commit/fe7698109f9cb7f129ef66ae9d0681728aab09d2))
+- modify get actions and get actions aggregate to have a start and end date ([#1239](https://github.com/graasp/graasp/issues/1239)) ([3c5ad2c](https://github.com/graasp/graasp/commit/3c5ad2c8c65751c777a07aeb148cb8ef54efd037))
+- update the unpublsihed state ([#1226](https://github.com/graasp/graasp/issues/1226)) ([d976dea](https://github.com/graasp/graasp/commit/d976dea6329baa6a3d405f6af01c2435038d5217))
 
 ### Bug Fixes
 
+- allow to download raw file ([#1246](https://github.com/graasp/graasp/issues/1246)) ([f2c592f](https://github.com/graasp/graasp/commit/f2c592f8414f67571d4115e5238342d79109edc0))
+- **deps:** update dependency @graasp/translations to v1.33.0 ([#1257](https://github.com/graasp/graasp/issues/1257)) ([43206c2](https://github.com/graasp/graasp/commit/43206c2bbf06709497ca26b7525da38165eaf8be))
+- **deps:** update dependency archiver to v7 ([#1211](https://github.com/graasp/graasp/issues/1211)) ([d8c5741](https://github.com/graasp/graasp/commit/d8c57415be18577c1a1f55aefb20520044fbe889))
+- **deps:** update dependency bullmq to v5 ([#1212](https://github.com/graasp/graasp/issues/1212)) ([c55976c](https://github.com/graasp/graasp/commit/c55976c06c69c9f4ced04f1abbd723ff66ad5a95))
+- **deps:** update dependency fast-json-stringify to v6 ([#1213](https://github.com/graasp/graasp/issues/1213)) ([9efd55a](https://github.com/graasp/graasp/commit/9efd55a51791312290c8f9ce634bad35016d1188))
+- **deps:** update dependency i18next to v23.12.2 ([#1253](https://github.com/graasp/graasp/issues/1253)) ([0b5c8b2](https://github.com/graasp/graasp/commit/0b5c8b2ed5ec9be0665204d78f7ed3ae3b138e98))
+- fix where scope on search ([#1245](https://github.com/graasp/graasp/issues/1245)) ([6d6c2b9](https://github.com/graasp/graasp/commit/6d6c2b9d5d1b1408c0c0a525c89daf6295b3776a))
+- lift up Pagination types and use ones defined in sdk ([#1238](https://github.com/graasp/graasp/issues/1238)) ([b76f640](https://github.com/graasp/graasp/commit/b76f640b939008bc5235d020edc3a458f8145d86))
+- log group in dev should be `ecs/graasp` ([#1250](https://github.com/graasp/graasp/issues/1250)) ([b21c4d8](https://github.com/graasp/graasp/commit/b21c4d80ab2196c27fc70b072fdf14362dc9c8db))
+- release please workflow to use PAT ([#1240](https://github.com/graasp/graasp/issues/1240)) ([7446772](https://github.com/graasp/graasp/commit/7446772b219501e08e26ad469e21e9d6a8b46b46))
+- remove mock for datasource ([#1234](https://github.com/graasp/graasp/issues/1234)) ([cd0b079](https://github.com/graasp/graasp/commit/cd0b07997a6976f77b27f37c0cf7ac4f40b49723))
 - allow to download raw file ([#1246](https://github.com/graasp/graasp/issues/1246)) ([f2c592f](https://github.com/graasp/graasp/commit/f2c592f8414f67571d4115e5238342d79109edc0))
 - **deps:** update dependency @graasp/translations to v1.33.0 ([#1257](https://github.com/graasp/graasp/issues/1257)) ([43206c2](https://github.com/graasp/graasp/commit/43206c2bbf06709497ca26b7525da38165eaf8be))
 - **deps:** update dependency archiver to v7 ([#1211](https://github.com/graasp/graasp/issues/1211)) ([d8c5741](https://github.com/graasp/graasp/commit/d8c57415be18577c1a1f55aefb20520044fbe889))
@@ -191,9 +252,24 @@ All notable changes to this project will be documented in this file. See [standa
 - **refactor:** update MagicLinkService to allow injection using DI ([#1198](https://github.com/graasp/graasp/issues/1198)) ([c70d93c](https://github.com/graasp/graasp/commit/c70d93cca07eea65679fe0a45b696ea79cda6063))
 - **refactor:** update MobileService to allow injection using DI ([#1196](https://github.com/graasp/graasp/issues/1196)) ([b6d43c5](https://github.com/graasp/graasp/commit/b6d43c50454dda89123bfab79924246a6f06b8c4))
 - restrict members that didn't validate their email ([#1113](https://github.com/graasp/graasp/issues/1113)) ([62915ac](https://github.com/graasp/graasp/commit/62915ac102c363f9d8d719cddbe02caee9fbb3ee))
+- change last migration to set legacy data validation to true ([#1232](https://github.com/graasp/graasp/issues/1232)) ([edbb727](https://github.com/graasp/graasp/commit/edbb7276948d5b556b92909faa0d9edbc18e0612))
+- compute the publication state in the backend ([#1180](https://github.com/graasp/graasp/issues/1180)) ([f4996cd](https://github.com/graasp/graasp/commit/f4996cd205ec3f30f982fc7a80bee00d4465b196))
+- **refactor:** update MagicLinkService to allow injection using DI ([#1198](https://github.com/graasp/graasp/issues/1198)) ([c70d93c](https://github.com/graasp/graasp/commit/c70d93cca07eea65679fe0a45b696ea79cda6063))
+- **refactor:** update MobileService to allow injection using DI ([#1196](https://github.com/graasp/graasp/issues/1196)) ([b6d43c5](https://github.com/graasp/graasp/commit/b6d43c50454dda89123bfab79924246a6f06b8c4))
+- restrict members that didn't validate their email ([#1113](https://github.com/graasp/graasp/issues/1113)) ([62915ac](https://github.com/graasp/graasp/commit/62915ac102c363f9d8d719cddbe02caee9fbb3ee))
 
 ### Bug Fixes
 
+- **deps:** update dependency @fastify/busboy to v3 ([#1191](https://github.com/graasp/graasp/issues/1191)) ([5122592](https://github.com/graasp/graasp/commit/5122592babf4efa4b03f39ad0744530ba2dd621d))
+- **deps:** update dependency @fastify/cors to v9 ([#1183](https://github.com/graasp/graasp/issues/1183)) ([6db4212](https://github.com/graasp/graasp/commit/6db4212d7f6ff03fc80def4a43928b2dde18cf0e))
+- **deps:** update dependency @fastify/forwarded to v3 ([#1208](https://github.com/graasp/graasp/issues/1208)) ([fc71c98](https://github.com/graasp/graasp/commit/fc71c9830b112d431ebd82e7f04ea24e9690c3e9))
+- **deps:** update dependency @fastify/multipart to v8 ([#1192](https://github.com/graasp/graasp/issues/1192)) ([c055cf8](https://github.com/graasp/graasp/commit/c055cf8704c86020330d0011ab604f1c084e8466))
+- **deps:** update dependency @fastify/static to v7 ([#1193](https://github.com/graasp/graasp/issues/1193)) ([fd8ce4b](https://github.com/graasp/graasp/commit/fd8ce4b1c4e8c1d872715a2afe50d2d4a338b9a4))
+- **deps:** update dependency ajv to v8.17.1 ([#1201](https://github.com/graasp/graasp/issues/1201)) ([82a72af](https://github.com/graasp/graasp/commit/82a72af71635ca94ffa351448c148c9874a27181))
+- **deps:** update dependency fluent-json-schema to v5 ([#1214](https://github.com/graasp/graasp/issues/1214)) ([23a2f1b](https://github.com/graasp/graasp/commit/23a2f1b284a7135df7409277aa86f3b60523afc2))
+- **deps:** update dependency i18next to v23.12.1 ([#1206](https://github.com/graasp/graasp/issues/1206)) ([02285f6](https://github.com/graasp/graasp/commit/02285f65f8d11ff46cc16e6429cd8c97c8ea98f1))
+- remove leaked information and remove unused errors ([#1204](https://github.com/graasp/graasp/issues/1204)) ([312f6d6](https://github.com/graasp/graasp/commit/312f6d651662550e2118b0e157f75249da41ee2f))
+- sort descendants as number ([#1221](https://github.com/graasp/graasp/issues/1221)) ([2f1f7b4](https://github.com/graasp/graasp/commit/2f1f7b440a192fc6aee14c213938899a7d212886))
 - **deps:** update dependency @fastify/busboy to v3 ([#1191](https://github.com/graasp/graasp/issues/1191)) ([5122592](https://github.com/graasp/graasp/commit/5122592babf4efa4b03f39ad0744530ba2dd621d))
 - **deps:** update dependency @fastify/cors to v9 ([#1183](https://github.com/graasp/graasp/issues/1183)) ([6db4212](https://github.com/graasp/graasp/commit/6db4212d7f6ff03fc80def4a43928b2dde18cf0e))
 - **deps:** update dependency @fastify/forwarded to v3 ([#1208](https://github.com/graasp/graasp/issues/1208)) ([fc71c98](https://github.com/graasp/graasp/commit/fc71c9830b112d431ebd82e7f04ea24e9690c3e9))
@@ -211,9 +287,30 @@ All notable changes to this project will be documented in this file. See [standa
 
 - improve reordering mechanism and allow to create items with order ([#1119](https://github.com/graasp/graasp/issues/1119)) ([38c6fe0](https://github.com/graasp/graasp/commit/38c6fe02ecc2c568d71b6ecb470c1401c0242fe4))
 - use DI to inject services ([#1095](https://github.com/graasp/graasp/issues/1095)) ([2132dc2](https://github.com/graasp/graasp/commit/2132dc2027d0dc95c2f5d4c5367a19039570c70c))
+- improve reordering mechanism and allow to create items with order ([#1119](https://github.com/graasp/graasp/issues/1119)) ([38c6fe0](https://github.com/graasp/graasp/commit/38c6fe02ecc2c568d71b6ecb470c1401c0242fe4))
+- use DI to inject services ([#1095](https://github.com/graasp/graasp/issues/1095)) ([2132dc2](https://github.com/graasp/graasp/commit/2132dc2027d0dc95c2f5d4c5367a19039570c70c))
 
 ### Bug Fixes
 
+- add email in link for email update ([#1186](https://github.com/graasp/graasp/issues/1186)) ([e668337](https://github.com/graasp/graasp/commit/e6683376ea36a76f49d67ac1e2757e3a3499e195))
+- **deps:** remove dependency qs ([#1166](https://github.com/graasp/graasp/issues/1166)) ([d9c6e18](https://github.com/graasp/graasp/commit/d9c6e180eb989af4b00a1e3717ad6ea2fc3c5a90))
+- **deps:** update aws-sdk-js-v3 monorepo to v3.609.0 ([#1167](https://github.com/graasp/graasp/issues/1167)) ([5fc9488](https://github.com/graasp/graasp/commit/5fc9488eb1e492e0430a0d50d63cbaf8a0f8b824))
+- **deps:** update aws-sdk-js-v3 monorepo to v3.614.0 ([#1190](https://github.com/graasp/graasp/issues/1190)) ([1e71146](https://github.com/graasp/graasp/commit/1e7114652ee1d0bc288a882813f8a741ba47a735))
+- **deps:** update dependency @fastify/passport to v2.5.0 ([#1155](https://github.com/graasp/graasp/issues/1155)) ([067216e](https://github.com/graasp/graasp/commit/067216e44bf11912f1e587f59241af32846feaf2))
+- **deps:** update dependency @graasp/sdk to v4.15.1 ([#1136](https://github.com/graasp/graasp/issues/1136)) ([3de759c](https://github.com/graasp/graasp/commit/3de759c5c0b5222ec74f718742a0ff92a72a6fce))
+- **deps:** update dependency @graasp/translations to v1.31.3 ([#1185](https://github.com/graasp/graasp/issues/1185)) ([5b6ec23](https://github.com/graasp/graasp/commit/5b6ec235d55976a79e768224a610091103306e6c))
+- **deps:** update dependency @graasp/translations to v1.32.0 ([#1156](https://github.com/graasp/graasp/issues/1156)) ([51bbfc7](https://github.com/graasp/graasp/commit/51bbfc79d5d2f1f5eeb8c2e611b4b869a486f7b3))
+- **deps:** update dependency @sentry/node to v7.118.0 ([#1168](https://github.com/graasp/graasp/issues/1168)) ([96967f9](https://github.com/graasp/graasp/commit/96967f9a5225dab987effefa254f0d7d5bcc3252))
+- **deps:** update dependency fast-json-stringify to v5.16.1 ([#1139](https://github.com/graasp/graasp/issues/1139)) ([5fc5666](https://github.com/graasp/graasp/commit/5fc5666734c3b38c23e2e2917630598bcbd58f22))
+- **deps:** update dependency fastify to v4.28.1 ([#1169](https://github.com/graasp/graasp/issues/1169)) ([0b5c441](https://github.com/graasp/graasp/commit/0b5c441a3130f49dafe86df9357f08f43fa7db77))
+- **deps:** update dependency meilisearch to v0.41.0 ([#1171](https://github.com/graasp/graasp/issues/1171)) ([8f420f1](https://github.com/graasp/graasp/commit/8f420f1ee37ebf72e558cb11a8197537c1abe9c2))
+- **deps:** update dependency nodemailer to v6.9.14 ([#1187](https://github.com/graasp/graasp/issues/1187)) ([f962e11](https://github.com/graasp/graasp/commit/f962e11ddf0c4697a557245953ba549c79e07774))
+- **deps:** update dependency openai to v4.52.3 ([#1172](https://github.com/graasp/graasp/issues/1172)) ([ccc0751](https://github.com/graasp/graasp/commit/ccc075148b39e6baac350145d98cb148ba4f16f1))
+- **deps:** update dependency openai to v4.52.7 ([#1188](https://github.com/graasp/graasp/issues/1188)) ([c4fe9fd](https://github.com/graasp/graasp/commit/c4fe9fda80c66daad04e085f2fd2ed6b939905c3))
+- **deps:** update dependency ws to v8.18.0 ([#1173](https://github.com/graasp/graasp/issues/1173)) ([2756224](https://github.com/graasp/graasp/commit/2756224bcaa3f2f46884480330f9d566a2ed0ca4))
+- filter out smartly given descendants ([#1162](https://github.com/graasp/graasp/issues/1162)) ([e354f2b](https://github.com/graasp/graasp/commit/e354f2ba0a6e07131e47edfc1b3af2a66de3044c))
+- logout member on delete ([#1158](https://github.com/graasp/graasp/issues/1158)) ([2ca19c9](https://github.com/graasp/graasp/commit/2ca19c9af2007d170a056ab55488b1b09f9cef42))
+- replace luxon by date-fns ([#967](https://github.com/graasp/graasp/issues/967)) ([5923b29](https://github.com/graasp/graasp/commit/5923b291cbf01729952ed3e7f19392c3cb55ceef))
 - add email in link for email update ([#1186](https://github.com/graasp/graasp/issues/1186)) ([e668337](https://github.com/graasp/graasp/commit/e6683376ea36a76f49d67ac1e2757e3a3499e195))
 - **deps:** remove dependency qs ([#1166](https://github.com/graasp/graasp/issues/1166)) ([d9c6e18](https://github.com/graasp/graasp/commit/d9c6e180eb989af4b00a1e3717ad6ea2fc3c5a90))
 - **deps:** update aws-sdk-js-v3 monorepo to v3.609.0 ([#1167](https://github.com/graasp/graasp/issues/1167)) ([5fc9488](https://github.com/graasp/graasp/commit/5fc9488eb1e492e0430a0d50d63cbaf8a0f8b824))
@@ -250,15 +347,32 @@ All notable changes to this project will be documented in this file. See [standa
 - remove memberId authentication from item login ([#1142](https://github.com/graasp/graasp/issues/1142)) ([c8f3ad0](https://github.com/graasp/graasp/commit/c8f3ad04e4ebca1a03c6575f40222f9e3107d8b6))
 - **spanish:** update translations ([#1145](https://github.com/graasp/graasp/issues/1145)) ([27b4b70](https://github.com/graasp/graasp/commit/27b4b709ed4b0e7dd2c973358160841bf467aed3))
 - test ([#1132](https://github.com/graasp/graasp/issues/1132)) ([6d93caa](https://github.com/graasp/graasp/commit/6d93caa4f6748f8c7205586c2048cd7e6140930c))
+- **arabic:** update translations ([#1144](https://github.com/graasp/graasp/issues/1144)) ([eea60db](https://github.com/graasp/graasp/commit/eea60dbd3beac474c59e9c8f26c1583b3ce53496))
+- **deps:** update aws-sdk-js-v3 monorepo to v3.606.0 ([#1102](https://github.com/graasp/graasp/issues/1102)) ([c71a070](https://github.com/graasp/graasp/commit/c71a0700b9d95a7c7761576a59632880c04cef40))
+- **deps:** update dependency ajv to v8.16.0 ([#1085](https://github.com/graasp/graasp/issues/1085)) ([44992c1](https://github.com/graasp/graasp/commit/44992c1b110b8b32b9a146623b433abbdcda5a20))
+- **deps:** update dependency openai to v4.48.3 ([#1091](https://github.com/graasp/graasp/issues/1091)) ([8639f7e](https://github.com/graasp/graasp/commit/8639f7e709d41e3fdfcb97a2f5389b8ac01ce61e))
+- **deps:** update dependency ws to v8.17.1 [security] ([#1118](https://github.com/graasp/graasp/issues/1118)) ([39a7ea3](https://github.com/graasp/graasp/commit/39a7ea3836eea05a3b24becf4354c350cbc92083))
+- fix deploy files for email var ([#1133](https://github.com/graasp/graasp/issues/1133)) ([3f7e36d](https://github.com/graasp/graasp/commit/3f7e36dad13241a03d5fef951092fb46bf96b30b))
+- **french:** update translations ([#1146](https://github.com/graasp/graasp/issues/1146)) ([f8db299](https://github.com/graasp/graasp/commit/f8db299104b900bc2fd1802ef801e6c1344ac4d5))
+- **german:** update translations ([#1143](https://github.com/graasp/graasp/issues/1143)) ([9c82033](https://github.com/graasp/graasp/commit/9c82033acaee6868e6f72e56b8b8f3efe402d6b2))
+- **italian:** update translations ([#1147](https://github.com/graasp/graasp/issues/1147)) ([730f503](https://github.com/graasp/graasp/commit/730f5034eabea25c78624bb39d369a8458061390))
+- remove memberId authentication from item login ([#1142](https://github.com/graasp/graasp/issues/1142)) ([c8f3ad0](https://github.com/graasp/graasp/commit/c8f3ad04e4ebca1a03c6575f40222f9e3107d8b6))
+- **spanish:** update translations ([#1145](https://github.com/graasp/graasp/issues/1145)) ([27b4b70](https://github.com/graasp/graasp/commit/27b4b709ed4b0e7dd2c973358160841bf467aed3))
+- test ([#1132](https://github.com/graasp/graasp/issues/1132)) ([6d93caa](https://github.com/graasp/graasp/commit/6d93caa4f6748f8c7205586c2048cd7e6140930c))
 
 ## [1.43.0](https://github.com/graasp/graasp/compare/v1.42.1...v1.43.0) (2024-06-28)
 
 ### Features
 
 - member edit email ([#1122](https://github.com/graasp/graasp/issues/1122)) ([39e5d7b](https://github.com/graasp/graasp/commit/39e5d7b4af9abc8e56ee8cd5166f005fd4dee85b))
+- member edit email ([#1122](https://github.com/graasp/graasp/issues/1122)) ([39e5d7b](https://github.com/graasp/graasp/commit/39e5d7b4af9abc8e56ee8cd5166f005fd4dee85b))
 
 ### Bug Fixes
 
+- add alignment setting ([#1124](https://github.com/graasp/graasp/issues/1124)) ([7b428b4](https://github.com/graasp/graasp/commit/7b428b414baa6edec7271912572ea1ba2f4d9d82))
+- email regex for .swiss emails ([#1129](https://github.com/graasp/graasp/issues/1129)) ([eef770c](https://github.com/graasp/graasp/commit/eef770c8c6a5bef45f33477df3ed9dcfcedad24f))
+- eslint warnings ([#1126](https://github.com/graasp/graasp/issues/1126)) ([79cadc3](https://github.com/graasp/graasp/commit/79cadc3ddd560744a0d0a96181e9cb0ab01d4a34))
+- update translations ([#1120](https://github.com/graasp/graasp/issues/1120)) ([869e727](https://github.com/graasp/graasp/commit/869e727809c343885544014fc6ee20c5dab77a44))
 - add alignment setting ([#1124](https://github.com/graasp/graasp/issues/1124)) ([7b428b4](https://github.com/graasp/graasp/commit/7b428b414baa6edec7271912572ea1ba2f4d9d82))
 - email regex for .swiss emails ([#1129](https://github.com/graasp/graasp/issues/1129)) ([eef770c](https://github.com/graasp/graasp/commit/eef770c8c6a5bef45f33477df3ed9dcfcedad24f))
 - eslint warnings ([#1126](https://github.com/graasp/graasp/issues/1126)) ([79cadc3](https://github.com/graasp/graasp/commit/79cadc3ddd560744a0d0a96181e9cb0ab01d4a34))
@@ -269,15 +383,18 @@ All notable changes to this project will be documented in this file. See [standa
 ### Bug Fixes
 
 - allow yearFrom and yearTo to be numbers as some editors save them like this ([#1111](https://github.com/graasp/graasp/issues/1111)) ([d872e9a](https://github.com/graasp/graasp/commit/d872e9aa980a047522957e722f812c3432e3edda))
+- allow yearFrom and yearTo to be numbers as some editors save them like this ([#1111](https://github.com/graasp/graasp/issues/1111)) ([d872e9a](https://github.com/graasp/graasp/commit/d872e9aa980a047522957e722f812c3432e3edda))
 
 ## [1.42.0](https://github.com/graasp/graasp/compare/v1.41.0...v1.42.0) (2024-06-13)
 
 ### Features
 
 - restrict publication to folders only ([#1106](https://github.com/graasp/graasp/issues/1106)) ([9f61157](https://github.com/graasp/graasp/commit/9f611573b8feae3fd6d834a5e277e9edb20e689f))
+- restrict publication to folders only ([#1106](https://github.com/graasp/graasp/issues/1106)) ([9f61157](https://github.com/graasp/graasp/commit/9f611573b8feae3fd6d834a5e277e9edb20e689f))
 
 ### Bug Fixes
 
+- many tags items length ([#1108](https://github.com/graasp/graasp/issues/1108)) ([b74bd2c](https://github.com/graasp/graasp/commit/b74bd2c3d24c0eadc52a99d44d9800dbae974007))
 - many tags items length ([#1108](https://github.com/graasp/graasp/issues/1108)) ([b74bd2c](https://github.com/graasp/graasp/commit/b74bd2c3d24c0eadc52a99d44d9800dbae974007))
 
 ## [1.41.0](https://github.com/graasp/graasp/compare/v1.40.1...v1.41.0) (2024-06-13)
