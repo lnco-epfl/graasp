@@ -17,7 +17,7 @@ import build, {
   unmockAuthenticate,
 } from '../../../../../test/app';
 import seed from '../../../../../test/mocks';
-import { mockCaptchaValidationOnce } from '../../../../../test/utils';
+import { TOKEN_REGEX, mockCaptchaValidationOnce } from '../../../../../test/utils';
 import { resolveDependency } from '../../../../di/utils';
 import { MailerService } from '../../../../plugins/mailer/service';
 import {
@@ -72,9 +72,12 @@ describe('Login with password', () => {
     const response = await app.inject({
       method: HttpMethod.Post,
       url: '/login-password',
-      payload: { email: member.email, password: pwd.password, captcha: MOCK_CAPTCHA },
+      payload: {
+        email: member.email,
+        password: pwd.password,
+        captcha: MOCK_CAPTCHA,
+      },
     });
-    console.log(await response.json());
     expect(response.statusCode).toEqual(StatusCodes.SEE_OTHER);
     expect(response.json()).toHaveProperty('resource');
   });
@@ -93,7 +96,11 @@ describe('Login with password', () => {
     const response = await app.inject({
       method: HttpMethod.Post,
       url: '/login-password',
-      payload: { email: member.email, password: pwd.password, captcha: MOCK_CAPTCHA },
+      payload: {
+        email: member.email,
+        password: pwd.password,
+        captcha: MOCK_CAPTCHA,
+      },
     });
     expect(response.statusCode).toEqual(StatusCodes.SEE_OTHER);
     expect(response.json()).toHaveProperty('resource');
@@ -113,7 +120,11 @@ describe('Login with password', () => {
     const response = await app.inject({
       method: HttpMethod.Post,
       url: '/login-password',
-      payload: { email: member.email, password: pwd.password, captcha: MOCK_CAPTCHA },
+      payload: {
+        email: member.email,
+        password: pwd.password,
+        captcha: MOCK_CAPTCHA,
+      },
     });
     expect(response.statusCode).toEqual(StatusCodes.SEE_OTHER);
     expect(response.json()).toHaveProperty('resource');
@@ -127,7 +138,11 @@ describe('Login with password', () => {
     const response = await app.inject({
       method: HttpMethod.Post,
       url: '/login-password',
-      payload: { email: member.email, password: wrongPassword, captcha: MOCK_CAPTCHA },
+      payload: {
+        email: member.email,
+        password: wrongPassword,
+        captcha: MOCK_CAPTCHA,
+      },
     });
     expect(response.statusCode).toEqual(StatusCodes.UNAUTHORIZED);
     expect(response.statusMessage).toEqual(ReasonPhrases.UNAUTHORIZED);
@@ -179,10 +194,13 @@ describe('Reset Password', () => {
   let mailerService: MailerService;
   let mockSendEmail;
   let mockRedisSetEx;
+
   beforeAll(async () => {
     ({ app } = await build());
     mailerService = resolveDependency(MailerService);
-    mockSendEmail = jest.spyOn(mailerService, 'sendEmail');
+    mockSendEmail = jest
+      .spyOn(mailerService, 'sendRaw')
+      .mockImplementation(async () => Promise.resolve());
     mockRedisSetEx = jest.spyOn(Redis.prototype, 'setex');
   });
 
@@ -223,7 +241,10 @@ describe('Reset Password', () => {
         entities: await Promise.all(
           entities
             .filter((e) => e.password)
-            .map(async (e) => ({ member: e.id, password: await encryptPassword(e.password!) })),
+            .map(async (e) => ({
+              member: e.id,
+              password: await encryptPassword(e.password!),
+            })),
         ),
       },
     });
@@ -248,6 +269,7 @@ describe('Reset Password', () => {
         expect(mockSendEmail.mock.calls[0][1]).toBe(entities[0].email);
       });
     });
+
     it('Create a password request to a non-existing email', async () => {
       mockCaptchaValidationOnce(RecaptchaAction.ResetPassword);
       const response = await app.inject({
@@ -303,6 +325,7 @@ describe('Reset Password', () => {
 
   describe('PATCH Reset Password Request Route', () => {
     let token: string;
+
     beforeEach(async () => {
       mockCaptchaValidationOnce(RecaptchaAction.ResetPassword);
       const response = await app.inject({
@@ -321,8 +344,9 @@ describe('Reset Password', () => {
         expect(mockSendEmail).toHaveBeenCalledTimes(1);
         expect(mockSendEmail.mock.calls[0][1]).toBe(entities[0].email);
       });
-      token = mockSendEmail.mock.calls[0][2].split('?t=')[1];
+      token = mockSendEmail.mock.calls[0][3].match(TOKEN_REGEX)[1];
     });
+
     it('Reset password', async () => {
       const newPassword = faker.internet.password({ prefix: '!1Aa' });
       const responseReset = await app.inject({
@@ -360,7 +384,21 @@ describe('Reset Password', () => {
 
       // Set new password to the entities array
       entities[0].password = newPassword;
+
+      // token should be single use
+      const responseSecondReset = await app.inject({
+        method: 'PATCH',
+        url: '/password/reset',
+        payload: {
+          password: `${newPassword}a`,
+        },
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      });
+      expect(responseSecondReset.statusCode).toBe(StatusCodes.UNAUTHORIZED);
     });
+
     it('Reset password with an invalid token', async () => {
       const newPassword = faker.internet.password({ prefix: '!1Aa' });
       const response = await app.inject({
@@ -426,7 +464,7 @@ describe('Reset Password', () => {
 
     expect(mockSendEmail).toHaveBeenCalledTimes(1);
     expect(mockSendEmail.mock.calls[0][1]).toBe(entities[0].email);
-    const token = mockSendEmail.mock.calls[0][2].split('?t=')[1];
+    const token = mockSendEmail.mock.calls[0][3].match(TOKEN_REGEX)[1];
 
     const newPassword = faker.internet.password({ prefix: '!1Aa' });
     const responseReset = await app.inject({
@@ -484,7 +522,10 @@ describe('Set Password', () => {
         entities: await Promise.all(
           entities
             .filter((e) => e.password)
-            .map(async (e) => ({ member: e.id, password: await encryptPassword(e.password!) })),
+            .map(async (e) => ({
+              member: e.id,
+              password: await encryptPassword(e.password!),
+            })),
         ),
       },
     });
@@ -554,7 +595,6 @@ describe('Set Password', () => {
       },
     });
     expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST);
-    console.log(await response.json());
   });
 });
 
@@ -596,7 +636,10 @@ describe('Update Password', () => {
         entities: await Promise.all(
           entities
             .filter((e) => e.password)
-            .map(async (e) => ({ member: e.id, password: await encryptPassword(e.password!) })),
+            .map(async (e) => ({
+              member: e.id,
+              password: await encryptPassword(e.password!),
+            })),
         ),
       },
     });
@@ -695,7 +738,6 @@ describe('Update Password', () => {
       },
     });
     expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST);
-    console.log(await response.json());
   });
 });
 
@@ -743,5 +785,47 @@ describe('GET members current password status', () => {
     });
     expect(response.statusCode).toBe(StatusCodes.OK);
     expect(response.json()).toEqual({ hasPassword: true });
+  });
+});
+
+describe('Flow tests', () => {
+  let app: FastifyInstance;
+
+  beforeAll(async () => {
+    ({ app } = await build({ member: null }));
+  });
+
+  afterEach(async () => {
+    await clearDatabase(app.db);
+  });
+
+  afterAll(async () => {
+    app.close();
+  });
+
+  it('Sign in with password and use the resource to receive the token', async () => {
+    // mock captcha validation
+    mockCaptchaValidationOnce(RecaptchaAction.SignInWithPassword);
+
+    const m = MemberFactory();
+    const pwd = MOCK_PASSWORD;
+    const member = await saveMemberAndPassword(m, pwd);
+
+    // login
+    const loginResponse = await app.inject({
+      method: HttpMethod.Post,
+      url: '/login-password',
+      payload: { email: member.email, password: pwd.password, captcha: MOCK_CAPTCHA },
+    });
+
+    expect(loginResponse.statusCode).toEqual(StatusCodes.SEE_OTHER);
+
+    const response = await app.inject({
+      method: HttpMethod.Get,
+      url: loginResponse.json().resource,
+    });
+
+    expect(response.statusCode).toEqual(StatusCodes.SEE_OTHER);
+    expect(response.headers['set-cookie']).toContain('session=');
   });
 });

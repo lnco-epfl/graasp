@@ -4,8 +4,8 @@ import { StatusCodes } from 'http-status-codes';
 import { FastifySchema } from 'fastify';
 
 import { customType, registerSchemaAsRef } from '../../../../plugins/typebox';
-import { memberSchemaRef } from '../../../member/schemas';
-import { itemIdSchemaRef, itemSchemaRef } from '../../schema';
+import { accountSchemaRef } from '../../../account/schemas';
+import { itemIdSchemaRef, itemSchemaRef } from '../../schemas';
 
 export const appContextSchemaRef = registerSchemaAsRef(
   'appContext',
@@ -14,7 +14,7 @@ export const appContextSchemaRef = registerSchemaAsRef(
     {
       // Object Definition
       item: itemSchemaRef,
-      members: Type.Array(memberSchemaRef),
+      members: Type.Array(accountSchemaRef),
     },
     {
       // Schema Options

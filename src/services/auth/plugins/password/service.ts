@@ -4,6 +4,7 @@ import { singleton } from 'tsyringe';
 import { v4 as uuid } from 'uuid';
 
 import { BaseLogger } from '../../../../logger';
+import { MailBuilder } from '../../../../plugins/mailer/builder';
 import { MAIL } from '../../../../plugins/mailer/langs/constants';
 import { MailerService } from '../../../../plugins/mailer/service';
 import {
@@ -32,6 +33,15 @@ export class MemberPasswordService {
     this.mailerService = mailerService;
     this.log = log;
     this.redis = redis;
+  }
+
+  /**
+   * Get the key to use to store the password reset request in Redis
+   * @param uuid uuid of the reset request
+   * @returns The redis key to use for storing password reset requests in redis
+   */
+  buildRedisKey(uuid: string) {
+    return `${REDIS_PREFIX}${uuid}`;
   }
 
   /**
@@ -81,11 +91,11 @@ export class MemberPasswordService {
    * @returns void
    */
   async applyReset(repositories: Repositories, password: string, uuid: string): Promise<void> {
-    const id = await this.redis.get(`${REDIS_PREFIX}${uuid}`);
+    const id = await this.redis.get(this.buildRedisKey(uuid));
     if (!id) {
       return;
     }
-    await this.redis.del(uuid);
+    await this.redis.del(this.buildRedisKey(uuid));
     const { memberPasswordRepository } = repositories;
     await memberPasswordRepository.patch(id, password);
   }
@@ -120,7 +130,7 @@ export class MemberPasswordService {
       expiresIn: `${PASSWORD_RESET_JWT_EXPIRATION_IN_MINUTES}m`,
     });
     this.redis.setex(
-      `${REDIS_PREFIX}${payload.uuid}`,
+      this.buildRedisKey(payload.uuid),
       PASSWORD_RESET_JWT_EXPIRATION_IN_MINUTES * 60,
       member.id,
     );
@@ -136,24 +146,24 @@ export class MemberPasswordService {
    * @returns void
    */
   mailResetPasswordRequest(email: string, token: string, lang: string): void {
-    const translated = this.mailerService.translate(lang);
-    const subject = translated(MAIL.RESET_PASSWORD_TITLE);
     // auth.graasp.org/reset-password?t=<token>
     const domain = AUTH_CLIENT_HOST;
     const destination = new URL('/reset-password', domain);
     destination.searchParams.set(SHORT_TOKEN_PARAM, token);
     const link = destination.toString();
 
-    const html = `
-      ${this.mailerService.buildText(translated(MAIL.RESET_PASSWORD_TEXT))}
-      ${this.mailerService.buildButton(link, translated(MAIL.RESET_PASSWORD_BUTTON_TEXT))}
-      ${this.mailerService.buildText(translated(MAIL.RESET_PASSWORD_NOT_REQUESTED))}`;
-
-    const footer = this.mailerService.buildFooter(lang);
+    const mail = new MailBuilder({
+      subject: { text: MAIL.RESET_PASSWORD_TITLE },
+      lang,
+    })
+      .addText(MAIL.CHANGE_EMAIL_TEXT)
+      .addButton(MAIL.CHANGE_EMAIL_BUTTON_TEXT, link)
+      .addIgnoreEmailIfNotRequestedNotice()
+      .build();
 
     // don't wait for mailerService's response; log error and link if it fails.
     this.mailerService
-      .sendEmail(subject, email, link, html, footer)
+      .send(mail, email)
       .catch((err) => this.log.warn(err, `mailerService failed. link: ${link}`));
   }
 
@@ -163,7 +173,7 @@ export class MemberPasswordService {
    * @returns True if the UUID is registered, false otherwise.
    */
   async validatePasswordResetUuid(uuid: string): Promise<boolean> {
-    return (await this.redis.get(`${REDIS_PREFIX}${uuid}`)) !== null;
+    return (await this.redis.get(this.buildRedisKey(uuid))) !== null;
   }
 
   /**
@@ -176,7 +186,7 @@ export class MemberPasswordService {
     repositories: Repositories,
     uuid: string,
   ): Promise<Member | undefined> {
-    const id = await this.redis.get(`${REDIS_PREFIX}${uuid}`);
+    const id = await this.redis.get(this.buildRedisKey(uuid));
     if (!id) {
       return;
     }
