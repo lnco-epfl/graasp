@@ -4,14 +4,14 @@ import { StatusCodes } from 'http-status-codes';
 import { MAX_TARGETS_FOR_READ_REQUEST } from '@graasp/sdk';
 
 import { customType } from '../../../../../plugins/typebox';
-import { UUID_REGEX, errorSchemaRef } from '../../../../../schemas/global';
+import { errorSchemaRef } from '../../../../../schemas/global';
 import {
   GET_MOST_LIKED_ITEMS_MAXIMUM,
   GET_MOST_RECENT_ITEMS_MAXIMUM,
 } from '../../../../../utils/config';
 import { LIST_OF_UUID_V4_REGEX_PATTERN } from '../../../../../utils/constants';
 import { nullableMemberSchemaRef } from '../../../../member/schemas';
-import { itemIdSchemaRef, itemSchemaRef } from '../../../schemas';
+import { itemSchemaRef } from '../../../schemas';
 import { packedItemSchemaRef } from '../../../schemas.packed';
 
 const publishEntry = Type.Object(
@@ -105,21 +105,27 @@ export const getCollectionsForMember = {
 };
 
 export const publishItem = {
-  params: itemIdSchemaRef,
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
   response: {
     [StatusCodes.OK]: publishEntry,
   },
 };
 
 export const unpublishItem = {
-  params: itemIdSchemaRef,
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
   response: {
     [StatusCodes.OK]: publishEntry,
   },
 };
 
 export const getInformations = {
-  params: itemIdSchemaRef,
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
   response: {
     [StatusCodes.OK]: customType.Nullable(publishEntryWithViews),
   },
@@ -140,7 +146,7 @@ export const getManyInformations = {
   response: {
     [StatusCodes.OK]: Type.Object(
       {
-        data: Type.Record(Type.String({ pattern: UUID_REGEX }), publishEntry),
+        data: Type.Record(Type.String({ format: 'uuid' }), publishEntry),
         errors: Type.Array(errorSchemaRef),
       },
       { additionalProperties: false },

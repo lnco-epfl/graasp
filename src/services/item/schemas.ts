@@ -18,32 +18,17 @@ import {
 } from '@graasp/sdk';
 
 import { customType, registerSchemaAsRef } from '../../plugins/typebox';
-import { NAME_REGEX, entityIdSchemaRef, errorSchemaRef } from '../../schemas/global';
+import { errorSchemaRef } from '../../schemas/global';
 import { nullableAccountSchemaRef } from '../account/schemas';
 
 export const SHOW_HIDDEN_PARRAM = 'showHidden';
 export const TYPES_FILTER_PARAM = 'types';
 
-export const itemIdSchemaRef = registerSchemaAsRef(
-  'itemId',
-  'Item ID',
-  Type.Object(
-    {
-      // Object Definition
-      itemId: customType.UUID(),
-    },
-    {
-      // Schema Options
-      additionalProperties: false,
-    },
-  ),
-);
-
 export const itemSchema = Type.Object(
   {
     // Object Definition
     id: customType.UUID(),
-    name: Type.String({ minLength: 1, maxLength: MAX_ITEM_NAME_LENGTH, pattern: NAME_REGEX }),
+    name: customType.ItemName(),
     displayName: Type.String({ maxLength: MAX_ITEM_NAME_LENGTH }),
     description: Type.Optional(customType.Nullable(Type.String())),
     type: Type.String(),
@@ -117,6 +102,14 @@ export const itemUpdateSchemaRef = registerSchemaAsRef(
               Type.Object(
                 {
                   s3File: Type.Object({
+                    altText: Type.String(),
+                  }),
+                },
+                { additionalProperties: false },
+              ),
+              Type.Object(
+                {
+                  file: Type.Object({
                     altText: Type.String(),
                   }),
                 },
@@ -200,7 +193,9 @@ export const getShared = {
 } as const satisfies FastifySchema;
 
 export const updateOne = {
-  params: entityIdSchemaRef,
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
   body: itemUpdateSchemaRef,
   response: { [StatusCodes.OK]: itemSchemaRef, '4xx': errorSchemaRef },
 } as const satisfies FastifySchema;
@@ -226,7 +221,9 @@ export const updateMany = {
 } as const satisfies FastifySchema;
 
 export const reorder = {
-  params: entityIdSchemaRef,
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
   body: Type.Object({ previousItemId: customType.UUID() }, { additionalProperties: false }),
   response: {
     [StatusCodes.OK]: itemSchemaRef,

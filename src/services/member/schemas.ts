@@ -6,8 +6,7 @@ import { FastifySchema } from 'fastify';
 import { AccountType, MAX_TARGETS_FOR_READ_REQUEST } from '@graasp/sdk';
 
 import { customType, registerSchemaAsRef } from '../../plugins/typebox';
-import { error } from '../../schemas/fluent-schema';
-import { UUID_REGEX, entityIdSchemaRef, errorSchemaRef } from '../../schemas/global';
+import { errorSchemaRef } from '../../schemas/global';
 import { FILE_METADATA_DEFAULT_PAGE_SIZE, FILE_METADATA_MIN_PAGE } from './constants';
 
 /**
@@ -139,6 +138,25 @@ export const updateMemberRequiredOneSchemaRef = registerSchemaAsRef(
   ),
 );
 
+export const fileItemMetadata = customType.StrictObject(
+  {
+    id: customType.UUID(),
+    name: Type.String(),
+    size: Type.Integer(),
+    updatedAt: customType.DateTime(),
+    path: Type.String(),
+    parent: Type.Optional(
+      customType.StrictObject({
+        id: customType.UUID(),
+        name: Type.String(),
+      }),
+    ),
+  },
+  {
+    descritpion: 'File metadata information',
+  },
+);
+
 // schema for getting current member
 export const getCurrent = {
   response: {
@@ -162,41 +180,14 @@ export const getStorage = {
 } as const satisfies FastifySchema;
 
 export const getStorageFiles = {
-  querystring: Type.Object(
-    {
-      page: Type.Integer({ minimum: FILE_METADATA_MIN_PAGE, default: FILE_METADATA_MIN_PAGE }),
-      pageSize: Type.Integer({ default: FILE_METADATA_DEFAULT_PAGE_SIZE }),
-    },
-    { additionalProperties: false },
-  ),
+  querystring: customType.Pagination({
+    page: Type.Integer({ minimum: FILE_METADATA_MIN_PAGE, default: FILE_METADATA_MIN_PAGE }),
+    pageSize: Type.Integer({ default: FILE_METADATA_DEFAULT_PAGE_SIZE }),
+  }),
   response: {
     [StatusCodes.OK]: Type.Object(
       {
-        data: Type.Array(
-          Type.Object(
-            {
-              id: customType.UUID(),
-              name: Type.String(),
-              size: Type.Integer(),
-              updatedAt: customType.DateTime(),
-              path: Type.String(),
-              parent: Type.Optional(
-                Type.Object(
-                  {
-                    id: customType.UUID(),
-                    name: Type.String(),
-                  },
-                  {
-                    additionalProperties: false,
-                  },
-                ),
-              ),
-            },
-            {
-              additionalProperties: false,
-            },
-          ),
-        ),
+        data: Type.Array(fileItemMetadata),
         totalCount: Type.Integer(),
         pagination: customType.Pagination({
           page: {
@@ -208,13 +199,15 @@ export const getStorageFiles = {
       },
       { additionalProperties: false },
     ),
-    '4xx': error,
+    '4xx': errorSchemaRef,
   },
 } as const satisfies FastifySchema;
 
 // schema for getting a member
 export const getOne = {
-  params: entityIdSchemaRef,
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
   response: {
     [StatusCodes.OK]: memberSchemaRef,
   },
@@ -236,7 +229,7 @@ export const getMany = {
   response: {
     [StatusCodes.OK]: Type.Object({
       data: Type.Record(
-        Type.String({ pattern: UUID_REGEX }),
+        Type.String({ format: 'uuid' }),
         Type.Object({
           id: customType.UUID(),
           name: customType.Username(),
@@ -278,11 +271,13 @@ export const getManyBy = {
 // schema for updating a member
 export const updateOne = {
   deprecated: true,
-  params: entityIdSchemaRef,
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
   body: updateMemberRequiredOneSchemaRef,
   response: {
     [StatusCodes.OK]: currentAccountSchemaRef,
-    [StatusCodes.FORBIDDEN]: error,
+    [StatusCodes.FORBIDDEN]: errorSchemaRef,
   },
 } as const satisfies FastifySchema;
 
@@ -291,13 +286,15 @@ export const updateCurrent = {
   body: updateMemberRequiredOneSchemaRef,
   response: {
     [StatusCodes.OK]: currentAccountSchemaRef,
-    [StatusCodes.FORBIDDEN]: error,
+    [StatusCodes.FORBIDDEN]: errorSchemaRef,
   },
 } as const satisfies FastifySchema;
 
 // schema for deleting a member
 export const deleteOne = {
-  params: entityIdSchemaRef,
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
   response: {
     [StatusCodes.NO_CONTENT]: {},
   },
@@ -314,15 +311,15 @@ export const postChangeEmail = {
   body: Type.Object({ email: Type.String({ format: 'email' }) }, { additionalProperties: false }),
   response: {
     [StatusCodes.NO_CONTENT]: {},
-    [StatusCodes.CONFLICT]: error,
-    [StatusCodes.UNAUTHORIZED]: error,
+    [StatusCodes.CONFLICT]: errorSchemaRef,
+    [StatusCodes.UNAUTHORIZED]: errorSchemaRef,
   },
 } as const satisfies FastifySchema;
 
 export const patchChangeEmail = {
   response: {
     [StatusCodes.NO_CONTENT]: {},
-    [StatusCodes.CONFLICT]: error,
-    [StatusCodes.UNAUTHORIZED]: error,
+    [StatusCodes.CONFLICT]: errorSchemaRef,
+    [StatusCodes.UNAUTHORIZED]: errorSchemaRef,
   },
 } as const satisfies FastifySchema;

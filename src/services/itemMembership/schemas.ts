@@ -6,9 +6,9 @@ import { FastifySchema } from 'fastify';
 import { PermissionLevel } from '@graasp/sdk';
 
 import { customType, registerSchemaAsRef } from '../../plugins/typebox';
-import { UUID_REGEX, entityIdSchemaRef, errorSchemaRef } from '../../schemas/global';
+import { errorSchemaRef } from '../../schemas/global';
 import { augmentedAccountSchemaRef, nullableAugmentedAccountSchemaRef } from '../account/schemas';
-import { itemIdSchemaRef, itemSchemaRef } from '../item/schemas';
+import { itemSchemaRef } from '../item/schemas';
 
 export const itemMembershipSchemaRef = registerSchemaAsRef(
   'itemMembership',
@@ -60,7 +60,9 @@ export const updateItemMembershipSchemaRef = registerSchemaAsRef(
 
 // schema for creating an item membership
 export const create = {
-  querystring: itemIdSchemaRef,
+  querystring: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
   body: createItemMembershipSchemaRef,
   response: {
     [StatusCodes.OK]: itemMembershipSchemaRef,
@@ -69,7 +71,9 @@ export const create = {
 
 // schema for creating many item memberships
 export const createMany = {
-  params: itemIdSchemaRef,
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
   body: Type.Object(
     { memberships: Type.Array(createItemMembershipSchemaRef) },
     { additionalProperties: false },
@@ -87,7 +91,7 @@ export const getItems = {
   ),
   response: {
     [StatusCodes.OK]: Type.Object({
-      data: Type.Record(Type.String({ pattern: UUID_REGEX }), Type.Array(itemMembershipSchemaRef)),
+      data: Type.Record(Type.String({ format: 'uuid' }), Type.Array(itemMembershipSchemaRef)),
       errors: Type.Array(errorSchemaRef),
     }),
   },
@@ -95,7 +99,9 @@ export const getItems = {
 
 // schema for updating an item membership
 export const updateOne = {
-  params: entityIdSchemaRef,
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
   body: updateItemMembershipSchemaRef,
   response: {
     [StatusCodes.OK]: itemMembershipSchemaRef,
@@ -104,7 +110,9 @@ export const updateOne = {
 
 // schema for deleting an item membership
 export const deleteOne = {
-  params: entityIdSchemaRef,
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
   querystring: Type.Object(
     { purgeBelow: Type.Optional(Type.Boolean()) },
     { additionalProperties: false },
