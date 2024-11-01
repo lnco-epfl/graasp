@@ -48,11 +48,11 @@ services:
       # the Localstack config is set by the "localstack" service below
       S3_FILE_ITEM_HOST: http://localstack:4566
       # the Iframely config is set by the "iframely" service below
-      EMBEDDED_LINK_ITEM_IFRAMELY_HREF_ORIGIN: http://lnco-ai-iframely:8061
-lnco
+      EMBEDDED_LINK_ITEM_IFRAMELY_HREF_ORIGIN: http://graasp-iframely:8061
+
     volumes:
-      - ..:/workspace:cached
-      - ../tmp:/tmp/graasp-file-item-storage
+      - "..:/workspace:cached"
+      - "../tmp:/tmp/graasp-file-item-storage"
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
     ports:
@@ -98,7 +98,7 @@ lnco
     # https://github.com/ether/etherpad-lite/issues/3849
     volumes:
       # bind copy the dev API key
-      - ./etherpad/devApiKey.txt:/opt/etherpad-lite/APIKEY.txt
+      - "./etherpad/devApiKey.txt:/opt/etherpad-lite/APIKEY.txt"
     ports:
       - 9001:9001
     environment:
@@ -109,7 +109,7 @@ lnco
       - DB_USER=etherpad
       - DB_PASS=etherpad
       # allow only group pads
-      # - REQUIRE_SESSION=true
+      # - REQUIRE_SESSION=true
       # only API can create pads
       - EDIT_ONLY=true
     # restart the container until db has created tables
@@ -125,7 +125,7 @@ lnco
     # ports:
     #   - 5433:5432
     volumes:
-      - postgres-data-etherpad:/var/lib/postgresql/data
+      - "postgres-data-etherpad:/var/lib/postgresql/data"
     environment:
       POSTGRES_DB: etherpad
       POSTGRES_USER: etherpad
@@ -145,16 +145,16 @@ lnco
     # ports:
     #   - 7700:7700
     volumes:
-      - ./meilisearch_data:/meili_data
+      - "./meilisearch_data:/meili_data"
 
   # Localstack is used to test aws services locally
   localstack:
     container_name: graasp-localstack
     image: localstack/localstack
     volumes:
-      - ../tmp:/tmp/graasp-localstack
+      - "../tmp:/tmp/graasp-localstack"
       - './localstack/init.sh:/etc/localstack/init/ready.d/init-aws.sh'
-      - /var/run/docker.sock:/var/run/docker.sock
+      - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       - SERVICES=s3
       - DEBUG=1
@@ -172,7 +172,7 @@ lnco
       - SERVER_PORT=80
       - SERVER_ROOT=/tmp/graasp-file-item-storage
     volumes:
-      - ../tmp:/tmp/graasp-file-item-storage
+      - "../tmp:/tmp/graasp-file-item-storage"
     ports:
       - 1081:80
 
@@ -185,6 +185,15 @@ lnco
     # exposing these ports is not necessary
     # ports:
     #   - 8061:8061
+
+  # necessary for validation
+  nudenet:
+    container_name: graasp-nudenet
+    image: notaitech/nudenet:classifier
+    # sxposing these ports is not necessary
+    # exposing these ports is not necessary
+    # ports:
+    #   - 8080:8080
 
   # a mock mailbox on port 1025 (web UI at http://localhost:1080)
   mailer:
