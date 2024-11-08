@@ -27,9 +27,9 @@ services:
       IMAGE_CLASSIFIER_API: http://nudenet:8080/sync
       # the DB config is set by the "db" service below
       DB_HOST: db
-      DB_NAME: graasp
-      DB_USERNAME: graasper
-      DB_PASSWORD: graasper
+      DB_NAME: docker
+      DB_USERNAME: docker
+      DB_PASSWORD: docker
       # the Etherpad config is set by the "etherpad" service below
       ETHERPAD_URL: http://etherpad:9001
       ETHERPAD_PUBLIC_URL: http://localhost:9001
@@ -65,7 +65,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - "postgres-data:/var/lib/postgresql/data"
     environment:
       POSTGRES_DB: docker
       POSTGRES_USER: docker
@@ -107,7 +107,7 @@ services:
     # ports:
     #   - 7700:7700
     volumes:
-      - ./meilisearch_data:/meili_data
+      - "./meilisearch_data:/meili_data"
 
   umami:
     container_name: umami
