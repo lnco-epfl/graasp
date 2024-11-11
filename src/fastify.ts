@@ -19,6 +19,7 @@ import { GREETING } from './utils/constants';
 export const instance = fastify({
   // allows to remove logging of incomming requests
   // can not be set using an environnement variable
+  bodyLimit: 25 * 1024 * 1024,
   disableRequestLogging: false,
   logger: {
     // Do not use pino-pretty in production
@@ -58,6 +59,8 @@ const start = async () => {
 
   try {
     await instance.listen({ port: PORT, host: HOSTNAME });
+    instance.log.info('Body limit set to:', instance.initialConfig.bodyLimit);
+
     instance.log.info('App is running version %s in %s mode', APP_VERSION, ENVIRONMENT);
     if (DEV) {
       // greet the world
