@@ -76,7 +76,7 @@ export const registerDependencies = (instance: FastifyInstance) => {
     }),
   );
 
-  // Register CachingService for the thumbnails urls.
+  // register the interface FileRepository with the concrete repo returned by the factory.
   registerValue(
     FILE_SERVICE_URLS_CACHING_DI_KEY,
     new CachingService(resolveDependency(Redis), 'file_service_url_caching'),
@@ -86,7 +86,14 @@ export const registerDependencies = (instance: FastifyInstance) => {
     s3: S3_FILE_ITEM_PLUGIN_OPTIONS,
     local: FILE_ITEM_PLUGIN_OPTIONS,
   });
-  registerValue(FileService, new FileService(fileRepository, resolveDependency(BaseLogger)));
+  registerValue(
+    FileService,
+    new FileService(
+      fileRepository,
+      resolveDependency(BaseLogger),
+      resolveDependency(FILE_SERVICE_URLS_CACHING_DI_KEY),
+    ),
+  );
 
   registerValue(
     ImportExportService,
@@ -99,13 +106,13 @@ export const registerDependencies = (instance: FastifyInstance) => {
   );
 
   // This code will be improved when we will be able to inject the repositories.
-  const { itemTagRepository, itemValidationGroupRepository, itemPublishedRepository } =
+  const { itemVisibilityRepository, itemValidationGroupRepository, itemPublishedRepository } =
     buildRepositories();
   registerValue(
     PublicationService,
     new PublicationService(
       resolveDependency(ItemService),
-      itemTagRepository,
+      itemVisibilityRepository,
       itemValidationGroupRepository,
       itemPublishedRepository,
       resolveDependency(ValidationQueue),

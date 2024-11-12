@@ -5,11 +5,15 @@ import { ChatbotRole, GPTVersion } from '@graasp/sdk';
 
 import { customType } from '../../../../../plugins/typebox';
 import { errorSchemaRef } from '../../../../../schemas/global';
-import { OPENAI_GPT_VERSION } from '../../../../../utils/config';
+import {
+  OPENAI_GPT_VERSION,
+  OPENAI_MAX_TEMPERATURE,
+  OPENAI_MIN_TEMPERATURE,
+} from '../../../../../utils/config';
 
 export const create = {
   operationId: 'createChatbotCompletionPrompt',
-  tags: ['app', 'chatbot'],
+  tags: ['app', 'app-chatbot'],
   summary: 'Get a prompt completion from a chatbot',
   description: 'Given a prompt, it returns a completion from a chatbot.',
 
@@ -31,6 +35,9 @@ export const create = {
   querystring: customType.StrictObject({
     gptVersion: Type.Optional(
       Type.Enum(GPTVersion, { description: 'Model to use', default: OPENAI_GPT_VERSION }),
+    ),
+    temperature: Type.Optional(
+      Type.Number({ maximum: OPENAI_MAX_TEMPERATURE, minimum: OPENAI_MIN_TEMPERATURE }),
     ),
   }),
   response: {

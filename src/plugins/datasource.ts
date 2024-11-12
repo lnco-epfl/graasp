@@ -19,13 +19,15 @@ import { ItemCategory } from '../services/item/plugins/itemCategory/entities/Ite
 import { ItemFavorite } from '../services/item/plugins/itemFavorite/entities/ItemFavorite';
 import { ItemFlag } from '../services/item/plugins/itemFlag/itemFlag';
 import { ItemLike } from '../services/item/plugins/itemLike/itemLike';
-import { ItemTag } from '../services/item/plugins/itemTag/ItemTag';
+import { ItemVisibility } from '../services/item/plugins/itemVisibility/ItemVisibility';
 import { ItemPublished } from '../services/item/plugins/publication/published/entities/itemPublished';
 import { ItemValidation } from '../services/item/plugins/publication/validation/entities/ItemValidation';
 import { ItemValidationGroup } from '../services/item/plugins/publication/validation/entities/ItemValidationGroup';
 import { ItemValidationReview } from '../services/item/plugins/publication/validation/entities/itemValidationReview';
 import { RecycledItemData } from '../services/item/plugins/recycled/RecycledItemData';
 import { ShortLink } from '../services/item/plugins/shortLink/entities/ShortLink';
+import { ItemTag } from '../services/item/plugins/tag/ItemTag.entity';
+import { Tag } from '../services/item/plugins/tag/Tag.entity';
 import { Guest } from '../services/itemLogin/entities/guest';
 import { GuestPassword } from '../services/itemLogin/entities/guestPassword';
 import { ItemLoginSchema } from '../services/itemLogin/entities/itemLoginSchema';
@@ -92,7 +94,7 @@ export const AppDataSource = new DataSource({
     ItemPublished,
     RecycledItemData,
     ItemLike,
-    ItemTag,
+    ItemVisibility,
     Category,
     ItemFavorite,
     ItemCategory,
@@ -106,6 +108,8 @@ export const AppDataSource = new DataSource({
     MemberProfile,
     ShortLink,
     ItemGeolocation,
+    Tag,
+    ItemTag,
   ],
   // refer to built files in js because it cannot run ts files
   migrations: ['dist/migrations/*.js'],
