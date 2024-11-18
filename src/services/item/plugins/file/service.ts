@@ -93,7 +93,6 @@ class FileItemService {
         filepath,
         mimetype,
       });
-
       console.debug('After upload');
 
       const size = await this.fileService.getFileSize(actor, filepath);

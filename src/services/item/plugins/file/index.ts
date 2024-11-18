@@ -132,7 +132,6 @@ const basePlugin: FastifyPluginAsyncTypebox<GraaspPluginFileOptions> = async (fa
         // transaction to ensure item is saved with memberships
         await db.transaction(async (manager) => {
           const repositories = buildRepositories(manager);
-
           try {
             const i = await fileItemService.upload(member, repositories, {
               parentId,
