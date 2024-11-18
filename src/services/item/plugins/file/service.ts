@@ -94,6 +94,8 @@ class FileItemService {
         mimetype,
       });
 
+      console.debug('After upload');
+
       const size = await this.fileService.getFileSize(actor, filepath);
 
       // throw for empty files
@@ -101,6 +103,8 @@ class FileItemService {
         await this.fileService.delete(filepath);
         throw new UploadEmptyFileError();
       }
+
+      console.debug('Past File Size Check');
 
       // create item from file properties
       const name = filename.substring(0, MAX_ITEM_NAME_LENGTH);
@@ -124,11 +128,15 @@ class FileItemService {
         creator: actor,
       };
 
+      console.debug('Before Item Post');
+
       const newItem = await this.itemService.post(actor, repositories, {
         item,
         parentId,
         previousItemId,
       });
+
+      console.debug('After Post Item');
 
       // add thumbnails if image or pdf
       // allow failures
@@ -154,6 +162,8 @@ class FileItemService {
       } catch (e) {
         console.error(e);
       }
+
+      console.debug('Before Final Return');
 
       // retrieve item again since hasThumbnail might have changed
       return await repositories.itemRepository.getOneOrThrow(newItem.id);
