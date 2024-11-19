@@ -53,20 +53,23 @@ class FileService {
     }
 
     try {
+      console.debug('Start Awaiting File Upload');
       await this.repository.uploadFile({
         fileStream: file,
         filepath,
         memberId: account.id,
         mimetype,
       });
+      console.debug('Finish Awaiting File Upload');
       await this.caching?.delete(filepath);
+      console.debug('Finish Awaiting Caching Delete');
     } catch (e) {
       // rollback uploaded file
       this.delete(filepath);
       this.logger.error(e);
       throw new UploadFileUnexpectedError({ mimetype, memberId: account.id });
     }
-
+    console.debug('FileService Upload Completed');
     return data;
   }
 
