@@ -133,6 +133,7 @@ const basePlugin: FastifyPluginAsyncTypebox<GraaspPluginFileOptions> = async (fa
         await db.transaction(async (manager) => {
           const repositories = buildRepositories(manager);
           try {
+            console.debug('Before upload in Index');
             const i = await fileItemService.upload(member, repositories, {
               parentId,
               filename,
@@ -140,7 +141,9 @@ const basePlugin: FastifyPluginAsyncTypebox<GraaspPluginFileOptions> = async (fa
               stream,
               previousItemId,
             });
+            console.debug('After upload in Index');
             items.push(i);
+            console.debug('After Push in Index');
           } catch (e) {
             // ignore errors
             log.error(e);
@@ -152,11 +155,13 @@ const basePlugin: FastifyPluginAsyncTypebox<GraaspPluginFileOptions> = async (fa
           }
         });
       }
+      console.debug('Outside Try upload in Index');
 
       // rescale is necessary when uploading multiple files: they have the same order number
       if (items.length) {
         await itemService.rescaleOrderForParent(member, buildRepositories(), items[0]);
       }
+      console.debug('Outside Try upload in Index');
 
       return {
         data: items.reduce((data, item) => ({ ...data, [item.id]: item }), {}),
