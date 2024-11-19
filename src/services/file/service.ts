@@ -109,8 +109,9 @@ class FileService {
         },
         this.logger,
       );
+    console.debug('getUrl in FileService');
 
-    return this.caching?.getOrCache(filepath, getUrl, expiration) ?? getUrl();
+    return /* this.caching?.getOrCache(filepath, getUrl, expiration) ?? */ getUrl();
   }
 
   async delete(filepath: string) {
@@ -118,7 +119,7 @@ class FileService {
       throw new DeleteFileInvalidPathError(filepath);
     }
     await this.repository.deleteFile({ filepath });
-    await this.caching?.delete(filepath);
+    // await this.caching?.delete(filepath);
   }
 
   async deleteFolder(folderPath: string) {

@@ -93,24 +93,30 @@ export class ItemThumbnailService {
     if (!items?.length || !sizes.length) {
       return {};
     }
+    console.debug('getUrlsByItems Start');
 
     const itemsIdWithThumbnail = items
       .filter((i) => Boolean(i.settings.hasThumbnail))
       .map((i) => i.id);
     const thumbnailSizes = Array.from(new Set(sizes)); // Ensures that sizes are unique.
 
+    console.debug('Mapped Items w. Thumbnail');
+
     const thumbnailsPerItem = await Promise.allSettled<ItemsThumbnails>(
       itemsIdWithThumbnail.map(async (id) => {
         const thumbnails = await Promise.all(
           thumbnailSizes.map(async (size) => {
+            console.debug('Get Thumbnail URLS');
             const url = await this.thumbnailService.getUrl({ size: String(size), id });
+            console.debug('Thumbnail URL gotten');
             return [size, url];
           }),
         );
+        console.debug('Thumbnails Per Item Const');
         return { [id]: Object.fromEntries(thumbnails) };
       }),
     );
-
+    console.debug('Return GetUrlsByItems');
     // As thumbnailsPerItem is an array, convert the array into an object where each key is the itemId.
     return thumbnailsPerItem.reduce<ItemsThumbnails>((acc, res) => {
       if (res.status === 'fulfilled') {

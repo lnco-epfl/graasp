@@ -58,10 +58,12 @@ export class ThumbnailService {
   }
 
   async getUrl({ id, size }: { size: string; id: string }) {
+    console.debug('start getUrl');
     const result = await this._fileService.getUrl({
       path: this.buildFilePath(id, size),
       id,
     });
+    console.debug('After getUrl (and thus after removed caching');
 
     return result;
   }
