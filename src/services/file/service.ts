@@ -61,7 +61,7 @@ class FileService {
         mimetype,
       });
       console.debug('Finish Awaiting File Upload');
-      await this.caching?.delete(filepath);
+      this.caching?.delete(filepath);
       console.debug('Finish Awaiting Caching Delete');
     } catch (e) {
       // rollback uploaded file
