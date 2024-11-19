@@ -47,6 +47,7 @@ export class CachingService implements ICachingService {
 
   async delete(key: string) {
     console.debug('Start Await caching delete');
+    console.debug(this.buildRedisKey(key));
     await this.redis.del(this.buildRedisKey(key));
     console.debug('Finish Await caching delete');
   }
