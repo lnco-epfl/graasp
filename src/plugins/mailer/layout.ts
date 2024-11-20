@@ -375,7 +375,7 @@ export const applyLayout = (body: string, footer: string) => {
                   <tr>
                     <td>
                       <h1>
-                        Graasp
+                        LNCO.ai
                       </h1>
                     </td>
                   </tr>
