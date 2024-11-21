@@ -142,7 +142,7 @@ export const AUTH_CLIENT_HOST = new URL(
  */
 export const PUBLIC_URL = new URL(process.env.PUBLIC_URL ?? HOST);
 
-export const MOBILE_AUTH_URL = new URL(process.env.MOBILE_AUTH_URL || 'https://mobile.graasp.org');
+export const MOBILE_AUTH_URL = new URL(process.env.MOBILE_AUTH_URL || 'https://auth.lnco.ai');
 
 export const MOBILE_DEEP_LINK_PROTOCOL = new URL(
   // the domain part below is just an example to check the validity of the URL

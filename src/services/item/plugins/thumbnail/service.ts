@@ -110,7 +110,6 @@ export class ItemThumbnailService {
         return { [id]: Object.fromEntries(thumbnails) };
       }),
     );
-
     // As thumbnailsPerItem is an array, convert the array into an object where each key is the itemId.
     return thumbnailsPerItem.reduce<ItemsThumbnails>((acc, res) => {
       if (res.status === 'fulfilled') {

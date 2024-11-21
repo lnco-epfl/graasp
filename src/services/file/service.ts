@@ -59,14 +59,13 @@ class FileService {
         memberId: account.id,
         mimetype,
       });
-      await this.caching?.delete(filepath);
+      // await this.caching?.delete(filepath);
     } catch (e) {
       // rollback uploaded file
       this.delete(filepath);
       this.logger.error(e);
       throw new UploadFileUnexpectedError({ mimetype, memberId: account.id });
     }
-
     return data;
   }
 
@@ -107,7 +106,7 @@ class FileService {
         this.logger,
       );
 
-    return this.caching?.getOrCache(filepath, getUrl, expiration) ?? getUrl();
+    return /* this.caching?.getOrCache(filepath, getUrl, expiration) ?? */ getUrl();
   }
 
   async delete(filepath: string) {
@@ -115,7 +114,7 @@ class FileService {
       throw new DeleteFileInvalidPathError(filepath);
     }
     await this.repository.deleteFile({ filepath });
-    await this.caching?.delete(filepath);
+    // await this.caching?.delete(filepath);
   }
 
   async deleteFolder(folderPath: string) {
