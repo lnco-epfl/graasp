@@ -49,8 +49,6 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [1.54.0](https://github.com/graasp/graasp/compare/v1.53.1...v1.54.0) (2024-10-18)
 
-## [1.56.0](https://github.com/graasp/graasp/compare/v1.55.0...v1.56.0) (2024-10-30)
-
 ### Features
 
 - custom type strict object ([#1540](https://github.com/graasp/graasp/issues/1540)) ([eba0475](https://github.com/graasp/graasp/commit/eba047573d170fe3fb616e0c593c95151faef85f))
@@ -114,8 +112,6 @@ All notable changes to this project will be documented in this file. See [standa
 - put nudenet back in container ([#1558](https://github.com/graasp/graasp/issues/1558)) ([d502058](https://github.com/graasp/graasp/commit/d5020582cc756a5d1c84a5fae472516d8cbaaf7a))
 - setup single db instance ([#1575](https://github.com/graasp/graasp/issues/1575)) ([bf8e86a](https://github.com/graasp/graasp/commit/bf8e86a7690e2d1e52904706886c3c86d5b5b728))
 
-## [1.53.1](https://github.com/graasp/graasp/compare/v1.53.0...v1.53.1) (2024-10-10)
-
 ## [1.54.2](https://github.com/graasp/graasp/compare/v1.54.1...v1.54.2) (2024-10-21)
 
 ### Bug Fixes
@@ -142,8 +138,6 @@ All notable changes to this project will be documented in this file. See [standa
 
 - set html as optional for link metadata ([#1546](https://github.com/graasp/graasp/issues/1546)) ([1d87bce](https://github.com/graasp/graasp/commit/1d87bceb9f4ee81b3d4bbc61ef1b029c50a7dce1))
 - update schema for current account ([#1542](https://github.com/graasp/graasp/issues/1542)) ([417f397](https://github.com/graasp/graasp/commit/417f397bd235ef6e3bc818f20cabc40d50ffc00a))
-
-## [1.53.0](https://github.com/graasp/graasp/compare/v1.52.0...v1.53.0) (2024-10-09)
 
 ## [1.54.0](https://github.com/graasp/graasp/compare/v1.53.1...v1.54.0) (2024-10-18)
 
@@ -410,8 +404,6 @@ All notable changes to this project will be documented in this file. See [standa
 - remove leaked information and remove unused errors ([#1204](https://github.com/graasp/graasp/issues/1204)) ([312f6d6](https://github.com/graasp/graasp/commit/312f6d651662550e2118b0e157f75249da41ee2f))
 - sort descendants as number ([#1221](https://github.com/graasp/graasp/issues/1221)) ([2f1f7b4](https://github.com/graasp/graasp/commit/2f1f7b440a192fc6aee14c213938899a7d212886))
 
-## [1.44.0](https://github.com/graasp/graasp/compare/v1.43.1...v1.44.0) (2024-07-12)
-
 ### Features
 
 - improve reordering mechanism and allow to create items with order ([#1119](https://github.com/graasp/graasp/issues/1119)) ([38c6fe0](https://github.com/graasp/graasp/commit/38c6fe02ecc2c568d71b6ecb470c1401c0242fe4))
@@ -443,6 +435,18 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Bug Fixes
 
+- **arabic:** update translations ([#1144](https://github.com/graasp/graasp/issues/1144)) ([eea60db](https://github.com/graasp/graasp/commit/eea60dbd3beac474c59e9c8f26c1583b3ce53496))
+- **deps:** update aws-sdk-js-v3 monorepo to v3.606.0 ([#1102](https://github.com/graasp/graasp/issues/1102)) ([c71a070](https://github.com/graasp/graasp/commit/c71a0700b9d95a7c7761576a59632880c04cef40))
+- **deps:** update dependency ajv to v8.16.0 ([#1085](https://github.com/graasp/graasp/issues/1085)) ([44992c1](https://github.com/graasp/graasp/commit/44992c1b110b8b32b9a146623b433abbdcda5a20))
+- **deps:** update dependency openai to v4.48.3 ([#1091](https://github.com/graasp/graasp/issues/1091)) ([8639f7e](https://github.com/graasp/graasp/commit/8639f7e709d41e3fdfcb97a2f5389b8ac01ce61e))
+- **deps:** update dependency ws to v8.17.1 [security] ([#1118](https://github.com/graasp/graasp/issues/1118)) ([39a7ea3](https://github.com/graasp/graasp/commit/39a7ea3836eea05a3b24becf4354c350cbc92083))
+- fix deploy files for email var ([#1133](https://github.com/graasp/graasp/issues/1133)) ([3f7e36d](https://github.com/graasp/graasp/commit/3f7e36dad13241a03d5fef951092fb46bf96b30b))
+- **french:** update translations ([#1146](https://github.com/graasp/graasp/issues/1146)) ([f8db299](https://github.com/graasp/graasp/commit/f8db299104b900bc2fd1802ef801e6c1344ac4d5))
+- **german:** update translations ([#1143](https://github.com/graasp/graasp/issues/1143)) ([9c82033](https://github.com/graasp/graasp/commit/9c82033acaee6868e6f72e56b8b8f3efe402d6b2))
+- **italian:** update translations ([#1147](https://github.com/graasp/graasp/issues/1147)) ([730f503](https://github.com/graasp/graasp/commit/730f5034eabea25c78624bb39d369a8458061390))
+- remove memberId authentication from item login ([#1142](https://github.com/graasp/graasp/issues/1142)) ([c8f3ad0](https://github.com/graasp/graasp/commit/c8f3ad04e4ebca1a03c6575f40222f9e3107d8b6))
+- **spanish:** update translations ([#1145](https://github.com/graasp/graasp/issues/1145)) ([27b4b70](https://github.com/graasp/graasp/commit/27b4b709ed4b0e7dd2c973358160841bf467aed3))
+- test ([#1132](https://github.com/graasp/graasp/issues/1132)) ([6d93caa](https://github.com/graasp/graasp/commit/6d93caa4f6748f8c7205586c2048cd7e6140930c))
 - **arabic:** update translations ([#1144](https://github.com/graasp/graasp/issues/1144)) ([eea60db](https://github.com/graasp/graasp/commit/eea60dbd3beac474c59e9c8f26c1583b3ce53496))
 - **deps:** update aws-sdk-js-v3 monorepo to v3.606.0 ([#1102](https://github.com/graasp/graasp/issues/1102)) ([c71a070](https://github.com/graasp/graasp/commit/c71a0700b9d95a7c7761576a59632880c04cef40))
 - **deps:** update dependency ajv to v8.16.0 ([#1085](https://github.com/graasp/graasp/issues/1085)) ([44992c1](https://github.com/graasp/graasp/commit/44992c1b110b8b32b9a146623b433abbdcda5a20))
