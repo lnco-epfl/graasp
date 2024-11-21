@@ -25,6 +25,7 @@ import { ItemValidationRepository } from '../services/item/plugins/publication/v
 import { ItemValidationReviewRepository } from '../services/item/plugins/publication/validation/repositories/itemValidationReview';
 import { RecycledItemDataRepository } from '../services/item/plugins/recycled/repository';
 import { ShortLinkRepository } from '../services/item/plugins/shortLink/repository';
+import { ItemTagRepository } from '../services/item/plugins/tag/ItemTag.repository';
 import { ItemRepository } from '../services/item/repository';
 import { GuestRepository } from '../services/itemLogin/repositories/guest';
 import { GuestPasswordRepository } from '../services/itemLogin/repositories/guestPassword';
@@ -33,6 +34,7 @@ import { MembershipRequestRepository } from '../services/itemMembership/plugins/
 import { ItemMembershipRepository } from '../services/itemMembership/repository';
 import MemberProfileRepository from '../services/member/plugins/profile/repository';
 import { MemberRepository } from '../services/member/repository';
+import { TagRepository } from '../services/tag/Tag.repository';
 
 export type Repositories = {
   actionRepository: ActionRepository;
@@ -68,6 +70,8 @@ export type Repositories = {
   shortLinkRepository: ShortLinkRepository;
   itemGeolocationRepository: ItemGeolocationRepository;
   accountRepository: AccountRepository;
+  itemTagRepository: ItemTagRepository;
+  tagRepository: TagRepository;
 };
 // public: exists in item visibility
 
@@ -107,4 +111,6 @@ export const buildRepositories = (manager?: EntityManager): Repositories => ({
   shortLinkRepository: new ShortLinkRepository(manager),
   itemGeolocationRepository: new ItemGeolocationRepository(manager),
   accountRepository: new AccountRepository(manager),
+  itemTagRepository: new ItemTagRepository(manager),
+  tagRepository: new TagRepository(manager),
 });
