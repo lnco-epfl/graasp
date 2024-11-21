@@ -412,11 +412,8 @@ export class ItemService {
     itemId: string,
     params?: ItemChildrenParams,
   ) {
-    console.debug('Get Packed Children Start');
     const children = await this._getChildren(actor, repositories, itemId, params);
-    console.debug('_GetChildren Done');
     const thumbnails = await this.itemThumbnailService.getUrlsByItems(children);
-    console.debug('getUrlsByItems Done');
 
     // TODO optimize?
     return filterOutPackedItems(actor, repositories, children, thumbnails);

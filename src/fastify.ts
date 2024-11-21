@@ -42,7 +42,6 @@ const start = async () => {
 
   try {
     await instance.listen({ port: PORT, host: HOSTNAME });
-    console.log('Body limit set to:', instance.initialConfig.bodyLimit);
 
     instance.log.info('App is running version %s in %s mode', APP_VERSION, ENVIRONMENT);
     if (DEV) {
