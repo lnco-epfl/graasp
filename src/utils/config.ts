@@ -15,7 +15,6 @@ import {
   LocalFileConfiguration,
   S3FileConfiguration,
 } from '../services/file/interfaces/configuration';
-import { API_KEY_FORMAT } from '../services/item/plugins/etherpad/serviceConfig';
 import { asDefined } from './assertions';
 import { ExpectedEnvVariable } from './errors';
 

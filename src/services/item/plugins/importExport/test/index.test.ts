@@ -7,7 +7,12 @@ import waitForExpect from 'wait-for-expect';
 
 import { HttpMethod, ItemType } from '@graasp/sdk';
 
-import build, { clearDatabase } from '../../../../../../test/app';
+import build, {
+  clearDatabase,
+  mockAuthenticate,
+  unmockAuthenticate,
+} from '../../../../../../test/app';
+import { saveMember } from '../../../../member/test/fixtures/members';
 import { ItemTestUtils } from '../../../test/fixtures/items';
 import * as ARCHIVE_CONTENT from './fixtures/archive';
 
