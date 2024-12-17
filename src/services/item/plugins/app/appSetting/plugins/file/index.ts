@@ -1,10 +1,10 @@
 import { fastifyMultipart } from '@fastify/multipart';
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import { HttpMethod, UUID } from '@graasp/sdk';
+import { HttpMethod } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../../../../di/utils';
-import { notUndefined } from '../../../../../../../utils/assertions';
+import { asDefined } from '../../../../../../../utils/assertions';
 import { Repositories, buildRepositories } from '../../../../../../../utils/repositories';
 import {
   authenticateAppsJWT,
@@ -29,7 +29,7 @@ export interface GraaspPluginFileOptions {
   appSettingService: AppSettingService;
 }
 
-const basePlugin: FastifyPluginAsync<GraaspPluginFileOptions> = async (fastify, options) => {
+const basePlugin: FastifyPluginAsyncTypebox<GraaspPluginFileOptions> = async (fastify, options) => {
   const { maxFileSize = DEFAULT_MAX_FILE_SIZE, appSettingService } = options;
 
   const { db } = fastify;
@@ -88,15 +88,15 @@ const basePlugin: FastifyPluginAsync<GraaspPluginFileOptions> = async (fastify, 
   };
   appSettingService.hooks.setPreHook('patch', patchPreHook);
 
-  fastify.route<{ Body: unknown }>({
+  fastify.route({
     method: HttpMethod.Post,
     url: '/app-settings/upload',
     schema: upload,
     preHandler: guestAuthenticateAppsJWT,
     handler: async (request) => {
       const { user } = request;
-      const account = notUndefined(user?.account);
-      const app = notUndefined(user?.app);
+      const account = asDefined(user?.account);
+      const app = asDefined(user?.app);
       // TODO: if one file fails, keep other files??? APPLY ROLLBACK
       // THEN WE SHOULD MOVE THE TRANSACTION
       return db
@@ -123,15 +123,9 @@ const basePlugin: FastifyPluginAsync<GraaspPluginFileOptions> = async (fastify, 
           throw new UploadFileUnexpectedError(e);
         });
     },
-    // onResponse: async (request, reply) => {
-    //   uploadOnResponse?.(request, reply);
-    // },
   });
 
-  fastify.get<{
-    Params: { id: UUID };
-    Querystring: { size?: string };
-  }>(
+  fastify.get(
     '/app-settings/:id/download',
     {
       schema: download,
@@ -142,8 +136,8 @@ const basePlugin: FastifyPluginAsync<GraaspPluginFileOptions> = async (fastify, 
         user,
         params: { id: appSettingId },
       } = request;
-      const member = notUndefined(user?.account);
-      const app = notUndefined(user?.app);
+      const member = asDefined(user?.account);
+      const app = asDefined(user?.app);
 
       return appSettingFileService
         .download(member, buildRepositories(), { item: app.item, appSettingId })

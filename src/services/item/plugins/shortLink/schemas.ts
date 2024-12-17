@@ -1,49 +1,100 @@
-import { UUID } from 'typeorm/driver/mongodb/bson.typings';
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
+
+import { FastifySchema } from 'fastify';
 
 import { ShortLinkPlatform } from '@graasp/sdk';
 
-const shortLinkPayload = {
-  type: 'object',
-  properties: {
-    alias: { type: 'string', minLength: 6, maxLength: 255, pattern: '^[a-zA-Z0-9-]*$' },
-    platform: { type: 'string', enum: Object.values(ShortLinkPlatform) },
-    itemId: {
-      type: 'string',
-      pattern: UUID,
-    },
-  },
-  additionalProperties: false,
-};
+import { customType } from '../../../../plugins/typebox';
+import { errorSchemaRef } from '../../../../schemas/global';
 
-const create = {
-  body: {
-    ...shortLinkPayload,
-    required: ['alias', 'platform', 'itemId'],
-  },
-};
+const shortLink = customType.StrictObject({
+  itemId: customType.UUID(),
+  alias: Type.String({ minLength: 6, maxLength: 255, pattern: '^[a-zA-Z0-9-]*$' }),
+  platform: Type.Enum(ShortLinkPlatform),
+});
 
-const update = {
-  body: {
-    ...shortLinkPayload,
-    not: {
-      required: ['itemId'], // Exclude 'itemId' from the properties of the update schema
-    },
-    anyOf: [{ required: ['alias'] }, { required: ['platform'] }], // at least one valid property
-  },
-};
+const shortLinkAlias = Type.Pick(shortLink, ['alias']);
 
-const restricted_get = {
+export const getRedirection = {
+  operationId: 'getShortLinkRedirection',
+  tags: ['short-link'],
+  summary: 'Get redirection for short link',
+  description: 'Get redirection for given short link.',
+
+  params: shortLinkAlias,
   response: {
-    200: {
-      type: 'object',
-      properties: {
-        itemId: { type: 'string' },
-        alias: { type: 'string' },
-        platform: { type: 'string' },
-        createdAt: { type: 'string' },
-      },
-    },
+    [StatusCodes.MOVED_TEMPORARILY]: Type.Null({ description: 'Successful Response' }),
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
-export { restricted_get, create, update };
+export const getAvailable = {
+  operationId: 'getShortLinkAvailability',
+  tags: ['short-link'],
+  summary: 'Get whether an alias is available',
+  description: 'Get whether an alias is available.',
+
+  params: shortLinkAlias,
+  response: {
+    [StatusCodes.OK]: Type.Object({ available: Type.Boolean() }),
+    '4xx': errorSchemaRef,
+  },
+} as const satisfies FastifySchema;
+
+export const getAllByItem = {
+  operationId: 'getShortLinksForItem',
+  tags: ['short-link'],
+  summary: 'Get all short links for item',
+  description:
+    'Get all short links created for an item. The response could be an empty object or a key-value with at least one platform and the alias.',
+
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
+  response: {
+    [StatusCodes.OK]: Type.Union([
+      customType.StrictObject(
+        {
+          [ShortLinkPlatform.Builder]: Type.Optional(Type.String()),
+          [ShortLinkPlatform.Player]: Type.Optional(Type.String()),
+          [ShortLinkPlatform.Library]: Type.Optional(Type.String()),
+        },
+        { minProperties: 1 },
+      ),
+      customType.StrictObject({}),
+    ]),
+    '4xx': errorSchemaRef,
+  },
+} as const satisfies FastifySchema;
+
+export const createShortLink = {
+  operationId: 'createShortLink',
+  tags: ['short-link'],
+  summary: 'Create short link for item',
+  description: 'Create short link for item.',
+
+  body: shortLink,
+  response: { [StatusCodes.OK]: shortLink, '4xx': errorSchemaRef },
+} as const satisfies FastifySchema;
+
+export const updateShortLink = {
+  operationId: 'updateShortLink',
+  tags: ['short-link'],
+  summary: 'Update short link',
+  description: 'Update the alias of the short link.',
+
+  params: shortLinkAlias,
+  body: shortLinkAlias,
+  response: { [StatusCodes.OK]: shortLink, '4xx': errorSchemaRef },
+} as const satisfies FastifySchema;
+
+export const deleteShortLink = {
+  operationId: 'deleteAlias',
+  tags: ['short-link'],
+  summary: 'Delete alias',
+  description: "Delete short link's alias.",
+
+  params: shortLinkAlias,
+  response: { [StatusCodes.OK]: shortLink, '4xx': errorSchemaRef },
+} as const satisfies FastifySchema;

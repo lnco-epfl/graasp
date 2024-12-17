@@ -1,234 +1,151 @@
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
+
 import { MAX_TARGETS_FOR_READ_REQUEST } from '@graasp/sdk';
 
-import { UUID_REGEX } from '../../../../../schemas/global';
+import { customType } from '../../../../../plugins/typebox';
+import { errorSchemaRef } from '../../../../../schemas/global';
 import {
   GET_MOST_LIKED_ITEMS_MAXIMUM,
   GET_MOST_RECENT_ITEMS_MAXIMUM,
 } from '../../../../../utils/config';
+import { nullableMemberSchemaRef } from '../../../../member/schemas';
+import { itemSchemaRef } from '../../../schemas';
+import { packedItemSchemaRef } from '../../../schemas.packed';
 
-const publishEntry = {
-  type: 'object',
-  properties: {
-    id: { type: 'string' },
-    item: {
-      $ref: 'https://graasp.org/items/#/definitions/item',
-    },
-    creator: {
-      $ref: 'https://graasp.org/members/#/definitions/member',
-    },
-    createdAt: { type: 'string' },
+const publishEntry = customType.StrictObject(
+  {
+    id: customType.UUID(),
+    item: itemSchemaRef,
+    creator: nullableMemberSchemaRef,
+    createdAt: customType.DateTime(),
   },
-  additionalProperties: false,
-};
-
-const publishEntryWithViews = {
-  type: 'object',
-  properties: {
-    id: { type: 'string' },
-    item: {
-      $ref: 'https://graasp.org/items/#/definitions/item',
-    },
-    creator: {
-      $ref: 'https://graasp.org/members/#/definitions/member',
-    },
-    createdAt: { type: 'string' },
-    totalViews: {
-      type: 'number',
-    },
+  {
+    description: 'Information of a published item',
   },
-  additionalProperties: false,
-};
-
-// the query string from frontend is in the form of ['A1,A2', 'B1', 'C1,C2,C3']
-// where A, B, C denote different category types, and 1, 2 denote different categories within same type
-// intersection between index
-// union in strings
-const concatenatedIds = {
-  type: 'string',
-  pattern:
-    '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}' +
-    '(,[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})*$',
-};
-
-export const getCollections = {
-  querystring: {
-    type: 'object',
-    properties: {
-      categoryId: {
-        type: 'array',
-        items: concatenatedIds,
-        maxItems: MAX_TARGETS_FOR_READ_REQUEST,
-      },
-    },
-  },
-
-  response: {
-    200: {
-      type: 'array',
-      items: {
-        $ref: 'https://graasp.org/items/#/definitions/item',
-      },
-    },
-  },
-};
+);
 
 export const getRecentCollections = {
-  querystring: {
-    type: 'object',
-    properties: {
-      limit: {
-        type: 'number',
-        maximum: GET_MOST_RECENT_ITEMS_MAXIMUM,
-        minimum: 1,
-      },
-    },
-  },
+  operationId: 'getRecentCollections',
+  tags: ['collection'],
+  summary: 'Get most recent published items',
+  description: 'Get most recently published items (collections)',
+
+  querystring: customType.StrictObject({
+    limit: Type.Number({
+      maximum: GET_MOST_RECENT_ITEMS_MAXIMUM,
+      minimum: 1,
+      default: 24,
+    }),
+  }),
 
   response: {
-    200: {
-      type: 'array',
-      items: {
-        $ref: 'https://graasp.org/items/#/definitions/item',
-      },
-    },
+    [StatusCodes.OK]: Type.Array(itemSchemaRef),
+    '4xx': errorSchemaRef,
   },
 };
 
 export const getMostLikedItems = {
-  querystring: {
-    type: 'object',
-    properties: {
-      limit: {
-        type: 'number',
-        maximum: GET_MOST_LIKED_ITEMS_MAXIMUM,
-        minimum: 1,
-      },
-    },
-  },
+  operationId: 'getMostLikedCollections',
+  tags: ['collection'],
+  summary: 'Get most liked items',
+  description: 'Get most liked items (collections)',
 
+  querystring: customType.StrictObject({
+    limit: Type.Number({
+      maximum: GET_MOST_LIKED_ITEMS_MAXIMUM,
+      minimum: 1,
+      default: 24,
+    }),
+  }),
   response: {
-    200: {
-      type: 'array',
-      items: {
-        $ref: 'https://graasp.org/items/#/definitions/item',
-      },
-    },
+    [StatusCodes.OK]: Type.Array(itemSchemaRef),
+    '4xx': errorSchemaRef,
   },
 };
 
 export const getCollectionsForMember = {
-  params: {
-    type: 'object',
-    properties: {
-      memberId: {
-        $ref: 'https://graasp.org/#/definitions/uuid',
-      },
-    },
-    required: ['memberId'],
-  },
+  operationId: 'getCollectionsForMember',
+  tags: ['collection'],
+  summary: 'Get collections for member',
+  description: 'Get collections for member.',
+
+  params: customType.StrictObject({
+    memberId: customType.UUID(),
+  }),
 
   response: {
-    200: {
-      type: 'array',
-      items: {
-        $ref: 'https://graasp.org/items/#/definitions/packedItem',
-      },
-    },
+    [StatusCodes.OK]: Type.Array(packedItemSchemaRef),
+    '4xx': errorSchemaRef,
   },
 };
 
 export const publishItem = {
-  params: {
-    type: 'object',
-    properties: {
-      itemId: {
-        $ref: 'https://graasp.org/#/definitions/uuid',
-      },
-    },
-    required: ['itemId'],
-  },
+  operationId: 'publishItem',
+  tags: ['collection'],
+  summary: 'Publish an item',
+  description: 'Publish an item. It will become listed in the Library.',
 
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
   response: {
-    200: publishEntry,
+    [StatusCodes.OK]: publishEntry,
+    '4xx': errorSchemaRef,
   },
 };
 
 export const unpublishItem = {
-  params: {
-    type: 'object',
-    properties: {
-      itemId: {
-        $ref: 'https://graasp.org/#/definitions/uuid',
-      },
-    },
-    required: ['itemId'],
-  },
+  operationId: 'unpublishItem',
+  tags: ['collection'],
+  summary: 'Unpublish an item',
+  description: 'Unpublish an item. It will stop being available in the Library.',
 
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
   response: {
-    200: publishEntry,
+    [StatusCodes.OK]: publishEntry,
+    '4xx': errorSchemaRef,
   },
 };
 
 export const getInformations = {
-  params: {
-    type: 'object',
-    properties: {
-      itemId: {
-        $ref: 'https://graasp.org/#/definitions/uuid',
-      },
-    },
-    required: ['itemId'],
-  },
+  operationId: 'getCollectionInformations',
+  tags: ['collection'],
+  summary: 'Get information of a collection',
+  description: 'Get information of a collection, including views count.',
 
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
   response: {
-    200: {
-      ...publishEntryWithViews,
-      nullable: true,
-    },
+    [StatusCodes.OK]: customType.Nullable(
+      Type.Composite([publishEntry, customType.StrictObject({ totalViews: Type.Number() })]),
+    ),
+    '4xx': errorSchemaRef,
   },
 };
 
 export const getManyInformations = {
-  querystring: {
-    allOf: [
-      {
-        type: 'object',
-        required: ['itemId'],
-        properties: {
-          itemId: {
-            type: 'array',
-            items: {
-              $ref: 'https://graasp.org/#/definitions/uuid',
-            },
-            uniqueItems: true,
-          },
-        },
-        additionalProperties: false,
-      },
-      {
-        type: 'object',
-        properties: { itemId: { type: 'array', maxItems: MAX_TARGETS_FOR_READ_REQUEST } },
-      },
-    ],
-  },
-
-  response: {
-    200: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'object',
-          patternProperties: {
-            [UUID_REGEX]: publishEntry,
-          },
-        },
-        errors: {
-          type: 'array',
-          items: {
-            $ref: 'https://graasp.org/#/definitions/error',
-          },
-        },
-      },
+  querystring: Type.Object(
+    {
+      itemId: Type.Array(customType.UUID(), {
+        uniqueItems: true,
+        maxItems: MAX_TARGETS_FOR_READ_REQUEST,
+      }),
     },
+    {
+      additionalProperties: false,
+    },
+  ),
+  response: {
+    [StatusCodes.OK]: Type.Object(
+      {
+        data: Type.Record(Type.String({ format: 'uuid' }), publishEntry),
+        errors: Type.Array(errorSchemaRef),
+      },
+      { additionalProperties: false },
+    ),
   },
 };

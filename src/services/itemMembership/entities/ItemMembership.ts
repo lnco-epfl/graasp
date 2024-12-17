@@ -15,9 +15,12 @@ import { PermissionLevel } from '@graasp/sdk';
 
 import { Account } from '../../account/entities/account';
 import { Item } from '../../item/entities/Item';
+import { Guest } from '../../itemLogin/entities/guest';
+import { Member } from '../../member/entities/member';
 
 @Entity()
 @Index('IDX_gist_item_membership_path', { synchronize: false })
+@Index('IDX_item_membership_account_id_permission', ['account', 'permission'])
 @Unique('item_membership-item-member', ['item', 'account'])
 export class ItemMembership extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -35,7 +38,7 @@ export class ItemMembership extends BaseEntity {
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'creator_id' })
-  creator: Account | null;
+  creator: Member | Guest | null;
 
   @Index('IDX_item_membership_account_id')
   @ManyToOne(() => Account, (account) => account.id, {
@@ -43,7 +46,7 @@ export class ItemMembership extends BaseEntity {
     nullable: false,
   })
   @JoinColumn({ name: 'account_id', foreignKeyConstraintName: 'FK_item_membership_account_id' })
-  account: Account;
+  account: Member | Guest;
 
   @ManyToOne(() => Item, (item) => item.path, {
     onUpdate: 'CASCADE',

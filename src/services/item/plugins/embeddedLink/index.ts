@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 import { ItemType } from '@graasp/sdk';
 
@@ -9,7 +9,7 @@ import { Actor } from '../../../member/entities/member';
 import { Item } from '../../entities/Item';
 import { ItemService } from '../../service';
 import { LinkQueryParameterIsRequired } from './errors';
-import { createSchema, getLinkMetadata, updateExtraSchema } from './schemas';
+import { getLinkMetadata } from './schemas';
 import { EmbeddedLinkService } from './service';
 import { ensureProtocol } from './utils';
 
@@ -18,26 +18,22 @@ interface GraaspEmbeddedLinkItemOptions {
   iframelyHrefOrigin: string;
 }
 
-const plugin: FastifyPluginAsync<GraaspEmbeddedLinkItemOptions> = async (fastify, options) => {
+const plugin: FastifyPluginAsyncTypebox<GraaspEmbeddedLinkItemOptions> = async (
+  fastify,
+  options,
+) => {
   const { iframelyHrefOrigin } = options;
-  const {
-    log,
-    items: { extendCreateSchema, extendExtrasUpdateSchema },
-  } = fastify;
+  const { log } = fastify;
   const itemService = resolveDependency(ItemService);
   const embeddedLinkService = resolveDependency(EmbeddedLinkService);
 
   if (!iframelyHrefOrigin) {
     throw new Error('graasp-embedded-link-item: mandatory options missing');
   }
-  // "install" custom schema for validating embedded link items creation
-  extendCreateSchema(createSchema);
-  // add link extra update schema that allows to update url
-  extendExtrasUpdateSchema(updateExtraSchema);
 
-  fastify.get<{ Querystring: { link: string } }>(
+  fastify.get(
     '/metadata',
-    { preHandler: isAuthenticated, schema: getLinkMetadata },
+    { schema: getLinkMetadata, preHandler: isAuthenticated },
     async ({ query: { link } }) => {
       if (!link) {
         throw new LinkQueryParameterIsRequired();

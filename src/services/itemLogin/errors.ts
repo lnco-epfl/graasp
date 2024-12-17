@@ -52,7 +52,7 @@ export class MissingItemLoginTag extends GraaspItemLoginError {
       {
         code: 'GILERR005',
         statusCode: StatusCodes.BAD_REQUEST,
-        message: 'Item does not possess the required tag',
+        message: 'Item does not possess the required visibility',
       },
       data,
     );
@@ -145,6 +145,71 @@ export class NotGuest extends GraaspItemLoginError {
         code: 'GILERR011',
         statusCode: StatusCodes.FORBIDDEN,
         message: FAILURE_MESSAGES.NOT_A_GUEST,
+      },
+      data,
+    );
+  }
+}
+
+export class ItemLoginSchemaExists extends GraaspItemLoginError {
+  constructor(data?: unknown) {
+    super(
+      {
+        code: 'GILERR012',
+        statusCode: StatusCodes.CONFLICT,
+        message: FAILURE_MESSAGES.CANNOT_CREATE_MEMBERSHIP_CAUSE_ITEM_LOGIN_SCHEMA_EXISTS,
+      },
+      data,
+    );
+  }
+}
+
+export class CannotEnrollItemWithoutItemLoginSchema extends GraaspItemLoginError {
+  constructor(data?: unknown) {
+    super(
+      {
+        code: 'GILERR013',
+        statusCode: StatusCodes.FORBIDDEN,
+        message: FAILURE_MESSAGES.CANNOT_ENROLL_ITEM_WITHOUT_ITEM_LOGIN_SCHEMA,
+      },
+      data,
+    );
+  }
+}
+
+export class CannotRegisterOnFrozenItemLoginSchema extends GraaspItemLoginError {
+  constructor(data?: unknown) {
+    super(
+      {
+        code: 'GILERR014',
+        statusCode: StatusCodes.FORBIDDEN,
+        message: FAILURE_MESSAGES.CANNOT_REGISTER_ON_FROZEN_ITEM_LOGIN_SCHEMA,
+      },
+      data,
+    );
+  }
+}
+
+export class CannotEnrollFrozenItemLoginSchema extends GraaspItemLoginError {
+  constructor(data?: unknown) {
+    super(
+      {
+        code: 'GILERR015',
+        statusCode: StatusCodes.FORBIDDEN,
+        message: FAILURE_MESSAGES.CANNOT_ENROLL_FROZEN_ITEM_LOGIN_SCHEMA,
+      },
+      data,
+    );
+  }
+}
+
+export class GuestNotFound extends GraaspItemLoginError {
+  constructor(data?: unknown) {
+    super(
+      {
+        code: 'GILERR016',
+        statusCode: StatusCodes.NOT_FOUND,
+        message: 'GUEST_NOT_FOUND',
       },
       data,
     );

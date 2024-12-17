@@ -5,10 +5,11 @@ import { HttpMethod, ItemType, PermissionLevel } from '@graasp/sdk';
 import { mockAuthenticate } from '../../../../../../test/app';
 import { AppDataSource } from '../../../../../plugins/datasource';
 import { APPS_PUBLISHER_ID, APP_ITEMS_PREFIX } from '../../../../../utils/config';
-import { Actor, Member } from '../../../../member/entities/member';
+import { Guest } from '../../../../itemLogin/entities/guest';
+import { Member } from '../../../../member/entities/member';
 import { Item } from '../../../entities/Item';
 import { ItemTestUtils } from '../../../test/fixtures/items';
-import { setItemPublic } from '../../itemTag/test/fixtures';
+import { setItemPublic } from '../../itemVisibility/test/fixtures';
 import { App } from '../entities/app';
 import { Publisher } from '../entities/publisher';
 
@@ -93,7 +94,7 @@ export class AppTestUtils extends ItemTestUtils {
   // save apps, app settings, and get token
   setUp = async (
     app,
-    actor: Actor | null,
+    actor: Member | Guest,
     creator: Member,
     permission?: PermissionLevel,
     setPublic?: boolean,

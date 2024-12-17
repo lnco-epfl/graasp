@@ -1,96 +1,77 @@
-import { UUID_REGEX } from '../../../../../schemas/global';
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
 
-export default {
-  $id: 'https://graasp.org/apps/app-action/',
-  definitions: {
-    appAction: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        member: {
-          $ref: 'https://graasp.org/members/#/definitions/member',
-        },
-        item: {
-          $ref: 'https://graasp.org/items/#/definitions/item',
-        },
-        data: {},
-        type: { type: 'string' },
-        createdAt: { type: 'string' },
-      },
-    },
-  },
-};
+import { FastifySchema } from 'fastify';
 
-const create = {
-  params: { $ref: 'https://graasp.org/apps/#/definitions/itemIdParam' },
-  body: {
-    type: 'object',
-    required: ['data', 'type'],
-    properties: {
-      data: { type: 'object', additionalProperties: true },
-      type: { type: 'string', minLength: 3, maxLength: 25 },
-      memberId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-  },
-  response: {
-    200: { $ref: 'https://graasp.org/apps/app-action/#/definitions/appAction' },
-  },
-};
+import { customType, registerSchemaAsRef } from '../../../../../plugins/typebox';
+import { errorSchemaRef } from '../../../../../schemas/global';
+import { accountSchemaRef } from '../../../../account/schemas';
 
-const getForOne = {
-  params: { $ref: 'https://graasp.org/apps/#/definitions/itemIdParam' },
-  querystring: {
-    type: 'object',
-    properties: {
-      memberId: { $ref: 'https://graasp.org/#/definitions/uuid' },
+export const appActionSchemaRef = registerSchemaAsRef(
+  'appAction',
+  'App Action',
+  Type.Object(
+    {
+      // Object Definition
+      id: customType.UUID(),
+      account: accountSchemaRef,
+      member: Type.Ref(accountSchemaRef.$ref, { deprecated: true }),
+      data: Type.Object({}, { additionalProperties: true }),
+      type: Type.String(),
+      createdAt: customType.DateTime(),
     },
-    additionalProperties: false,
-  },
-  response: {
-    200: {
-      type: 'array',
-      items: { $ref: 'https://graasp.org/apps/app-action/#/definitions/appAction' },
-    },
-  },
-};
-
-const getForMany = {
-  querystring: {
-    type: 'object',
-    required: ['itemId'],
-    properties: {
-      itemId: {
-        type: 'array',
-        items: { $ref: 'https://graasp.org/#/definitions/uuid' },
-        uniqueItems: true,
-      },
-      memberId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-    additionalProperties: false,
-  },
-  response: {
-    200: {
-      type: 'object',
+    {
+      description: 'Activity trace saved by an app.',
       additionalProperties: false,
-      properties: {
-        data: {
-          type: 'object',
-          patternProperties: {
-            [UUID_REGEX]: {
-              type: 'array',
-              items: { $ref: 'https://graasp.org/apps/app-action/#/definitions/appAction' },
-            },
-          },
-        },
-        errors: {
-          type: 'array',
-          items: {
-            $ref: 'https://graasp.org/#/definitions/error',
-          },
-        },
-      },
     },
-  },
-};
+  ),
+);
 
-export { create, getForOne, getForMany };
+export const create = {
+  operationId: 'createAppAction',
+  tags: ['app', 'app-action'],
+  summary: 'Create an action happening in an app',
+  description: 'Create an action happening in an app given data and type.',
+
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
+  body: Type.Object({
+    data: Type.Object({}, { additionalProperties: true }),
+    type: Type.String({ minLength: 3, maxLength: 25 }),
+  }),
+  response: {
+    [StatusCodes.OK]: appActionSchemaRef,
+    '4xx': errorSchemaRef,
+  },
+} as const satisfies FastifySchema;
+
+export const getForOne = {
+  operationId: 'getAppActionsForApp',
+  tags: ['app', 'app-action'],
+  summary: 'Get all actions of an app',
+  description: 'Get all actions saved for an app.',
+
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
+  querystring: Type.Union([
+    Type.Object(
+      {
+        memberId: customType.UUID(),
+      },
+      { additionalProperties: false, deprecated: true },
+    ),
+    Type.Object(
+      {
+        accountId: customType.UUID(),
+      },
+      { additionalProperties: false },
+    ),
+    Type.Object({}, { additionalProperties: false }),
+  ]),
+  response: {
+    [StatusCodes.OK]: Type.Array(appActionSchemaRef),
+    '4xx': errorSchemaRef,
+  },
+} as const satisfies FastifySchema;

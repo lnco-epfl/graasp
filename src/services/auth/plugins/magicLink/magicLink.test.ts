@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import { sign } from 'jsonwebtoken';
 import fetch from 'node-fetch';
@@ -15,6 +16,7 @@ import {
 import { FAILURE_MESSAGES } from '@graasp/translations';
 
 import build, { clearDatabase } from '../../../../../test/app';
+import { URL_REGEX } from '../../../../../test/utils';
 import { resolveDependency } from '../../../../di/utils';
 import { AppDataSource } from '../../../../plugins/datasource';
 import { MailerService } from '../../../../plugins/mailer/service';
@@ -59,7 +61,7 @@ describe('Auth routes tests', () => {
     it('Sign Up successfully', async () => {
       const email = 'someemail@email.com';
       const name = 'anna';
-      const mockSendEmail = jest.spyOn(mailerService, 'sendEmail');
+      const mockSendEmail = jest.spyOn(mailerService, 'sendRaw');
       const response = await app.inject({
         method: HttpMethod.Post,
         url: '/register',
@@ -76,13 +78,8 @@ describe('Auth routes tests', () => {
       expect(m?.userAgreementsDate).toBeInstanceOf(Date);
 
       expect(response.statusCode).toEqual(StatusCodes.NO_CONTENT);
-      expect(mockSendEmail).toHaveBeenCalledWith(
-        expect.anything(),
-        email,
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-      );
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][1]).toBe(email);
     });
 
     it('Sign Up successfully with given lang', async () => {
@@ -90,20 +87,15 @@ describe('Auth routes tests', () => {
       const name = 'anna';
       const lang = 'fr';
 
-      const mockSendEmail = jest.spyOn(mailerService, 'sendEmail');
+      const mockSendEmail = jest.spyOn(mailerService, 'sendRaw');
       const response = await app.inject({
         method: HttpMethod.Post,
         url: `/register?lang=${lang}`,
         payload: { email, name, captcha: MOCK_CAPTCHA },
       });
 
-      expect(mockSendEmail).toHaveBeenCalledWith(
-        expect.anything(),
-        email,
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-      );
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][1]).toBe(email);
       const m = await memberRawRepository.findOneBy({ email, name });
       expectMember(m, { name, email, extra: { lang } });
       expect(m?.lastAuthenticatedAt).toBeNull();
@@ -135,20 +127,15 @@ describe('Auth routes tests', () => {
       const name = 'anna';
       const enableSaveActions = false;
 
-      const mockSendEmail = jest.spyOn(mailerService, 'sendEmail');
+      const mockSendEmail = jest.spyOn(mailerService, 'sendRaw');
       const response = await app.inject({
         method: HttpMethod.Post,
         url: `/register`,
         payload: { email, name, captcha: MOCK_CAPTCHA, enableSaveActions },
       });
 
-      expect(mockSendEmail).toHaveBeenCalledWith(
-        expect.anything(),
-        email,
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-      );
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][1]).toBe(email);
       const m = await memberRawRepository.findOneBy({ email, name });
       expectMember(m, { name, email });
       expect(m?.enableSaveActions).toBe(enableSaveActions);
@@ -166,20 +153,15 @@ describe('Auth routes tests', () => {
       const name = 'anna';
       const enableSaveActions = true;
 
-      const mockSendEmail = jest.spyOn(mailerService, 'sendEmail');
+      const mockSendEmail = jest.spyOn(mailerService, 'sendRaw');
       const response = await app.inject({
         method: HttpMethod.Post,
         url: `/register`,
         payload: { email, name, enableSaveActions, captcha: MOCK_CAPTCHA },
       });
 
-      expect(mockSendEmail).toHaveBeenCalledWith(
-        expect.anything(),
-        email,
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-      );
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][1]).toBe(email);
       const m = await memberRawRepository.findOneBy({ email, name });
       expectMember(m, { name, email });
       expect(m?.enableSaveActions).toBe(enableSaveActions);
@@ -195,7 +177,7 @@ describe('Auth routes tests', () => {
     it('Sign Up fallback to login for already register member', async () => {
       // register already existing member
       const member = await saveMember(MemberFactory({ isValidated: false }));
-      const mockSendEmail = jest.spyOn(mailerService, 'sendEmail');
+      const mockSendEmail = jest.spyOn(mailerService, 'sendRaw');
 
       const response = await app.inject({
         method: HttpMethod.Post,
@@ -203,13 +185,8 @@ describe('Auth routes tests', () => {
         payload: { ...member, captcha: MOCK_CAPTCHA },
       });
 
-      expect(mockSendEmail).toHaveBeenCalledWith(
-        expect.anything(),
-        member.email,
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-      );
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][1]).toBe(member.email);
 
       const members = await memberRawRepository.findBy({ email: member.email });
       expect(members).toHaveLength(1);
@@ -234,6 +211,22 @@ describe('Auth routes tests', () => {
       expect(response.statusMessage).toEqual(ReasonPhrases.BAD_REQUEST);
       expect(response.statusCode).toEqual(StatusCodes.BAD_REQUEST);
     });
+
+    it('Bad request if the username contains special characters', async () => {
+      const email = faker.internet.email().toLowerCase();
+      const name = '<div>%"^';
+      const response = await app.inject({
+        method: HttpMethod.Post,
+        url: '/register',
+        payload: { email, name, captcha: MOCK_CAPTCHA },
+      });
+
+      const members = await memberRawRepository.findBy({ email });
+      expect(members).toHaveLength(0);
+
+      expect(response.statusMessage).toEqual(ReasonPhrases.BAD_REQUEST);
+      expect(response.statusCode).toEqual(StatusCodes.BAD_REQUEST);
+    });
   });
 
   describe('POST /login', () => {
@@ -243,47 +236,37 @@ describe('Auth routes tests', () => {
     });
     it('Sign In successfully', async () => {
       const member = await saveMember();
-      const mockSendEmail = jest.spyOn(mailerService, 'sendEmail');
+      const mockSendEmail = jest.spyOn(mailerService, 'sendRaw');
       const response = await app.inject({
         method: HttpMethod.Post,
         url: '/login',
         payload: { email: member.email, captcha: MOCK_CAPTCHA },
       });
 
-      expect(mockSendEmail).toHaveBeenCalledWith(
-        expect.anything(),
-        member.email,
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-      );
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][1]).toBe(member.email);
       expect(response.statusCode).toEqual(StatusCodes.NO_CONTENT);
     });
 
     it('Sign In successfully with given lang', async () => {
       const member = await saveMember(MemberFactory({ extra: { lang: 'fr' } }));
       const { lang } = member.extra;
-      const mockSendEmail = jest.spyOn(mailerService, 'sendEmail');
+      const mockSendEmail = jest.spyOn(mailerService, 'sendRaw');
       const response = await app.inject({
         method: HttpMethod.Post,
         url: `/login?lang=${lang}`,
         payload: { email: member.email, captcha: MOCK_CAPTCHA },
       });
 
-      expect(mockSendEmail).toHaveBeenCalledWith(
-        expect.anything(),
-        member.email,
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-      );
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][1]).toBe(member.email);
       expect(response.statusCode).toEqual(StatusCodes.NO_CONTENT);
     });
 
     it('Sign In does send not found on non-existing email', async () => {
       const email = 'some@email.com';
 
-      const mockSendEmail = jest.spyOn(mailerService, 'sendEmail');
+      const mockSendEmail = jest.spyOn(mailerService, 'sendRaw');
       const response = await app.inject({
         method: HttpMethod.Post,
         url: '/login',
@@ -399,6 +382,40 @@ describe('Auth routes tests', () => {
         url: '/logout',
       });
       expect(response.statusCode).toEqual(StatusCodes.NO_CONTENT);
+    });
+  });
+
+  describe('Complete Authentication Process', () => {
+    it('MagicLink', async () => {
+      mockCaptchaValidation(RecaptchaAction.SignUp);
+      const mockSendEmail = jest.spyOn(resolveDependency(MailerService), 'sendRaw');
+
+      const name = faker.internet.userName().toLowerCase();
+      const email = faker.internet.email().toLowerCase();
+
+      const responseRegister = await app.inject({
+        method: HttpMethod.Post,
+        url: '/register',
+        payload: { email, name, captcha: MOCK_CAPTCHA },
+      });
+      expect(responseRegister.statusCode).toBe(StatusCodes.NO_CONTENT);
+
+      let m = await memberRawRepository.findOneBy({ email });
+      expect(m?.lastAuthenticatedAt).toBeNull();
+      expect(m?.isValidated).toBeFalsy();
+
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      const fetchedURL = new URL(mockSendEmail.mock.calls[0][2].match(URL_REGEX)![1]);
+      const authURL = fetchedURL.toString();
+      const responseAuth = await app.inject({
+        method: HttpMethod.Get,
+        url: authURL,
+      });
+      expect(responseAuth.statusCode).toBe(StatusCodes.SEE_OTHER);
+
+      m = await memberRawRepository.findOneBy({ email });
+      expect(m?.lastAuthenticatedAt).toBeDefined();
+      expect(m?.isValidated).toBeTruthy();
     });
   });
 });

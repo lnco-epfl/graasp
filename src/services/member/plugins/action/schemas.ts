@@ -1,17 +1,24 @@
-import { idParam } from '../../../../schemas/fluent-schema';
+import { Type } from '@sinclair/typebox';
+
+import { FastifySchema } from 'fastify';
+
+import { customType } from '../../../../plugins/typebox';
 
 // schema for removing all actions of a member
 export const deleteAllById = {
-  params: idParam,
-};
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
+} as const satisfies FastifySchema;
 
 export const getMemberFilteredActions = {
-  querystring: {
-    type: 'object',
-    properties: {
-      startDate: { type: 'string', format: 'date-time' },
-      endDate: { type: 'string', format: 'date-time' },
+  querystring: Type.Object(
+    {
+      startDate: Type.Optional(Type.String({ format: 'date-time' })),
+      endDate: Type.Optional(Type.String({ format: 'date-time' })),
     },
-    additionalProperties: false,
-  },
-};
+    {
+      additionalProperties: false,
+    },
+  ),
+} as const satisfies FastifySchema;

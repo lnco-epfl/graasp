@@ -1,84 +1,102 @@
-export default {
-  $id: 'https://graasp.org/apps/app-settings/',
-  definitions: {
-    appSetting: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        name: { type: 'string' },
-        item: {
-          $ref: 'https://graasp.org/items/#/definitions/item',
-        },
-        data: {},
-        creator: { $ref: 'https://graasp.org/members/#/definitions/member' },
-        createdAt: { type: 'string' },
-        updatedAt: { type: 'string' },
-      },
-    },
-  },
-};
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
 
-const create = {
-  params: { $ref: 'https://graasp.org/apps/#/definitions/itemIdParam' },
-  body: {
-    type: 'object',
-    required: ['data', 'name'],
-    properties: {
-      data: { type: 'object', additionalProperties: true },
-      name: { type: 'string' },
+import { FastifySchema } from 'fastify';
+
+import { customType, registerSchemaAsRef } from '../../../../../plugins/typebox';
+import { errorSchemaRef } from '../../../../../schemas/global';
+import { nullableMemberSchemaRef } from '../../../../member/schemas';
+import { itemSchemaRef } from '../../../schemas';
+
+export const appSettingSchemaRef = registerSchemaAsRef(
+  'appSetting',
+  'App Setting',
+  customType.StrictObject(
+    {
+      id: customType.UUID(),
+      name: Type.String(),
+      item: itemSchemaRef,
+      data: Type.Object({}, { additionalProperties: true }),
+      creator: Type.Optional(nullableMemberSchemaRef),
+      createdAt: customType.DateTime(),
+      updatedAt: customType.DateTime(),
     },
-  },
+    {
+      description: 'Settings for an app.',
+    },
+  ),
+);
+
+export const create = {
+  operationId: 'createAppSetting',
+  tags: ['app', 'app-setting'],
+  summary: 'Create a setting for an app',
+  description: 'Create a setting in an app given data and name. Only admins can create settings.',
+
+  params: Type.Object({
+    itemId: customType.UUID(),
+  }),
+  body: customType.StrictObject({
+    data: Type.Object({}),
+    name: Type.String(),
+  }),
   response: {
-    200: { $ref: 'https://graasp.org/apps/app-settings/#/definitions/appSetting' },
+    [StatusCodes.OK]: appSettingSchemaRef,
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
-const updateOne = {
-  params: {
-    allOf: [
-      { $ref: 'https://graasp.org/apps/#/definitions/itemIdParam' },
-      { $ref: 'https://graasp.org/#/definitions/idParam' },
-    ],
-  },
-  body: {
-    type: 'object',
-    required: ['data'],
-    properties: {
-      data: { type: 'object', additionalProperties: true },
-    },
-  },
+export const updateOne = {
+  operationId: 'updateAppSetting',
+  tags: ['app', 'app-setting'],
+  summary: 'Update app setting',
+  description: 'Update given app setting with new data. Only admins can update settings.',
+
+  params: Type.Object({
+    itemId: customType.UUID(),
+    id: customType.UUID(),
+  }),
+  body: customType.StrictObject({
+    data: Type.Object({}),
+  }),
   response: {
-    200: { $ref: 'https://graasp.org/apps/app-settings/#/definitions/appSetting' },
+    [StatusCodes.OK]: appSettingSchemaRef,
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
-const deleteOne = {
-  params: {
-    allOf: [
-      { $ref: 'https://graasp.org/apps/#/definitions/itemIdParam' },
-      { $ref: 'https://graasp.org/#/definitions/idParam' },
-    ],
-  },
+export const deleteOne = {
+  operationId: 'deleteAppSetting',
+  tags: ['app', 'app-setting'],
+  summary: 'Delete app setting',
+  description: 'Delete given app setting.',
+
+  params: Type.Object({
+    itemId: customType.UUID(),
+    id: customType.UUID(),
+  }),
   response: {
-    200: { $ref: 'https://graasp.org/apps/app-settings/#/definitions/appSetting' },
+    [StatusCodes.OK]: customType.UUID({ description: 'Successful Response' }),
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
-const getForOne = {
-  params: { $ref: 'https://graasp.org/apps/#/definitions/itemIdParam' },
-  querystring: {
-    type: 'object',
-    properties: {
-      name: { type: 'string' },
-    },
-    additionalProperties: false,
-  },
+export const getForOne = {
+  operationId: 'getAppSettingsForApp',
+  tags: ['app', 'app-setting'],
+  summary: 'Get all settings of an app',
+  description: 'Get all settings for an app.',
+
+  params: Type.Object({
+    itemId: customType.UUID(),
+  }),
+  querystring: customType.StrictObject({
+    name: Type.Optional(
+      Type.String({ description: 'Return only app settings that match the given name' }),
+    ),
+  }),
   response: {
-    200: {
-      type: 'array',
-      items: { $ref: 'https://graasp.org/apps/app-settings/#/definitions/appSetting' },
-    },
+    [StatusCodes.OK]: Type.Array(appSettingSchemaRef, { descritpion: 'Successful Response' }),
+    '4xx': errorSchemaRef,
   },
-};
-
-export { create, updateOne, deleteOne, getForOne };
+} as const satisfies FastifySchema;

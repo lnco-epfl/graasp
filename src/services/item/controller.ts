@@ -1,63 +1,45 @@
 import { StatusCodes } from 'http-status-codes';
 
 import { fastifyMultipart } from '@fastify/multipart';
-import { FastifyPluginAsync } from 'fastify';
-
-import { ItemTagType, Pagination, PermissionLevel } from '@graasp/sdk';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 import { resolveDependency } from '../../di/utils';
-import { IdParam, IdsParams } from '../../types';
-import { notUndefined } from '../../utils/assertions';
+import { FastifyInstanceTypebox } from '../../plugins/typebox';
+import { asDefined } from '../../utils/assertions';
 import { buildRepositories } from '../../utils/repositories';
 import { isAuthenticated, optionalIsAuthenticated } from '../auth/plugins/passport';
 import { matchOne } from '../authorization';
 import { assertIsMember } from '../member/entities/member';
 import { memberAccountRole } from '../member/strategies/memberAccountRole';
 import { validatedMemberAccountRole } from '../member/strategies/validatedMemberAccountRole';
-import { resultOfToList } from '../utils';
 import { ITEMS_PAGE_SIZE } from './constants';
 import { Item } from './entities/Item';
+import { ActionItemService } from './plugins/action/service';
+import { copyMany, deleteMany, getOwn, getShared, moveMany, reorder, updateOne } from './schemas';
+import { create, createWithThumbnail } from './schemas.create';
 import {
-  SHOW_HIDDEN_PARRAM,
-  TYPES_FILTER_PARAM,
-  copyMany,
-  deleteMany,
   getAccessible,
   getChildren,
-  getDescendants,
+  getDescendantItems,
   getMany,
   getOne,
-  getOwn,
-  getParents,
-  getShared,
-  moveMany,
-  reorder,
-  updateMany,
-} from './fluent-schema';
-import { ActionItemService } from './plugins/action/service';
-import { ItemGeolocation } from './plugins/geolocation/ItemGeolocation';
+  getParentItems,
+} from './schemas.packed';
 import { ItemService } from './service';
-import { ItemChildrenParams, ItemSearchParams } from './types';
 import { getPostItemPayloadFromFormData } from './utils';
 import { ItemOpFeedbackErrorEvent, ItemOpFeedbackEvent, memberItemsTopic } from './ws/events';
 
-const plugin: FastifyPluginAsync = async (fastify) => {
-  const { db, items, websockets } = fastify;
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
+  const { db, websockets } = fastify;
   const itemService = resolveDependency(ItemService);
   const actionItemService = resolveDependency(ActionItemService);
 
   // create item
   // question: add link hook here? or have another endpoint?
-  fastify.post<{
-    Querystring: {
-      parentId?: string;
-      previousItemId?: string;
-    };
-    Body: Partial<Item> & Pick<Item, 'name' | 'type'> & Pick<ItemGeolocation, 'lat' | 'lng'>;
-  }>(
+  fastify.post(
     '/',
     {
-      schema: items.extendCreateSchema(),
+      schema: create,
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async (request, reply) => {
@@ -66,13 +48,15 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         query: { parentId, previousItemId },
         body: data,
       } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
 
       const item = await db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);
         const item = await itemService.post(member, repositories, {
-          item: data,
+          // Because of an incoherence between the service and the schema, we need to cast the data to the correct type
+          // This need to be fixed in issue #1288 https://github.com/graasp/graasp/issues/1288
+          item: data as Partial<Item> & Pick<Item, 'name' | 'type'>,
           previousItemId,
           parentId,
           geolocation: data.geolocation,
@@ -92,7 +76,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   // isolate inside a register because of the mutlipart
-  fastify.register(async (fastify) => {
+  fastify.register(async (fastify: FastifyInstanceTypebox) => {
     fastify.register(fastifyMultipart, {
       limits: {
         // fieldNameSize: 0,             // Max field name size in bytes (Default: 100 bytes).
@@ -104,13 +88,10 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       },
     });
     // create folder element with thumbnail
-    fastify.post<{
-      Querystring: {
-        parentId?: string;
-      };
-    }>(
+    fastify.post(
       '/with-thumbnail',
       {
+        schema: createWithThumbnail,
         preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
       },
       async (request) => {
@@ -118,7 +99,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
           user,
           query: { parentId },
         } = request;
-        const member = notUndefined(user?.account);
+        const member = asDefined(user?.account);
         assertIsMember(member);
 
         // get the formData from the request
@@ -145,19 +126,18 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   });
 
   // get item
-  fastify.get<{ Params: IdParam }>(
+  fastify.get(
     '/:id',
     {
       schema: getOne,
       preHandler: optionalIsAuthenticated,
     },
     async ({ user, params: { id } }) => {
-      const item = await itemService.getPacked(user?.account, buildRepositories(), id);
-      return item;
+      return itemService.getPacked(user?.account, buildRepositories(), id);
     },
   );
 
-  fastify.get<{ Querystring: IdsParams }>(
+  fastify.get(
     '/',
     { schema: getMany, preHandler: optionalIsAuthenticated },
     async ({ user, query: { id: ids } }) => {
@@ -166,9 +146,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   // returns items you have access to given the parameters
-  fastify.get<{
-    Querystring: ItemSearchParams & Partial<Pagination>;
-  }>(
+  fastify.get(
     '/accessible',
     { schema: getAccessible, preHandler: [isAuthenticated, matchOne(memberAccountRole)] },
     async ({ user, query }) => {
@@ -182,7 +160,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         permissions,
         types,
       } = query;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return itemService.getAccessible(
         member,
@@ -198,28 +176,28 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     '/own',
     { schema: getOwn, preHandler: [isAuthenticated, matchOne(memberAccountRole)] },
     async ({ user }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return itemService.getOwn(member, buildRepositories());
     },
   );
 
   // get shared with
-  fastify.get<{ Querystring: { permission?: PermissionLevel } }>(
+  fastify.get(
     '/shared-with',
     {
       schema: getShared,
       preHandler: [isAuthenticated, matchOne(memberAccountRole)],
     },
     async ({ user, query }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return itemService.getShared(member, buildRepositories(), query.permission);
     },
   );
 
   // get item's children
-  fastify.get<{ Params: IdParam; Querystring: ItemChildrenParams }>(
+  fastify.get(
     '/:id/children',
     { schema: getChildren, preHandler: optionalIsAuthenticated },
     async ({ user, params: { id }, query: { ordered, types, keywords } }) => {
@@ -232,22 +210,19 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   // get item's descendants
-  fastify.get<{
-    Params: IdParam;
-    Querystring: { [SHOW_HIDDEN_PARRAM]?: boolean; [TYPES_FILTER_PARAM]?: ItemTagType[] };
-  }>(
+  fastify.get(
     '/:id/descendants',
-    { schema: getDescendants, preHandler: optionalIsAuthenticated },
+    { schema: getDescendantItems, preHandler: optionalIsAuthenticated },
     async ({ user, params: { id }, query }) => {
       return itemService.getPackedDescendants(user?.account, buildRepositories(), id, query);
     },
   );
 
   // get item's parents
-  fastify.get<{ Params: IdParam }>(
+  fastify.get(
     '/:id/parents',
     {
-      schema: getParents,
+      schema: getParentItems,
       preHandler: optionalIsAuthenticated,
     },
     async ({ user, params: { id } }) => {
@@ -256,10 +231,10 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   // update item
-  fastify.patch<{ Params: IdParam; Body: Partial<Item> }>(
+  fastify.patch(
     '/:id',
     {
-      schema: items.extendExtrasUpdateSchema(),
+      schema: updateOne,
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async (request) => {
@@ -268,7 +243,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         params: { id },
         body,
       } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return await db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);
@@ -279,53 +254,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.patch<{ Querystring: IdsParams; Body: Partial<Item> }>(
-    '/',
-    {
-      schema: updateMany(items.extendExtrasUpdateSchema()),
-      preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
-    },
-    async (request, reply) => {
-      const {
-        user,
-        query: { id: ids },
-        body,
-        log,
-      } = request;
-      const member = notUndefined(user?.account);
-      assertIsMember(member);
-      db.transaction(async (manager) => {
-        const repositories = buildRepositories(manager);
-        const items = await itemService.patchMany(member, repositories, ids, body);
-        await actionItemService.postManyPatchAction(
-          request,
-
-          repositories,
-          resultOfToList(items),
-        );
-        return items;
-      })
-        .then((items) => {
-          websockets.publish(
-            memberItemsTopic,
-            member.id,
-            ItemOpFeedbackEvent('update', ids, items.data, items.errors),
-          );
-        })
-        .catch((e: Error) => {
-          log.error(e);
-          websockets.publish(
-            memberItemsTopic,
-            member.id,
-            ItemOpFeedbackErrorEvent('update', ids, e),
-          );
-        });
-      reply.status(StatusCodes.ACCEPTED);
-      return ids;
-    },
-  );
-
-  fastify.patch<{ Params: { id: string }; Body: { previousItemId?: string } }>(
+  fastify.patch(
     '/:id/reorder',
     {
       schema: reorder,
@@ -338,7 +267,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         body,
       } = request;
 
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
 
       const item = await db.transaction(async (manager) => {
@@ -355,7 +284,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.delete<{ Querystring: IdsParams }>(
+  fastify.delete(
     '/',
     {
       schema: deleteMany,
@@ -367,7 +296,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         query: { id: ids },
         log,
       } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);
@@ -395,12 +324,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.post<{
-    Querystring: IdsParams;
-    Body: {
-      parentId?: string;
-    };
-  }>(
+  fastify.post(
     '/move',
     {
       schema: moveMany,
@@ -413,7 +337,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         body: { parentId },
         log,
       } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);
@@ -437,10 +361,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.post<{
-    Querystring: IdsParams;
-    Body: { parentId: string };
-  }>(
+  fastify.post(
     '/copy',
     {
       schema: copyMany,
@@ -453,7 +374,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         body: { parentId },
         log,
       } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);

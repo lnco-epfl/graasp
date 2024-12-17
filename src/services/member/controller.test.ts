@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { beforeAll } from '@jest/globals';
-import { StatusCodes } from 'http-status-codes';
+import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import { sign as jwtSign } from 'jsonwebtoken';
 
 import { FastifyInstance } from 'fastify';
@@ -19,7 +19,7 @@ import {
   FILE_METADATA_MIN_PAGE,
   FILE_METADATA_MIN_PAGE_SIZE,
 } from './constants';
-import { Actor, Member } from './entities/member';
+import { Member } from './entities/member';
 import { saveMember } from './test/fixtures/members';
 
 jest.mock('node-fetch');
@@ -55,8 +55,8 @@ describe('Member Controller', () => {
   });
   beforeEach(async () => {
     member = await saveMember();
-    mockAuthenticate(member as Actor);
-    mockSendEmail = jest.spyOn(resolveDependency(MailerService), 'sendEmail');
+    mockAuthenticate(member);
+    mockSendEmail = jest.spyOn(resolveDependency(MailerService), 'sendRaw');
   });
   afterEach(async () => {
     await clearDatabase(app.db);
@@ -128,9 +128,7 @@ describe('Member Controller', () => {
       expect(response.statusCode).toBe(StatusCodes.NO_CONTENT);
       expect(mockSendEmail).toHaveBeenCalledTimes(1);
       expect(mockSendEmail.mock.calls[0][1]).toBe(email);
-      expect(mockSendEmail.mock.calls[0][2]).toMatch(
-        new RegExp(`^${ACCOUNT_HOST.url}email/change\\?t=.*$`),
-      );
+      expect(mockSendEmail.mock.calls[0][2]).toContain(`${ACCOUNT_HOST.url}email/change?t=`);
       // Email didn't change
       const rawMember = await memberRawRepository.findOneBy({ id: member.id });
       expect(rawMember?.email).toEqual(member.email);
@@ -459,6 +457,21 @@ describe('Member Controller', () => {
           lastSize = data.size;
         }
       });
+    });
+  });
+
+  describe('PATCH /members/:id', () => {
+    it('username can not contain special characters', async () => {
+      const invalidName = '<divvy>%$^&';
+
+      const response = await app.inject({
+        method: HttpMethod.Patch,
+        url: `members/${member.id}`,
+        body: { name: invalidName },
+      });
+
+      expect(response.statusMessage).toEqual(ReasonPhrases.BAD_REQUEST);
+      expect(response.statusCode).toEqual(StatusCodes.BAD_REQUEST);
     });
   });
 });

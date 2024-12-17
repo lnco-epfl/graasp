@@ -1,61 +1,69 @@
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
+
 import { FlagType } from '@graasp/sdk';
 
-export default {
-  $id: 'https://graasp.org/item-flags/',
-  definitions: {
-    itemIdParam: {
-      type: 'object',
-      required: ['itemId'],
-      properties: {
-        itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      },
-    },
-    // flag
-    flag: { type: 'string', enum: Object.values(FlagType) },
+import { customType, registerSchemaAsRef } from '../../../../plugins/typebox';
+import { errorSchemaRef } from '../../../../schemas/global';
+import { nullableAccountSchemaRef } from '../../../account/schemas';
+import { itemSchemaRef } from '../../schemas';
 
-    // item flag
-    itemFlag: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        item: {
-          $ref: 'https://graasp.org/items/#/definitions/item',
-        },
-        type: { $ref: 'https://graasp.org/item-flags/#/definitions/flag' },
-        creator: { $ref: 'https://graasp.org/members/#/definitions/member' },
-        createdAt: { type: 'string' },
-      },
+export const itemFlagSchemaRef = registerSchemaAsRef(
+  'itemFlag',
+  'Item Flag',
+  Type.Object(
+    {
+      // Object definition
+      id: customType.UUID(),
+      item: itemSchemaRef,
+      type: Type.Enum(FlagType),
+      creator: nullableAccountSchemaRef,
+      createdAt: customType.DateTime(),
+    },
+    {
+      // Schema options
+      description: 'Flag object of an item.',
       additionalProperties: false,
     },
-
-    // item flag properties required at creation
-    createPartialItemFlag: {
-      type: 'object',
-      required: ['type'],
-      properties: {
-        type: { $ref: 'https://graasp.org/item-flags/#/definitions/flag' },
-      },
-      additionalProperties: false,
-    },
-  },
-};
+  ),
+);
 
 // schema for creating an item flag
 const create = {
-  params: { $ref: 'https://graasp.org/item-flags/#/definitions/itemIdParam' },
-  body: { $ref: 'https://graasp.org/item-flags/#/definitions/createPartialItemFlag' },
+  operationId: 'createItemFlag',
+  tags: ['flag'],
+  summary: 'Flag item',
+  description: 'Flag item with given type.',
+
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
+  body: Type.Object(
+    {
+      // Object definition
+      type: Type.Enum(FlagType),
+    },
+    {
+      // Schema options
+      additionalProperties: false,
+    },
+  ),
   response: {
-    201: { $ref: 'https://graasp.org/item-flags/#/definitions/itemFlag' },
+    [StatusCodes.CREATED]: itemFlagSchemaRef,
+    '4xx': errorSchemaRef,
   },
 };
 
 // schema for getting flag types
 const getFlagTypes = {
+  operationId: 'getFlagTypes',
+  tags: ['flag'],
+  summary: 'Get flag types',
+  description: 'Get available flag types.',
+
   response: {
-    200: {
-      type: 'array',
-      items: { $ref: 'https://graasp.org/item-flags/#/definitions/flag' },
-    },
+    [StatusCodes.OK]: Type.Array(Type.Enum(FlagType), { description: 'Successful Response' }),
+    '4xx': errorSchemaRef,
   },
 };
 

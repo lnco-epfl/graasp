@@ -8,7 +8,7 @@ ARG NODE_VERSION=20
 ARG ALPINE_VERSION=3.19
 
 # Variable passed as a build arg. Represents the tag or git sha used for the build
-ARG APP_VERSION 
+ARG APP_VERSION
 
 ##############################
 ### Build Application Step ###
@@ -56,6 +56,7 @@ RUN apk update \
 COPY ./package.json ./
 COPY ./.yarnrc.yml ./
 COPY ./.yarn/ ./.yarn/
+COPY ./yarn.lock ./
 
 
 # Husky's script are needed for postinstall script

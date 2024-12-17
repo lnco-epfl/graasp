@@ -8,8 +8,9 @@ import { AppDataVisibility, HttpMethod, ItemType, PermissionLevel } from '@graas
 import build, { clearDatabase } from '../../../../../../../test/app';
 import { AppDataSource } from '../../../../../../plugins/datasource';
 import { APP_ITEMS_PREFIX } from '../../../../../../utils/config';
-import { Actor, Member } from '../../../../../member/entities/member';
-import { expectMinimalMember, saveMember } from '../../../../../member/test/fixtures/members';
+import { Guest } from '../../../../../itemLogin/entities/guest';
+import { Member } from '../../../../../member/entities/member';
+import { expectAccount, saveMember } from '../../../../../member/test/fixtures/members';
 import { AppTestUtils } from '../../test/fixtures';
 import { AppData } from '../appData';
 import { PreventUpdateAppDataFile } from '../errors';
@@ -29,7 +30,7 @@ const expectAppData = (values, expected) => {
 // save apps, app data, and get token
 const setUpForAppData = async (
   app,
-  actor: Actor,
+  actor: Member | Guest,
   creator: Member,
   permission?: PermissionLevel,
   setPublic?: boolean,
@@ -235,78 +236,6 @@ describe('App Data Tests', () => {
     });
   });
 
-  describe('GET many /app-data', () => {
-    let items;
-    let appDataArray;
-
-    describe('Sign Out', () => {
-      beforeEach(async () => {
-        ({ app, actor } = await build());
-
-        // unefficient way of registering two apps and their app data
-        ({ item, token, appData } = await setUpForAppData(app, actor, actor));
-
-        // logout after getting token and setting up
-        await app.inject({
-          method: HttpMethod.Get,
-          url: '/logout',
-        });
-      });
-
-      it('Get many app data without member and token throws', async () => {
-        const response = await app.inject({
-          method: HttpMethod.Get,
-          url: `${APP_ITEMS_PREFIX}/app-data?itemId=${item.id}`,
-        });
-        expect(response.statusCode).toEqual(StatusCodes.UNAUTHORIZED);
-      });
-    });
-
-    // TODO: public
-    // TODO: get with many filters
-    describe('Sign In', () => {
-      beforeEach(async () => {
-        ({ app, actor } = await build());
-
-        // unefficient way of registering two apps and their app data
-        const { item: item1, appData: appData1 } = await setUpForAppData(app, actor, actor);
-        const {
-          item: item2,
-          token: validToken,
-          appData: appData2,
-        } = await setUpForAppData(app, actor, actor);
-        items = [item1, item2];
-        appDataArray = { [item1.id]: appData1, [item2.id]: appData2 };
-        token = validToken;
-      });
-
-      it('Get many app data successfully', async () => {
-        const response = await app.inject({
-          method: HttpMethod.Get,
-          url: `${APP_ITEMS_PREFIX}/app-data?itemId=${items[0].id}&itemId=${items[1].id}`,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        expect(response.statusCode).toEqual(StatusCodes.OK);
-        Object.entries(response.json().data).forEach(([itemId, appDatas]) => {
-          expectAppData(appDatas, appDataArray[itemId]);
-        });
-      });
-
-      it('Get many app data with invalid item id throws', async () => {
-        const response = await app.inject({
-          method: HttpMethod.Get,
-          url: `${APP_ITEMS_PREFIX}/app-data?itemId=invalid-id`,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        expect(response.statusCode).toEqual(StatusCodes.BAD_REQUEST);
-      });
-    });
-  });
-
   // TODO test different payload
   describe('POST /:itemId/app-data', () => {
     const payload = { data: { some: 'data' }, type: 'some-type' };
@@ -392,8 +321,8 @@ describe('App Data Tests', () => {
         // we don't use the util function because it does not contain an id for iteration
         expect(newAppData.type).toEqual(payload.type);
         expect(newAppData.data).toEqual(payload.data);
-        expectMinimalMember(newAppData.account, bob);
-        expectMinimalMember(newAppData.creator, actor);
+        expectAccount(newAppData.account, bob);
+        expectAccount(newAppData.creator, actor);
 
         const savedAppData = await new AppDataRepository().getOne(newAppData.id);
         expectAppData([newAppData], [savedAppData]);
@@ -434,8 +363,8 @@ describe('App Data Tests', () => {
         // we don't use the util function because it does not contain an id for iteration
         expect(newAppData.type).toEqual(payload.type);
         expect(newAppData.data).toEqual(payload.data);
-        expectMinimalMember(newAppData.account, bob);
-        expectMinimalMember(newAppData.creator, actor);
+        expectAccount(newAppData.account, bob);
+        expectAccount(newAppData.creator, actor);
 
         const savedAppData = await new AppDataRepository().getOne(newAppData.id);
         expectAppData([newAppData], [savedAppData]);

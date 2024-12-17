@@ -6,7 +6,8 @@ import { FastifyInstance } from 'fastify';
 import { HttpMethod, ItemType, LinkItemFactory, PermissionLevel } from '@graasp/sdk';
 
 import build, { clearDatabase } from '../../../../../../test/app';
-import { ItemMembershipRepository } from '../../../../itemMembership/repository';
+import { AppDataSource } from '../../../../../plugins/datasource';
+import { ItemMembership } from '../../../../itemMembership/entities/ItemMembership';
 import { Member } from '../../../../member/entities/member';
 import { saveMember } from '../../../../member/test/fixtures/members';
 import { ItemRepository } from '../../../repository';
@@ -17,6 +18,7 @@ jest.mock('node-fetch');
 const testUtils = new ItemTestUtils();
 
 const itemRepository = new ItemRepository();
+const itemMembershipRawRepository = AppDataSource.getRepository(ItemMembership);
 
 const iframelyMeta = {
   title: 'title',
@@ -106,7 +108,9 @@ describe('Link Item tests', () => {
         expectItem(item, expectedItem);
 
         // a membership is created for this item
-        const membership = await ItemMembershipRepository.findOneBy({ item: { id: newItem.id } });
+        const membership = await itemMembershipRawRepository.findOneBy({
+          item: { id: newItem.id },
+        });
         expect(membership?.permission).toEqual(PermissionLevel.Admin);
       });
 
@@ -244,66 +248,6 @@ describe('Link Item tests', () => {
 
         expect(response.statusMessage).toEqual(ReasonPhrases.BAD_REQUEST);
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST);
-      });
-    });
-  });
-
-  // cannot update a link
-  describe('PATCH many /items', () => {
-    it('Throws if signed out', async () => {
-      ({ app } = await build({ member: null }));
-      const member = await saveMember();
-      const { item } = await testUtils.saveItemAndMembership({ member });
-
-      const response = await app.inject({
-        method: HttpMethod.Patch,
-        url: `/items?id=${item.id}`,
-        payload: { name: 'new name' },
-      });
-
-      expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
-    });
-
-    describe('Signed In', () => {
-      beforeEach(async () => {
-        ({ app, actor } = await build());
-      });
-
-      it('Fail to update', async () => {
-        const { item } = await testUtils.saveItemAndMembership({
-          item: {
-            type: ItemType.LINK,
-            extra: {
-              [ItemType.LINK]: {
-                url: 'https://myurl.com',
-              },
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } as any,
-            name: 'mylink',
-          },
-          member: actor,
-        });
-        const payload = {
-          name: 'new name',
-          extra: {
-            [ItemType.LINK]: {
-              url: 'https://validurl.com',
-            },
-          },
-          settings: {
-            someSetting: 'value',
-          },
-        };
-
-        const response = await app.inject({
-          method: HttpMethod.Patch,
-          url: `/items?id=${item.id}`,
-          payload,
-        });
-
-        expect(response.statusMessage).toEqual(ReasonPhrases.ACCEPTED);
-        expect(response.statusCode).toBe(StatusCodes.ACCEPTED);
-        // TODO: test that the link info has been updated
       });
     });
   });

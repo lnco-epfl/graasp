@@ -1,26 +1,23 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 import { resolveDependency } from '../../../../di/utils';
-import { notUndefined } from '../../../../utils/assertions';
+import { asDefined } from '../../../../utils/assertions';
 import { buildRepositories } from '../../../../utils/repositories';
 import { isAuthenticated, optionalIsAuthenticated } from '../../../auth/plugins/passport';
 import { matchOne } from '../../../authorization';
 import { assertIsMember } from '../../../member/entities/member';
 import { validatedMemberAccountRole } from '../../../member/strategies/validatedMemberAccountRole';
-import common, { create, deleteOne, getCategories, getItemCategories } from './schemas';
+import { create, deleteOne, getCategories, getItemCategories } from './schemas';
 import { CategoryService } from './services/category';
 import { ItemCategoryService } from './services/itemCategory';
 
-const plugin: FastifyPluginAsync = async (fastify) => {
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { db } = fastify;
   const itemCategoryService = resolveDependency(ItemCategoryService);
   const categoryService = resolveDependency(CategoryService);
 
-  // schemas
-  fastify.addSchema(common);
-
   // get categories
-  fastify.get<{ Params: { categoryId: string } }>(
+  fastify.get(
     '/categories',
     { schema: getCategories, preHandler: optionalIsAuthenticated },
     async ({ user }) => {
@@ -29,7 +26,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   //get item category of an item
-  fastify.get<{ Params: { itemId: string } }>(
+  fastify.get(
     '/:itemId/categories',
     {
       schema: getItemCategories,
@@ -42,12 +39,12 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   // insert item category
-  fastify.post<{ Params: { itemId: string }; Body: { categoryId: string } }>(
+  fastify.post(
     '/:itemId/categories',
     { schema: create, preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)] },
     async ({ user, params: { itemId }, body: { categoryId } }) => {
       return db.transaction(async (manager) => {
-        const member = notUndefined(user?.account);
+        const member = asDefined(user?.account);
         assertIsMember(member);
         return itemCategoryService.post(member, buildRepositories(manager), itemId, categoryId);
       });
@@ -55,11 +52,11 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   );
 
   // delete item category entry
-  fastify.delete<{ Params: { itemCategoryId: string; itemId: string } }>(
+  fastify.delete(
     '/:itemId/categories/:itemCategoryId',
     { schema: deleteOne, preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)] },
     async ({ user, params: { itemCategoryId, itemId } }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       return db.transaction(async (manager) => {
         const { id: deletedId } = await itemCategoryService.delete(

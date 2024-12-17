@@ -17,4 +17,6 @@ API Collections
 
 !.yarn
 !.yarnrc.yml
-yarn.lock
+
+
+src/scripts/

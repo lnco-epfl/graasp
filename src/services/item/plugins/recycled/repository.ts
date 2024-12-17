@@ -1,10 +1,13 @@
 import { EntityManager, In } from 'typeorm';
 
-import { PermissionLevel } from '@graasp/sdk';
+import { Paginated, Pagination, PermissionLevel } from '@graasp/sdk';
 
 import { MutableRepository } from '../../../../repositories/MutableRepository';
 import { DEFAULT_PRIMARY_KEY } from '../../../../repositories/const';
+import { Account } from '../../../account/entities/account';
+import { ItemMembership } from '../../../itemMembership/entities/ItemMembership';
 import { Member } from '../../../member/entities/member';
+import { ITEMS_PAGE_SIZE_MAX } from '../../constants';
 import { Item } from '../../entities/Item';
 import { RecycledItemData } from './RecycledItemData';
 
@@ -31,23 +34,41 @@ export class RecycledItemDataRepository extends MutableRepository<RecycledItemDa
     return recycled;
   }
 
-  async getManyByMember(member: Member): Promise<RecycledItemData[]> {
-    // get only with admin membership
-    return await this.repository
-      .createQueryBuilder('recycledItem')
+  async getOwnRecycledItems(account: Account, pagination: Pagination): Promise<Paginated<Item>> {
+    const { page, pageSize } = pagination;
+    const limit = Math.min(pageSize, ITEMS_PAGE_SIZE_MAX);
+    const skip = (page - 1) * limit;
+
+    const query = this.manager
+      // start with smaller table that can have the most contraints: membership with admin and accountId
+      .getRepository(ItemMembership)
+      .createQueryBuilder('im')
+      // we want to join on recycled item
       .withDeleted()
-      .leftJoinAndSelect('recycledItem.creator', 'member')
-      .leftJoinAndSelect('recycledItem.item', 'item')
-      .leftJoinAndSelect('item.creator', 'itemMember')
-      .innerJoin(
-        'item_membership',
-        'im',
-        `im.item_path @> item.path 
-        AND im.permission = :permission 
-        AND im.account_id = :accountId`,
-        { permission: PermissionLevel.Admin, accountId: member.id },
+      .innerJoinAndSelect(
+        'im.item',
+        'item',
+        // reduce size by getting only recycled items
+        `item.path <@ im.item_path and item.deleted_at is not null`,
       )
-      .getMany();
+      // get top most recycled item
+      .innerJoin(RecycledItemData, 'rid', 'item.path = rid.item_path')
+      // return item's creator
+      .leftJoinAndSelect('item.creator', 'member')
+      // item membership constraints
+      .where(`im.account_id = :accountId`, {
+        accountId: account.id,
+      })
+      .andWhere(` im.permission = :permission`, {
+        permission: PermissionLevel.Admin,
+      })
+      // show most recently deleted items first
+      .orderBy('item.deleted_at', 'DESC')
+      .offset(skip)
+      .limit(limit);
+
+    const [data, totalCount] = await query.getManyAndCount();
+    return { data: data.map(({ item }) => item), totalCount, pagination };
   }
 
   // warning: this call removes from the table

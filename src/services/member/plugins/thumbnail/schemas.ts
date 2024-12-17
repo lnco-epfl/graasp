@@ -1,49 +1,34 @@
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
+
+import { FastifySchema } from 'fastify';
+
 import { ThumbnailSize } from '@graasp/sdk';
 
-const upload = {
-  params: {
-    type: 'object',
-    additionalProperties: false,
-  },
-};
+import { customType } from '../../../../plugins/typebox';
+import { errorSchemaRef } from '../../../../schemas/global';
 
-const download = {
-  params: {
-    allOf: [
-      { $ref: 'https://graasp.org/#/definitions/idParam' },
-      {
-        type: 'object',
-        properties: {
-          size: {
-            enum: Object.values(ThumbnailSize),
-            default: ThumbnailSize.Medium,
-          },
-        },
-        required: ['size'],
-      },
-    ],
-  },
-  querystring: {
-    type: 'object',
-    properties: {
-      replyUrl: {
-        type: 'boolean',
-        default: false,
-      },
+export const upload = {
+  response: { [StatusCodes.NO_CONTENT]: Type.Null() },
+} as const satisfies FastifySchema;
+
+export const download = {
+  params: Type.Object(
+    {
+      id: customType.UUID(),
+      size: Type.Enum(ThumbnailSize, { default: ThumbnailSize.Medium }),
     },
-    additionalProperties: false,
-  },
+    { additionalProperties: false },
+  ),
+  querystring: Type.Object(
+    {
+      replyUrl: Type.Boolean({ default: false }),
+    },
+    { additionalProperties: false },
+  ),
   response: {
-    200: {
-      type: 'string',
-    },
-    '4xx': {
-      $ref: 'https://graasp.org/#/definitions/error',
-    },
-    500: {
-      $ref: 'https://graasp.org/#/definitions/error',
-    },
+    [StatusCodes.OK]: errorSchemaRef,
+    '4xx': errorSchemaRef,
+    [StatusCodes.INTERNAL_SERVER_ERROR]: errorSchemaRef,
   },
-};
-
-export { upload, download };
+} as const satisfies FastifySchema;

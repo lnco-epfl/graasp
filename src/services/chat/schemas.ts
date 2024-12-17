@@ -1,133 +1,172 @@
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
+
+import { FastifySchema } from 'fastify';
+
+import { customType, registerSchemaAsRef } from '../../plugins/typebox';
+import { errorSchemaRef } from '../../schemas/global';
+import { nullableAccountSchemaRef } from '../account/schemas';
+import { itemSchemaRef } from '../item/schemas';
+
 /**
  * JSON schema definitions to validate requests and responses
  * through Fastify's AJV instance
  */
-export default {
-  $id: 'https://graasp.org/chat/',
-  definitions: {
-    itemIdParam: {
-      type: 'object',
-      required: ['itemId'],
-      properties: {
-        itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      },
-    },
 
-    messageParam: {
-      type: 'object',
-      required: ['itemId', 'messageId'],
-      properties: {
-        itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-        messageId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      },
+export const chatMessageSchemaRef = registerSchemaAsRef(
+  'chatMessage',
+  'Chat Message',
+  Type.Object(
+    {
+      // Object Definition
+      id: customType.UUID(),
+      creator: nullableAccountSchemaRef,
+      createdAt: customType.DateTime(),
+      updatedAt: customType.DateTime(),
+      body: Type.String(),
+      item: itemSchemaRef,
     },
-
-    chat: {
-      type: 'object',
-      properties: {
-        id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-        messages: {
-          type: 'array',
-          items: { $ref: '#/definitions/chatMessage' },
-        },
-      },
-    },
-
-    chatMessage: {
-      type: 'object',
-      properties: {
-        id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-        creator: { $ref: 'https://graasp.org/members/#/definitions/member' },
-        createdAt: { type: 'string' },
-        updatedAt: { type: 'string' },
-        body: { type: 'string' },
-        item: {
-          $ref: 'https://graasp.org/items/#/definitions/item',
-        },
-      },
+    {
+      // Schema Options
+      description: 'Message from a member in a chat of an item.',
       additionalProperties: false,
     },
+  ),
+);
 
-    // chat message properties required at creation
-    partialChatMessage: {
-      type: 'object',
-      required: ['body'],
-      properties: {
-        body: {
-          type: 'string',
-        },
-        mentions: {
-          type: 'array',
-          items: {
-            type: 'string',
-          },
-          minItems: 0,
-        },
-      },
+export const chatSchemaRef = registerSchemaAsRef(
+  'chat',
+  'Chat',
+  Type.Object(
+    {
+      // Object Definition
+      id: customType.UUID(),
+      messages: Type.Array(chatMessageSchemaRef),
+    },
+    {
+      // Schema Options
+      description: 'Chat object of an item with its messages.',
       additionalProperties: false,
     },
-  },
-};
+  ),
+);
 
 /**
  * JSON schema on GET chat route for request and response
  */
-const getChat = {
-  params: { $ref: 'https://graasp.org/chat/#/definitions/itemIdParam' },
+export const getChat = {
+  operationId: 'getChat',
+  tags: ['chat'],
+  summary: 'Get chat',
+  description: 'Get chat object for given item.',
+
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
   response: {
-    200: {
-      type: 'array',
-      items: { $ref: 'https://graasp.org/chat/#/definitions/chatMessage' },
-    },
+    [StatusCodes.OK]: Type.Array(chatMessageSchemaRef, { description: 'Successful Response' }),
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
 /**
  * JSON schema on POST publish message route for request and response
  */
-const publishMessage = {
-  params: { $ref: 'https://graasp.org/chat/#/definitions/itemIdParam' },
-  body: { $ref: 'https://graasp.org/chat/#/definitions/partialChatMessage' },
+export const createChatMessage = {
+  operationId: 'createChatMessage',
+  tags: ['chat'],
+  summary: 'Save message in chat',
+  description: 'Save message in chat for given item.',
+
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
+  body: Type.Object(
+    {
+      // Object Definition
+      body: Type.String(),
+      mentions: Type.Optional(Type.Array(Type.String())),
+    },
+    {
+      // Schema Options
+      additionalProperties: false,
+    },
+  ),
   response: {
-    201: { $ref: 'https://graasp.org/chat/#/definitions/chatMessage' },
+    [StatusCodes.CREATED]: chatMessageSchemaRef,
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
 /**
  * JSON schema on PATCH message route for request and response
  */
-const patchMessage = {
-  params: { $ref: 'https://graasp.org/chat/#/definitions/messageParam' },
-  body: {
-    type: 'object',
-    required: ['body'],
-    properties: {
-      body: { type: 'string' },
+export const patchMessage = {
+  operationId: 'patchChatMessage',
+  tags: ['chat'],
+  summary: 'Edit message in chat',
+  description: 'Edit message in chat for given item.',
+
+  params: Type.Object(
+    {
+      // Object Definition
+      itemId: customType.UUID(),
+      messageId: customType.UUID(),
     },
-  },
+    {
+      // Schema Options
+      additionalProperties: false,
+    },
+  ),
+  body: Type.Object({
+    body: Type.String(),
+  }),
   response: {
-    200: { $ref: 'https://graasp.org/chat/#/definitions/chatMessage' },
+    [StatusCodes.OK]: chatMessageSchemaRef,
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
 /**
  * JSON schema on DELETE remove message route for request and response
  */
-const deleteMessage = {
-  params: { $ref: 'https://graasp.org/chat/#/definitions/messageParam' },
+export const deleteMessage = {
+  operationId: 'deleteChatMessage',
+  tags: ['chat'],
+  summary: 'Delete message in chat',
+  description: 'Delete message in chat for given item.',
+
+  params: Type.Object(
+    {
+      // Object Definition
+      itemId: customType.UUID(),
+      messageId: customType.UUID(),
+    },
+    {
+      // Schema Options
+      additionalProperties: false,
+    },
+  ),
   response: {
-    200: { $ref: 'https://graasp.org/chat/#/definitions/chatMessage' },
+    [StatusCodes.OK]: chatMessageSchemaRef,
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
 /**
  * JSON schema on DELETE clear chat route for request and response
  */
-const clearChat = {
-  params: { $ref: 'https://graasp.org/chat/#/definitions/itemIdParam' },
-  response: {
-    200: { $ref: 'https://graasp.org/chat/#/definitions/chat' },
-  },
-};
+export const clearChat = {
+  operationId: 'clearChatMessage',
+  tags: ['chat'],
+  summary: 'Clear messages of chat',
+  description: 'Clear messages of chat for given item.',
 
-export { getChat, publishMessage, patchMessage, deleteMessage, clearChat };
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
+  response: {
+    [StatusCodes.OK]: chatSchemaRef,
+    '4xx': errorSchemaRef,
+  },
+} as const satisfies FastifySchema;

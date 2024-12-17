@@ -1,12 +1,12 @@
 import { StatusCodes } from 'http-status-codes';
 
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
 import { RecaptchaAction } from '@graasp/sdk';
 import { DEFAULT_LANG } from '@graasp/translations';
 
 import { resolveDependency } from '../../../../di/utils';
-import { notUndefined } from '../../../../utils/assertions';
+import { asDefined } from '../../../../utils/assertions';
 import {
   LOGIN_TOKEN_EXPIRATION_IN_MINUTES,
   MOBILE_DEEP_LINK_PROTOCOL,
@@ -18,7 +18,6 @@ import { generateAuthTokensPair, getRedirectionUrl } from '../../utils';
 import captchaPreHandler from '../captcha';
 import {
   SHORT_TOKEN_PARAM,
-  TOKEN_PARAM,
   authenticateJWTChallengeVerifier,
   authenticateMobileMagicLink,
   authenticatePassword,
@@ -29,7 +28,7 @@ import { authWeb, mPasswordLogin, mauth, mlogin, mregister } from './schemas';
 import { MobileService } from './service';
 
 // token based auth and endpoints for mobile
-const plugin: FastifyPluginAsync = async (fastify) => {
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { log, db } = fastify;
 
   const mobileService = resolveDependency(MobileService);
@@ -38,16 +37,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
 
   // no need to add CORS support here - only used by mobile app
 
-  fastify.post<{
-    Body: {
-      name: string;
-      email: string;
-      challenge: string;
-      captcha: string;
-      enableSaveActions?: boolean;
-    };
-    Querystring: { lang?: string };
-  }>(
+  fastify.post(
     '/register',
     {
       schema: mregister,
@@ -66,28 +56,22 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.post<{
-    Body: { email: string; challenge: string; captcha: string };
-    Querystring: { lang?: string };
-  }>(
+  fastify.post(
     '/login',
     {
       schema: mlogin,
       preHandler: captchaPreHandler(RecaptchaAction.SignInMobile),
     },
     async (request, reply) => {
-      const {
-        body,
-        query: { lang },
-      } = request;
+      const { body } = request;
 
-      await mobileService.login(undefined, buildRepositories(), body, lang);
+      await mobileService.login(undefined, buildRepositories(), body);
       reply.status(StatusCodes.NO_CONTENT);
     },
   );
 
   // login with password
-  fastify.post<{ Body: { email: string; challenge: string; password: string; captcha: string } }>(
+  fastify.post(
     '/login-password',
     {
       schema: mPasswordLogin,
@@ -104,7 +88,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         user,
         body: { challenge },
       } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
 
       const token = memberPasswordService.generateToken(
         { sub: member.id, challenge: challenge },
@@ -121,14 +105,14 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.post<{ Body: { [SHORT_TOKEN_PARAM]: string; verifier: string } }>(
+  fastify.post(
     '/auth',
     {
       schema: mauth,
       preHandler: authenticateJWTChallengeVerifier,
     },
     async ({ user, authInfo }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       await db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);
         await memberService.refreshLastAuthenticatedAt(member.id, repositories);
@@ -147,13 +131,13 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       preHandler: authenticateRefreshToken,
     },
     async ({ user }) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       return generateAuthTokensPair(member.id);
     },
   );
 
   // from user token, set corresponding cookie
-  fastify.get<{ Querystring: { [TOKEN_PARAM]: string; url: string } }>(
+  fastify.get(
     '/auth/web',
     {
       schema: authWeb,

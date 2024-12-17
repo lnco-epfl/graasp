@@ -4,14 +4,14 @@ import { FastifyInstance } from 'fastify';
 
 import {
   FolderItemFactory,
-  ItemTagType,
+  ItemVisibilityType,
   PackedFolderItemFactory,
   PermissionLevel,
 } from '@graasp/sdk';
 
-import build, { clearDatabase, mockAuthenticate } from '../../test/app';
+import build, { clearDatabase, mockAuthenticate, unmockAuthenticate } from '../../test/app';
 import { ItemMembershipRepository } from '../services/itemMembership/repository';
-import { notUndefined } from '../utils/assertions';
+import { asDefined } from '../utils/assertions';
 import { MemberCannotAccess, MemberCannotAdminItem, MemberCannotWriteItem } from '../utils/errors';
 import { Account } from './account/entities/account';
 import { isAuthenticated } from './auth/plugins/passport';
@@ -23,12 +23,13 @@ import {
 } from './authorization';
 import { PackedItem } from './item/ItemWrapper';
 import { Item } from './item/entities/Item';
-import { ItemTag } from './item/plugins/itemTag/ItemTag';
-import { ItemTagRepository } from './item/plugins/itemTag/repository';
+import { ItemVisibility } from './item/plugins/itemVisibility/ItemVisibility';
+import { ItemVisibilityRepository } from './item/plugins/itemVisibility/repository';
 import { expectPackedItem } from './item/test/fixtures/items';
 import { ItemMembership } from './itemMembership/entities/ItemMembership';
 import { Member } from './member/entities/member';
 import { validatedMemberAccountRole } from './member/strategies/validatedMemberAccountRole';
+import { saveMember } from './member/test/fixtures/members';
 
 const OWNER = { id: 'owner', name: 'owner' } as Account;
 const SHARED_MEMBER = { id: 'shared', name: 'shared' } as Account;
@@ -38,13 +39,13 @@ const ownerMembership = { account: OWNER, permission: PermissionLevel.Admin } as
 const buildSharedMembership = (permission: PermissionLevel, item: Item = ITEM) =>
   ({ account: SHARED_MEMBER, permission, item }) as ItemMembership;
 
-jest.mock('./item/plugins/itemTag/repository');
+jest.mock('./item/plugins/itemVisibility/repository');
 
-const itemTagRepository = new ItemTagRepository();
-const getManyForManyMock = jest.spyOn(itemTagRepository, 'getManyForMany');
+const itemVisibilityRepository = new ItemVisibilityRepository();
+const getManyForManyMock = jest.spyOn(itemVisibilityRepository, 'getManyForMany');
 
-const MOCK_ITEM_TAG_PUBLIC = { type: ItemTagType.Public } as ItemTag;
-const MOCK_ITEM_TAG_HIDDEN = { type: ItemTagType.Hidden } as ItemTag;
+const MOCK_ITEM_VISIBILITY_PUBLIC = { type: ItemVisibilityType.Public } as ItemVisibility;
+const MOCK_ITEM_VISIBILITY_HIDDEN = { type: ItemVisibilityType.Hidden } as ItemVisibility;
 const returnDummyArray = async () => [];
 
 describe('validatePermission', () => {
@@ -55,13 +56,13 @@ describe('validatePermission', () => {
     getManyForManyMock.mockClear();
   });
   it('Invalid saved membership', async () => {
-    jest.spyOn(itemTagRepository, 'getForItem').mockImplementation(returnDummyArray);
+    jest.spyOn(itemVisibilityRepository, 'getByItemPath').mockImplementation(returnDummyArray);
 
     const repositories = {
       itemMembershipRepository: {
         getInherited: jest.fn(() => ({ permission: 'anything' })),
-      } as unknown as typeof ItemMembershipRepository,
-      itemTagRepository,
+      } as unknown as ItemMembershipRepository,
+      itemVisibilityRepository,
     };
 
     // any other member shouldn't access
@@ -72,14 +73,14 @@ describe('validatePermission', () => {
 
   describe('Private item', () => {
     beforeEach(() => {
-      jest.spyOn(itemTagRepository, 'getForItem').mockImplementation(returnDummyArray);
+      jest.spyOn(itemVisibilityRepository, 'getByItemPath').mockImplementation(returnDummyArray);
       repositories = {
         itemMembershipRepository: {
-          getInherited: jest.fn((item, member) =>
-            member.id === OWNER.id ? ownerMembership : null,
+          getInherited: jest.fn((_itemPath, memberId) =>
+            memberId === OWNER.id ? ownerMembership : null,
           ),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -134,11 +135,11 @@ describe('validatePermission', () => {
   describe('Shared item with Read permission', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Read);
 
-    jest.spyOn(itemTagRepository, 'getForItem').mockImplementation(returnDummyArray);
+    jest.spyOn(itemVisibilityRepository, 'getByItemPath').mockImplementation(returnDummyArray);
     const repositories = {
       itemMembershipRepository: {
-        getInherited: jest.fn((item, member) => {
-          switch (member.id) {
+        getInherited: jest.fn((_itemPath, memberId) => {
+          switch (memberId) {
             case OWNER.id:
               return ownerMembership;
             case SHARED_MEMBER.id:
@@ -147,8 +148,8 @@ describe('validatePermission', () => {
               return null;
           }
         }),
-      } as unknown as typeof ItemMembershipRepository,
-      itemTagRepository,
+      } as unknown as ItemMembershipRepository,
+      itemVisibilityRepository,
     };
 
     it(PermissionLevel.Read, async () => {
@@ -222,11 +223,11 @@ describe('validatePermission', () => {
   describe('Shared item with Write permission', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Write);
 
-    jest.spyOn(itemTagRepository, 'getForItem').mockImplementation(returnDummyArray);
+    jest.spyOn(itemVisibilityRepository, 'getByItemPath').mockImplementation(returnDummyArray);
     const repositories = {
       itemMembershipRepository: {
-        getInherited: jest.fn((item, member) => {
-          switch (member.id) {
+        getInherited: jest.fn((_itemPath, memberId) => {
+          switch (memberId) {
             case OWNER.id:
               return ownerMembership;
             case SHARED_MEMBER.id:
@@ -235,8 +236,8 @@ describe('validatePermission', () => {
               return null;
           }
         }),
-      } as unknown as typeof ItemMembershipRepository,
-      itemTagRepository,
+      } as unknown as ItemMembershipRepository,
+      itemVisibilityRepository,
     };
 
     it(PermissionLevel.Read, async () => {
@@ -314,11 +315,11 @@ describe('validatePermission', () => {
   describe('Shared item with Admin permission', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Admin);
 
-    jest.spyOn(itemTagRepository, 'getForItem').mockImplementation(returnDummyArray);
+    jest.spyOn(itemVisibilityRepository, 'getByItemPath').mockImplementation(returnDummyArray);
     const repositories = {
       itemMembershipRepository: {
-        getInherited: jest.fn((item, member) => {
-          switch (member.id) {
+        getInherited: jest.fn((_itemPath, memberId) => {
+          switch (memberId) {
             case OWNER.id:
               return ownerMembership;
             case SHARED_MEMBER.id:
@@ -327,8 +328,8 @@ describe('validatePermission', () => {
               return null;
           }
         }),
-      } as unknown as typeof ItemMembershipRepository,
-      itemTagRepository,
+      } as unknown as ItemMembershipRepository,
+      itemVisibilityRepository,
     };
 
     it(PermissionLevel.Read, async () => {
@@ -410,20 +411,20 @@ describe('validatePermission', () => {
   describe('Public item', () => {
     beforeEach(() => {
       jest
-        .spyOn(itemTagRepository, 'getForItem')
-        .mockImplementation(async () => [MOCK_ITEM_TAG_PUBLIC]);
+        .spyOn(itemVisibilityRepository, 'getByItemPath')
+        .mockImplementation(async () => [MOCK_ITEM_VISIBILITY_PUBLIC]);
       repositories = {
         itemMembershipRepository: {
-          getInherited: jest.fn(async (item, member) => {
-            switch (member.id) {
+          getInherited: jest.fn(async (_itemPath, memberId) => {
+            switch (memberId) {
               case OWNER.id:
                 return ownerMembership;
               default:
                 return null;
             }
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -484,13 +485,13 @@ describe('validatePermission', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Read);
     beforeEach(() => {
       jest
-        .spyOn(itemTagRepository, 'getForItem')
-        .mockImplementation(async () => [MOCK_ITEM_TAG_PUBLIC]);
+        .spyOn(itemVisibilityRepository, 'getByItemPath')
+        .mockImplementation(async () => [MOCK_ITEM_VISIBILITY_PUBLIC]);
 
       repositories = {
         itemMembershipRepository: {
-          getInherited: jest.fn(async (item, member) => {
-            switch (member.id) {
+          getInherited: jest.fn(async (_itemPath, memberId) => {
+            switch (memberId) {
               case OWNER.id:
                 return ownerMembership;
               case SHARED_MEMBER.id:
@@ -499,8 +500,8 @@ describe('validatePermission', () => {
                 return null;
             }
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -580,13 +581,13 @@ describe('validatePermission', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Write);
     beforeEach(() => {
       jest
-        .spyOn(itemTagRepository, 'getForItem')
-        .mockImplementation(async () => [MOCK_ITEM_TAG_PUBLIC]);
+        .spyOn(itemVisibilityRepository, 'getByItemPath')
+        .mockImplementation(async () => [MOCK_ITEM_VISIBILITY_PUBLIC]);
 
       repositories = {
         itemMembershipRepository: {
-          getInherited: jest.fn(async (item, member) => {
-            switch (member.id) {
+          getInherited: jest.fn(async (_itemPath, memberId) => {
+            switch (memberId) {
               case OWNER.id:
                 return ownerMembership;
               case SHARED_MEMBER.id:
@@ -595,8 +596,8 @@ describe('validatePermission', () => {
                 return null;
             }
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -681,13 +682,13 @@ describe('validatePermission', () => {
 
     beforeEach(() => {
       jest
-        .spyOn(itemTagRepository, 'getForItem')
-        .mockImplementation(async () => [MOCK_ITEM_TAG_PUBLIC]);
+        .spyOn(itemVisibilityRepository, 'getByItemPath')
+        .mockImplementation(async () => [MOCK_ITEM_VISIBILITY_PUBLIC]);
 
       repositories = {
         itemMembershipRepository: {
-          getInherited: jest.fn(async (item, member) => {
-            switch (member.id) {
+          getInherited: jest.fn(async (_itemPath, memberId) => {
+            switch (memberId) {
               case OWNER.id:
                 return ownerMembership;
               case SHARED_MEMBER.id:
@@ -696,8 +697,8 @@ describe('validatePermission', () => {
                 return null;
             }
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -786,13 +787,13 @@ describe('validatePermission', () => {
 
     beforeEach(() => {
       jest
-        .spyOn(itemTagRepository, 'getForItem')
-        .mockImplementation(async () => [MOCK_ITEM_TAG_HIDDEN]);
+        .spyOn(itemVisibilityRepository, 'getByItemPath')
+        .mockImplementation(async () => [MOCK_ITEM_VISIBILITY_HIDDEN]);
 
       repositories = {
         itemMembershipRepository: {
-          getInherited: jest.fn(async (item, member) => {
-            switch (member.id) {
+          getInherited: jest.fn(async (_itemPath, memberId) => {
+            switch (memberId) {
               case OWNER.id:
                 return ownerMembership;
               case SHARED_MEMBER.id:
@@ -801,8 +802,8 @@ describe('validatePermission', () => {
                 return null;
             }
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -874,13 +875,13 @@ describe('validatePermission', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Write);
     beforeEach(() => {
       jest
-        .spyOn(itemTagRepository, 'getForItem')
-        .mockImplementation(async () => [MOCK_ITEM_TAG_HIDDEN]);
+        .spyOn(itemVisibilityRepository, 'getByItemPath')
+        .mockImplementation(async () => [MOCK_ITEM_VISIBILITY_HIDDEN]);
 
       repositories = {
         itemMembershipRepository: {
-          getInherited: jest.fn(async (item, member) => {
-            switch (member.id) {
+          getInherited: jest.fn(async (_itemPath, memberId) => {
+            switch (memberId) {
               case OWNER.id:
                 return ownerMembership;
               case SHARED_MEMBER.id:
@@ -889,8 +890,8 @@ describe('validatePermission', () => {
                 return null;
             }
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
     it(PermissionLevel.Read, async () => {
@@ -970,13 +971,13 @@ describe('validatePermission', () => {
 
     beforeEach(() => {
       jest
-        .spyOn(itemTagRepository, 'getForItem')
-        .mockImplementation(async () => [MOCK_ITEM_TAG_HIDDEN]);
+        .spyOn(itemVisibilityRepository, 'getByItemPath')
+        .mockImplementation(async () => [MOCK_ITEM_VISIBILITY_HIDDEN]);
 
       repositories = {
         itemMembershipRepository: {
-          getInherited: jest.fn(async (item, member) => {
-            switch (member.id) {
+          getInherited: jest.fn(async (_itemPath, memberId) => {
+            switch (memberId) {
               case OWNER.id:
                 return ownerMembership;
               case SHARED_MEMBER.id:
@@ -985,8 +986,8 @@ describe('validatePermission', () => {
                 return null;
             }
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -1068,21 +1069,21 @@ describe('validatePermission', () => {
   describe('Public & Hidden item', () => {
     beforeEach(() => {
       jest
-        .spyOn(itemTagRepository, 'getForItem')
-        .mockImplementation(async () => [MOCK_ITEM_TAG_HIDDEN, MOCK_ITEM_TAG_PUBLIC]);
+        .spyOn(itemVisibilityRepository, 'getByItemPath')
+        .mockImplementation(async () => [MOCK_ITEM_VISIBILITY_HIDDEN, MOCK_ITEM_VISIBILITY_PUBLIC]);
 
       repositories = {
         itemMembershipRepository: {
-          getInherited: jest.fn(async (item, member) => {
-            switch (member.id) {
+          getInherited: jest.fn(async (_itemPath, memberId) => {
+            switch (memberId) {
               case OWNER.id:
                 return ownerMembership;
               default:
                 return null;
             }
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -1139,12 +1140,12 @@ describe('validatePermission', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Read);
 
     jest
-      .spyOn(itemTagRepository, 'getForItem')
-      .mockImplementation(async () => [MOCK_ITEM_TAG_HIDDEN, MOCK_ITEM_TAG_PUBLIC]);
+      .spyOn(itemVisibilityRepository, 'getByItemPath')
+      .mockImplementation(async () => [MOCK_ITEM_VISIBILITY_HIDDEN, MOCK_ITEM_VISIBILITY_PUBLIC]);
     const repositories = {
       itemMembershipRepository: {
-        getInherited: jest.fn(async (item, member) => {
-          switch (member.id) {
+        getInherited: jest.fn(async (_itemPath, memberId) => {
+          switch (memberId) {
             case OWNER.id:
               return ownerMembership;
             case SHARED_MEMBER.id:
@@ -1153,8 +1154,8 @@ describe('validatePermission', () => {
               return null;
           }
         }),
-      } as unknown as typeof ItemMembershipRepository,
-      itemTagRepository,
+      } as unknown as ItemMembershipRepository,
+      itemVisibilityRepository,
     };
 
     it(PermissionLevel.Read, async () => {
@@ -1225,12 +1226,12 @@ describe('validatePermission', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Write);
 
     jest
-      .spyOn(itemTagRepository, 'getForItem')
-      .mockImplementation(async () => [MOCK_ITEM_TAG_HIDDEN, MOCK_ITEM_TAG_PUBLIC]);
+      .spyOn(itemVisibilityRepository, 'getByItemPath')
+      .mockImplementation(async () => [MOCK_ITEM_VISIBILITY_HIDDEN, MOCK_ITEM_VISIBILITY_PUBLIC]);
     const repositories = {
       itemMembershipRepository: {
-        getInherited: jest.fn(async (item, member) => {
-          switch (member.id) {
+        getInherited: jest.fn(async (_itemPath, memberId) => {
+          switch (memberId) {
             case OWNER.id:
               return ownerMembership;
             case SHARED_MEMBER.id:
@@ -1239,8 +1240,8 @@ describe('validatePermission', () => {
               return null;
           }
         }),
-      } as unknown as typeof ItemMembershipRepository,
-      itemTagRepository,
+      } as unknown as ItemMembershipRepository,
+      itemVisibilityRepository,
     };
 
     it(PermissionLevel.Read, async () => {
@@ -1319,12 +1320,12 @@ describe('validatePermission', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Admin);
 
     jest
-      .spyOn(itemTagRepository, 'getForItem')
-      .mockImplementation(async () => [MOCK_ITEM_TAG_HIDDEN, MOCK_ITEM_TAG_PUBLIC]);
+      .spyOn(itemVisibilityRepository, 'getByItemPath')
+      .mockImplementation(async () => [MOCK_ITEM_VISIBILITY_HIDDEN, MOCK_ITEM_VISIBILITY_PUBLIC]);
     const repositories = {
       itemMembershipRepository: {
-        getInherited: jest.fn(async (item, member) => {
-          switch (member.id) {
+        getInherited: jest.fn(async (_itemPath, memberId) => {
+          switch (memberId) {
             case OWNER.id:
               return ownerMembership;
             case SHARED_MEMBER.id:
@@ -1333,8 +1334,8 @@ describe('validatePermission', () => {
               return null;
           }
         }),
-      } as unknown as typeof ItemMembershipRepository,
-      itemTagRepository,
+      } as unknown as ItemMembershipRepository,
+      itemVisibilityRepository,
     };
 
     it(PermissionLevel.Read, async () => {
@@ -1420,23 +1421,23 @@ describe('validatePermissionMany for no items', () => {
     getManyForManyMock.mockClear();
   });
   it('Should return empty data', async () => {
-    jest.spyOn(itemTagRepository, 'getForItem').mockImplementation(returnDummyArray);
+    jest.spyOn(itemVisibilityRepository, 'getByItemPath').mockImplementation(returnDummyArray);
     const repositories = {
       itemMembershipRepository: {
         getInheritedMany: jest.fn(() => ({ permission: 'anything' })),
-      } as unknown as typeof ItemMembershipRepository,
-      itemTagRepository,
+      } as unknown as ItemMembershipRepository,
+      itemVisibilityRepository,
     };
 
     const res = await validatePermissionMany(repositories, PermissionLevel.Admin, OWNER, []);
     const expected: Awaited<ReturnType<typeof validatePermissionMany>> = {
       itemMemberships: { data: {}, errors: [] },
-      tags: { data: {}, errors: [] },
+      visibilities: { data: {}, errors: [] },
     };
     // any other member shouldn't access
     expect(res).toEqual(expected);
     expect(repositories.itemMembershipRepository.getInheritedMany).not.toHaveBeenCalled();
-    expect(repositories.itemTagRepository.getManyForMany).not.toHaveBeenCalled();
+    expect(repositories.itemVisibilityRepository.getManyForMany).not.toHaveBeenCalled();
   });
 });
 
@@ -1449,12 +1450,12 @@ describe('validatePermissionMany for one item', () => {
   });
 
   it('Invalid saved membership', async () => {
-    jest.spyOn(itemTagRepository, 'getForItem').mockImplementation(returnDummyArray);
+    jest.spyOn(itemVisibilityRepository, 'getByItemPath').mockImplementation(returnDummyArray);
     const repositories = {
       itemMembershipRepository: {
         getInheritedMany: jest.fn(() => ({ permission: 'anything' })),
-      } as unknown as typeof ItemMembershipRepository,
-      itemTagRepository,
+      } as unknown as ItemMembershipRepository,
+      itemVisibilityRepository,
     };
 
     // any other member shouldn't access
@@ -1471,10 +1472,10 @@ describe('validatePermissionMany for one item', () => {
       }));
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -1484,8 +1485,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
     it(PermissionLevel.Read, async () => {
@@ -1559,10 +1560,10 @@ describe('validatePermissionMany for one item', () => {
 
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -1575,8 +1576,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -1677,10 +1678,10 @@ describe('validatePermissionMany for one item', () => {
       }));
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -1693,8 +1694,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -1795,10 +1796,10 @@ describe('validatePermissionMany for one item', () => {
       }));
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -1811,8 +1812,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -1907,15 +1908,15 @@ describe('validatePermissionMany for one item', () => {
   describe('Public item', () => {
     beforeEach(() => {
       getManyForManyMock.mockImplementation(async () => ({
-        data: { [ITEM.id]: [MOCK_ITEM_TAG_PUBLIC] },
+        data: { [ITEM.id]: [MOCK_ITEM_VISIBILITY_PUBLIC] },
         errors: [],
       }));
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -1925,8 +1926,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -1995,16 +1996,16 @@ describe('validatePermissionMany for one item', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Read);
     beforeEach(() => {
       getManyForManyMock.mockImplementation(async () => ({
-        data: { [ITEM.id]: [MOCK_ITEM_TAG_PUBLIC] },
+        data: { [ITEM.id]: [MOCK_ITEM_VISIBILITY_PUBLIC] },
         errors: [],
       }));
 
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -2017,8 +2018,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
     it(PermissionLevel.Read, async () => {
@@ -2113,16 +2114,16 @@ describe('validatePermissionMany for one item', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Write);
 
     getManyForManyMock.mockImplementation(async () => ({
-      data: { [ITEM.id]: [MOCK_ITEM_TAG_PUBLIC] },
+      data: { [ITEM.id]: [MOCK_ITEM_VISIBILITY_PUBLIC] },
       errors: [],
     }));
 
     const repositories = {
       itemMembershipRepository: {
-        getInheritedMany: jest.fn((items, member) => {
+        getInheritedMany: jest.fn((_items, memberId) => {
           let im;
 
-          switch (member.id) {
+          switch (memberId) {
             case OWNER.id:
               im = ownerMembership;
               break;
@@ -2135,8 +2136,8 @@ describe('validatePermissionMany for one item', () => {
           }
           return { data: { [ITEM.id]: im }, errors: [] };
         }),
-      } as unknown as typeof ItemMembershipRepository,
-      itemTagRepository,
+      } as unknown as ItemMembershipRepository,
+      itemVisibilityRepository,
     };
 
     it(PermissionLevel.Read, async () => {
@@ -2232,17 +2233,17 @@ describe('validatePermissionMany for one item', () => {
 
     getManyForManyMock.mockImplementation(async () => {
       return {
-        data: { [ITEM.id]: [MOCK_ITEM_TAG_PUBLIC] },
+        data: { [ITEM.id]: [MOCK_ITEM_VISIBILITY_PUBLIC] },
         errors: [],
       };
     });
 
     const repositories = {
       itemMembershipRepository: {
-        getInheritedMany: jest.fn((items, member) => {
+        getInheritedMany: jest.fn((_items, memberId) => {
           let im;
 
-          switch (member.id) {
+          switch (memberId) {
             case OWNER.id:
               im = ownerMembership;
               break;
@@ -2255,8 +2256,8 @@ describe('validatePermissionMany for one item', () => {
           }
           return { data: { [ITEM.id]: im }, errors: [] };
         }),
-      } as unknown as typeof ItemMembershipRepository,
-      itemTagRepository,
+      } as unknown as ItemMembershipRepository,
+      itemVisibilityRepository,
     };
 
     it(PermissionLevel.Read, async () => {
@@ -2352,16 +2353,16 @@ describe('validatePermissionMany for one item', () => {
 
     beforeEach(() => {
       getManyForManyMock.mockImplementation(async () => ({
-        data: { [ITEM.id]: [MOCK_ITEM_TAG_HIDDEN] },
+        data: { [ITEM.id]: [MOCK_ITEM_VISIBILITY_HIDDEN] },
         errors: [],
       }));
 
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -2374,8 +2375,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
     it(PermissionLevel.Read, async () => {
@@ -2471,16 +2472,16 @@ describe('validatePermissionMany for one item', () => {
 
     beforeEach(() => {
       getManyForManyMock.mockImplementation(async () => ({
-        data: { [ITEM.id]: [MOCK_ITEM_TAG_HIDDEN] },
+        data: { [ITEM.id]: [MOCK_ITEM_VISIBILITY_HIDDEN] },
         errors: [],
       }));
 
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -2493,8 +2494,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -2590,16 +2591,16 @@ describe('validatePermissionMany for one item', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Admin);
     beforeEach(() => {
       getManyForManyMock.mockImplementation(async () => ({
-        data: { [ITEM.id]: [MOCK_ITEM_TAG_HIDDEN] },
+        data: { [ITEM.id]: [MOCK_ITEM_VISIBILITY_HIDDEN] },
         errors: [],
       }));
 
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -2612,8 +2613,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -2708,15 +2709,15 @@ describe('validatePermissionMany for one item', () => {
   describe('Public & Hidden item', () => {
     beforeEach(() => {
       getManyForManyMock.mockImplementation(async () => ({
-        data: { [ITEM.id]: [MOCK_ITEM_TAG_HIDDEN, MOCK_ITEM_TAG_PUBLIC] },
+        data: { [ITEM.id]: [MOCK_ITEM_VISIBILITY_HIDDEN, MOCK_ITEM_VISIBILITY_PUBLIC] },
         errors: [],
       }));
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -2726,8 +2727,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -2796,15 +2797,15 @@ describe('validatePermissionMany for one item', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Read);
     beforeEach(() => {
       getManyForManyMock.mockImplementation(async () => ({
-        data: { [ITEM.id]: [MOCK_ITEM_TAG_HIDDEN] },
+        data: { [ITEM.id]: [MOCK_ITEM_VISIBILITY_HIDDEN] },
         errors: [],
       }));
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -2817,8 +2818,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -2914,15 +2915,15 @@ describe('validatePermissionMany for one item', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Write);
     beforeEach(() => {
       getManyForManyMock.mockImplementation(async () => ({
-        data: { [ITEM.id]: [MOCK_ITEM_TAG_HIDDEN] },
+        data: { [ITEM.id]: [MOCK_ITEM_VISIBILITY_HIDDEN] },
         errors: [],
       }));
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -2935,8 +2936,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -3032,15 +3033,15 @@ describe('validatePermissionMany for one item', () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Admin);
     beforeEach(() => {
       getManyForManyMock.mockImplementation(async () => ({
-        data: { [ITEM.id]: [MOCK_ITEM_TAG_HIDDEN] },
+        data: { [ITEM.id]: [MOCK_ITEM_VISIBILITY_HIDDEN] },
         errors: [],
       }));
       repositories = {
         itemMembershipRepository: {
-          getInheritedMany: jest.fn((items, member) => {
+          getInheritedMany: jest.fn((_items, memberId) => {
             let im;
 
-            switch (member.id) {
+            switch (memberId) {
               case OWNER.id:
                 im = ownerMembership;
                 break;
@@ -3053,8 +3054,8 @@ describe('validatePermissionMany for one item', () => {
             }
             return { data: { [ITEM.id]: im }, errors: [] };
           }),
-        } as unknown as typeof ItemMembershipRepository,
-        itemTagRepository,
+        } as unknown as ItemMembershipRepository,
+        itemVisibilityRepository,
       };
     });
 
@@ -3115,7 +3116,7 @@ describe('validatePermissionMany for one item', () => {
       expect(result2.errors[0]).toBeInstanceOf(MemberCannotAccess);
     });
 
-    it(PermissionLevel.Admin, async () => {
+    it('PermissionLevel.Admin', async () => {
       // owner should pass
       const { itemMemberships: result } = await validatePermissionMany(
         repositories,
@@ -3160,7 +3161,7 @@ describe('validatePermissionMany for many items', () => {
   it('Public item & Shared write item', async () => {
     const sharedMembership = buildSharedMembership(PermissionLevel.Write, SHARED_ITEM);
     getManyForManyMock.mockImplementation(async () => ({
-      data: { [PUBLIC_ITEM.id]: [MOCK_ITEM_TAG_PUBLIC], [SHARED_ITEM.id]: [] },
+      data: { [PUBLIC_ITEM.id]: [MOCK_ITEM_VISIBILITY_PUBLIC], [SHARED_ITEM.id]: [] },
       errors: [],
     }));
     repositories = {
@@ -3168,8 +3169,8 @@ describe('validatePermissionMany for many items', () => {
         getInheritedMany: jest.fn(() => {
           return { data: { [SHARED_ITEM.id]: sharedMembership }, errors: [] };
         }),
-      } as unknown as typeof ItemMembershipRepository,
-      itemTagRepository,
+      } as unknown as ItemMembershipRepository,
+      itemVisibilityRepository,
     };
     // shared member can read both items
     const { itemMemberships: result } = await validatePermissionMany(
@@ -3217,19 +3218,22 @@ describe('filterOutPackedDescendants', () => {
     FolderItemFactory({ parentItem: item }) as unknown as Item,
     FolderItemFactory({ parentItem: item }) as unknown as Item,
   ];
-  const hiddenTag = { type: ItemTagType.Hidden, item: descendants[2] } as ItemTag;
+  const hiddenVisibility = {
+    type: ItemVisibilityType.Hidden,
+    item: descendants[2],
+  } as ItemVisibility;
 
   /** build packed descendants for checking returned values
    * types don't play nicely because factory does not use the same types as the backend
    */
-  const buildPackedDescendants = (permission, hiddenTag): PackedItem[] => {
+  const buildPackedDescendants = (permission, hiddenVisibility): PackedItem[] => {
     const arr = descendants.map((descendant) =>
       PackedFolderItemFactory(descendant as never, {
         permission,
       }),
     );
-    const idx = arr.findIndex(({ id }) => id === hiddenTag.item.id);
-    arr[idx].hidden = hiddenTag;
+    const idx = arr.findIndex(({ id }) => id === hiddenVisibility.item.id);
+    arr[idx].hidden = hiddenVisibility;
     return arr as unknown as PackedItem[];
   };
 
@@ -3242,14 +3246,14 @@ describe('filterOutPackedDescendants', () => {
     const memberships = [{ item, member: OWNER, permission: PermissionLevel.Admin }];
     // packed descendants for expect
     // one item is hidden but this item should be returned
-    const packedDescendants = buildPackedDescendants(memberships[0].permission, hiddenTag);
+    const packedDescendants = buildPackedDescendants(memberships[0].permission, hiddenVisibility);
 
     repositories = {
       itemMembershipRepository: {
         getAllBelow: jest.fn(async () => memberships),
       },
-      itemTagRepository: {
-        getManyBelowAndSelf: jest.fn(async () => [hiddenTag]),
+      itemVisibilityRepository: {
+        getManyBelowAndSelf: jest.fn(async () => [hiddenVisibility]),
       },
     };
 
@@ -3266,14 +3270,14 @@ describe('filterOutPackedDescendants', () => {
     const memberships = [{ item, member: OWNER, permission: PermissionLevel.Write }];
     // packed descendants for expect
     // one item is hidden but this item should be returned
-    const packedDescendants = buildPackedDescendants(memberships[0].permission, hiddenTag);
+    const packedDescendants = buildPackedDescendants(memberships[0].permission, hiddenVisibility);
 
     repositories = {
       itemMembershipRepository: {
         getAllBelow: jest.fn(async () => memberships),
       },
-      itemTagRepository: {
-        getManyBelowAndSelf: jest.fn(async () => [hiddenTag]),
+      itemVisibilityRepository: {
+        getManyBelowAndSelf: jest.fn(async () => [hiddenVisibility]),
       },
     };
 
@@ -3290,14 +3294,14 @@ describe('filterOutPackedDescendants', () => {
     const memberships = [{ item, member: OWNER, permission: PermissionLevel.Read }];
     // packed descendants for expect
     // one item is hidden, this item should not be returned!
-    const packedDescendants = buildPackedDescendants(memberships[0].permission, hiddenTag);
+    const packedDescendants = buildPackedDescendants(memberships[0].permission, hiddenVisibility);
 
     repositories = {
       itemMembershipRepository: {
         getAllBelow: jest.fn(async () => memberships),
       },
-      itemTagRepository: {
-        getManyBelowAndSelf: jest.fn(async () => [hiddenTag]),
+      itemVisibilityRepository: {
+        getManyBelowAndSelf: jest.fn(async () => [hiddenVisibility]),
       },
     };
 
@@ -3313,14 +3317,14 @@ describe('filterOutPackedDescendants', () => {
   it('No membership does not return hidden', async () => {
     // packed descendants for expect
     // one item is hidden, this item should not be returned!
-    const packedDescendants = buildPackedDescendants(null, hiddenTag);
+    const packedDescendants = buildPackedDescendants(null, hiddenVisibility);
 
     repositories = {
       itemMembershipRepository: {
         getAllBelow: jest.fn(async () => []),
       },
-      itemTagRepository: {
-        getManyBelowAndSelf: jest.fn(async () => [hiddenTag]),
+      itemVisibilityRepository: {
+        getManyBelowAndSelf: jest.fn(async () => [hiddenVisibility]),
       },
     };
 
@@ -3347,10 +3351,10 @@ describe('Passport Plugin', () => {
   function shouldBeActor(actor: Member) {
     return ({ user }) => expect(user.account).toEqual(actor);
   }
-  beforeEach(async () => {
-    let actor: Member | undefined;
-    ({ app, actor } = await build({}));
-    member = notUndefined(actor);
+
+  beforeAll(async () => {
+    ({ app } = await build({ member: null }));
+
     handler = jest.fn();
     preHandler = jest.fn(async () => {});
     app.get(MOCKED_ROUTE, { preHandler: [isAuthenticated, preHandler] }, async (...args) =>
@@ -3358,10 +3362,20 @@ describe('Passport Plugin', () => {
     );
   });
 
-  afterEach(async () => {
-    handler.mockClear();
+  afterAll(async () => {
     await clearDatabase(app.db);
     app.close();
+  });
+
+  beforeEach(async () => {
+    const actor = await saveMember();
+    mockAuthenticate(actor);
+    member = asDefined(actor);
+  });
+
+  afterEach(async () => {
+    unmockAuthenticate();
+    handler.mockClear();
   });
 
   it('No Whitelist', async () => {

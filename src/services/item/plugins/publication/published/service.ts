@@ -1,10 +1,10 @@
 import { formatISO } from 'date-fns';
 import { singleton } from 'tsyringe';
 
-import { ItemTagType, PermissionLevel, PublicationStatus, UUID } from '@graasp/sdk';
-import { DEFAULT_LANG } from '@graasp/translations';
+import { ItemVisibilityType, PermissionLevel, PublicationStatus, UUID } from '@graasp/sdk';
 
 import { BaseLogger } from '../../../../../logger';
+import { MailBuilder } from '../../../../../plugins/mailer/builder';
 import { MAIL } from '../../../../../plugins/mailer/langs/constants';
 import { MailerService } from '../../../../../plugins/mailer/service';
 import { resultOfToList } from '../../../../../services/utils';
@@ -15,6 +15,7 @@ import { Actor, Member, isMember } from '../../../../member/entities/member';
 import { ItemWrapper } from '../../../ItemWrapper';
 import { Item } from '../../../entities/Item';
 import { ItemService } from '../../../service';
+import { ItemThumbnailService } from '../../thumbnail/service';
 import { buildPublishedItemLink } from './constants';
 import {
   ItemIsNotValidated,
@@ -28,18 +29,25 @@ interface ActionCount {
 
 @singleton()
 export class ItemPublishedService {
-  private log: BaseLogger;
-  private itemService: ItemService;
-  private mailerService: MailerService;
+  private readonly log: BaseLogger;
+  private readonly itemService: ItemService;
+  private readonly itemThumbnailService: ItemThumbnailService;
+  private readonly mailerService: MailerService;
 
   hooks = new HookManager<{
     create: { pre: { item: Item }; post: { item: Item } };
     delete: { pre: { item: Item }; post: { item: Item } };
   }>();
 
-  constructor(itemService: ItemService, mailerService: MailerService, log: BaseLogger) {
+  constructor(
+    itemService: ItemService,
+    itemThumbnailService: ItemThumbnailService,
+    mailerService: MailerService,
+    log: BaseLogger,
+  ) {
     this.log = log;
     this.itemService = itemService;
+    this.itemThumbnailService = itemThumbnailService;
     this.mailerService = mailerService;
   }
 
@@ -57,19 +65,20 @@ export class ItemPublishedService {
 
     for (const member of contributors) {
       if (isMember(member)) {
-        const lang = member.lang ?? DEFAULT_LANG;
-        const t = this.mailerService.translate(lang);
+        const mail = new MailBuilder({
+          subject: {
+            text: MAIL.PUBLISH_ITEM_TITLE,
+            translationVariables: { itemName: item.name },
+          },
+          lang: member.lang,
+        })
+          .addText(MAIL.PUBLISH_ITEM_TEXT, { itemName: item.name })
+          .addButton(MAIL.PUBLISH_ITEM_BUTTON_TEXT, link, {
+            itemName: item.name,
+          })
+          .build();
 
-        const text = t(MAIL.PUBLISH_ITEM_TEXT, { itemName: item.name });
-        const html = `
-        ${this.mailerService.buildText(text)}
-        ${this.mailerService.buildButton(link, t(MAIL.PUBLISH_ITEM_BUTTON_TEXT))}
-      `;
-        const title = t(MAIL.PUBLISH_ITEM_TITLE, { itemName: item.name });
-
-        const footer = this.mailerService.buildFooter(lang);
-
-        await this.mailerService.sendEmail(title, member.email, link, html, footer).catch((err) => {
+        await this.mailerService.send(mail, member.email).catch((err) => {
           this.log.warn(err, `mailerService failed. published link: ${link}`);
         });
       }
@@ -77,12 +86,14 @@ export class ItemPublishedService {
   }
 
   async get(actor: Actor, repositories: Repositories, itemId: string) {
-    const { itemPublishedRepository, itemTagRepository, actionRepository } = repositories;
+    const { itemPublishedRepository, itemVisibilityRepository, actionRepository } = repositories;
 
     const item = await this.itemService.get(actor, repositories, itemId);
 
     // item should be public first
-    await itemTagRepository.getType(item, ItemTagType.Public, { shouldThrow: true });
+    await itemVisibilityRepository.getType(item.path, ItemVisibilityType.Public, {
+      shouldThrow: true,
+    });
 
     // get item published entry
     const publishedItem = await itemPublishedRepository.getForItem(item);
@@ -97,20 +108,21 @@ export class ItemPublishedService {
       startDate: formatISO(publishedItem.createdAt),
       endDate: formatISO(new Date()),
     });
-    return { totalViews: (totalViews?.[0] as ActionCount)?.actionCount, ...publishedItem };
+    return {
+      totalViews: (totalViews?.[0] as ActionCount)?.actionCount,
+      ...publishedItem,
+    };
   }
 
   async getMany(actor: Actor, repositories: Repositories, itemIds: string[]) {
-    const { itemPublishedRepository, itemTagRepository } = repositories;
+    const { itemPublishedRepository, itemVisibilityRepository } = repositories;
     const { data: itemsMap, errors } = await this.itemService.getMany(actor, repositories, itemIds);
 
     const items = Object.values(itemsMap);
 
     // item should be public first
-    const { data: areItemsPublic, errors: publicErrors } = await itemTagRepository.hasForMany(
-      items,
-      ItemTagType.Public,
-    );
+    const { data: areItemsPublic, errors: publicErrors } =
+      await itemVisibilityRepository.hasForMany(items, ItemVisibilityType.Public);
 
     const { data: publishedInfo, errors: publishedErrors } =
       await itemPublishedRepository.getForItems(items.filter((i) => areItemsPublic[i.id]));
@@ -137,7 +149,9 @@ export class ItemPublishedService {
       return itemPublished;
     }
 
-    return await this.post(member, repositories, item, publicationStatus, { canBePrivate: true });
+    return await this.post(member, repositories, item, publicationStatus, {
+      canBePrivate: true,
+    });
   }
 
   private checkPublicationStatus({ id, type }: Item, publicationStatus: PublicationStatus) {
@@ -165,21 +179,25 @@ export class ItemPublishedService {
     publicationStatus: PublicationStatus,
     { canBePrivate }: { canBePrivate?: boolean } = {},
   ) {
-    const { itemPublishedRepository, itemTagRepository } = repositories;
+    const { itemPublishedRepository, itemVisibilityRepository } = repositories;
 
     // ensure that the item can be published
     this.checkPublicationStatus(item, publicationStatus);
 
     // item should be public first
-    const tag = await itemTagRepository.getType(item, ItemTagType.Public, {
-      shouldThrow: !canBePrivate,
-    });
+    const visibility = await itemVisibilityRepository.getType(
+      item.path,
+      ItemVisibilityType.Public,
+      {
+        shouldThrow: !canBePrivate,
+      },
+    );
 
     // if the item can be private and be published, set it to public automatically.
     // it's usefull to publish the item automatically after the validation.
     // the user is asked to set the item to public in the frontend.
-    if (!tag && canBePrivate) {
-      await itemTagRepository.post(member, item, ItemTagType.Public);
+    if (!visibility && canBePrivate) {
+      await itemVisibilityRepository.post(member, item, ItemVisibilityType.Public);
     }
 
     // TODO: check validation is alright
@@ -214,7 +232,7 @@ export class ItemPublishedService {
     const { itemRepository } = repositories;
     const items = await itemRepository.getPublishedItemsForMember(memberId);
 
-    return ItemWrapper.createPackedItems(actor, repositories, items);
+    return ItemWrapper.createPackedItems(actor, repositories, this.itemThumbnailService, items);
   }
 
   async getLikedItems(actor: Actor, repositories: Repositories, limit?: number) {

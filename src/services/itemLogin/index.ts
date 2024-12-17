@@ -1,68 +1,104 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import { ItemLoginSchemaType } from '@graasp/sdk';
+import { ItemLoginSchemaStatus, PermissionLevel } from '@graasp/sdk';
 
 import { resolveDependency } from '../../di/utils';
-import { notUndefined } from '../../utils/assertions';
+import { asDefined } from '../../utils/assertions';
+import { ItemNotFound } from '../../utils/errors';
 import { buildRepositories } from '../../utils/repositories';
 import { SESSION_KEY, isAuthenticated, optionalIsAuthenticated } from '../auth/plugins/passport';
-import { matchOne } from '../authorization';
+import { isItemVisible, matchOne } from '../authorization';
+import { ItemVisibilityService } from '../item/plugins/itemVisibility/service';
 import { ItemService } from '../item/service';
+import { ItemMembershipService } from '../itemMembership/service';
 import { assertIsMember } from '../member/entities/member';
 import { validatedMemberAccountRole } from '../member/strategies/validatedMemberAccountRole';
-import { ValidMemberSession } from './errors';
-import { ItemLoginMemberCredentials } from './interfaces/item-login';
+import { ItemLoginSchemaNotFound, ValidMemberSession } from './errors';
 import {
-  deleteLoginSchema,
-  getLoginSchema,
+  getItemLoginSchema,
   getLoginSchemaType,
-  login,
+  loginOrRegisterAsGuest,
   updateLoginSchema,
 } from './schemas';
 import { ItemLoginService } from './service';
 
-const plugin: FastifyPluginAsync = async (fastify) => {
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { db } = fastify;
 
+  const itemLoginService = resolveDependency(ItemLoginService);
   const itemService = resolveDependency(ItemService);
-  const itemLoginService = new ItemLoginService(fastify, itemService);
+  const itemVisibilityService = resolveDependency(ItemVisibilityService);
+  const itemMembershipService = resolveDependency(ItemMembershipService);
 
   // get login schema type for item
   // used to trigger item login for student
   // public endpoint
-  fastify.get<{ Params: { id: string } }>(
+  fastify.get(
     '/:id/login-schema-type',
     { schema: getLoginSchemaType, preHandler: optionalIsAuthenticated },
     async ({ user, params: { id: itemId } }) => {
-      const value =
-        (await itemLoginService.getSchemaType(user?.account, buildRepositories(), itemId)) ?? null;
-      return value;
+      return await db.transaction(async (manager) => {
+        const repositories = buildRepositories(manager);
+
+        // Get item to have the path
+        const item = await itemService.get(
+          user?.account,
+          repositories,
+          itemId,
+          PermissionLevel.Read,
+          false,
+        );
+
+        // If item is not visible, throw NOT_FOUND
+        const isVisible = await isItemVisible(
+          user?.account,
+          repositories,
+          { itemVisibilityService, itemMembershipService },
+          item.path,
+        );
+        if (!isVisible) {
+          throw new ItemNotFound(itemId);
+        }
+        const itemLoginSchema = await itemLoginService.getByItemPath(repositories, item.path);
+        if (itemLoginSchema && itemLoginSchema.status !== ItemLoginSchemaStatus.Disabled) {
+          return itemLoginSchema.type;
+        }
+        return null;
+      });
     },
   );
 
   // get login schema for item
-  fastify.get<{ Params: { id: string } }>(
+  fastify.get(
     '/:id/login-schema',
     {
-      schema: getLoginSchema,
+      schema: getItemLoginSchema,
       preHandler: isAuthenticated,
     },
     async ({ user, params: { id: itemId } }) => {
-      const value = (await itemLoginService.get(user?.account, buildRepositories(), itemId)) ?? {};
-      return value;
+      return await db.transaction(async (manager) => {
+        const repositories = buildRepositories(manager);
+        const item = await itemService.get(
+          user?.account,
+          repositories,
+          itemId,
+          PermissionLevel.Admin,
+        );
+        const itemLoginSchema = await itemLoginService.getByItemPath(repositories, item.path);
+        if (!itemLoginSchema) {
+          throw new ItemLoginSchemaNotFound({ itemId });
+        }
+        return itemLoginSchema;
+      });
     },
   );
 
   // TODO: MOBILE
   // log in to item
-  fastify.post<{
-    Params: { id: string };
-    Querystring: { m: boolean };
-    Body: ItemLoginMemberCredentials;
-  }>(
+  fastify.post(
     '/:id/login',
     {
-      schema: login,
+      schema: loginOrRegisterAsGuest,
       // set member in request if exists without throwing
       preHandler: optionalIsAuthenticated,
     },
@@ -72,11 +108,8 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         throw new ValidMemberSession(user?.account);
       }
       return db.transaction(async (manager) => {
-        const bondMember = await itemLoginService.login(
-          buildRepositories(manager),
-          params.id,
-          body,
-        );
+        const repositories = buildRepositories(manager);
+        const bondMember = await itemLoginService.logInOrRegister(repositories, params.id, body);
         // set session
         session.set(SESSION_KEY, bondMember.id);
         return bondMember;
@@ -84,7 +117,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.put<{ Params: { id: string }; Body: { type: ItemLoginSchemaType } }>(
+  fastify.put(
     '/:id/login-schema',
     {
       schema: updateLoginSchema,
@@ -92,28 +125,21 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       // set member in request - throws if does not exist
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
-    async ({ user, params: { id: itemId }, body: { type } }) => {
-      const member = notUndefined(user?.account);
+    async ({ user, params: { id: itemId }, body: { type, status } }) => {
+      const member = asDefined(user?.account);
       assertIsMember(member);
-      return db.transaction(async (manager) => {
-        return itemLoginService.put(member, buildRepositories(manager), itemId, type);
-      });
-    },
-  );
+      return await db.transaction(async (manager) => {
+        const repositories = buildRepositories(manager);
 
-  fastify.delete<{ Params: { id: string } }>(
-    '/:id/login-schema',
-    {
-      schema: deleteLoginSchema,
-
-      // set member in request - throws if does not exist
-      preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
-    },
-    async ({ user, params: { id: itemId } }) => {
-      return db.transaction(async (manager) => {
-        const member = notUndefined(user?.account);
-        assertIsMember(member);
-        return itemLoginService.delete(member, buildRepositories(manager), itemId);
+        const item = await itemService.get(member, repositories, itemId, PermissionLevel.Admin); // Validate permissions
+        const schema = await itemLoginService.getOneByItem(repositories, item.id);
+        if (schema) {
+          // If exists, then update the existing one
+          return await itemLoginService.update(repositories, schema.id, type, status);
+        } else {
+          // If not exists, then create a new one
+          return await itemLoginService.create(repositories, item.path, type);
+        }
       });
     },
   );

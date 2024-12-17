@@ -1,182 +1,117 @@
+import { Type } from '@sinclair/typebox';
 import { StatusCodes } from 'http-status-codes';
+
+import { FastifySchema } from 'fastify';
 
 import { PermissionLevel } from '@graasp/sdk';
 
-import { UUID_REGEX } from '../../schemas/global';
+import { customType, registerSchemaAsRef } from '../../plugins/typebox';
+import { errorSchemaRef } from '../../schemas/global';
+import { augmentedAccountSchemaRef, nullableAugmentedAccountSchemaRef } from '../account/schemas';
+import { itemSchemaRef } from '../item/schemas';
 
-export default {
-  $id: 'https://graasp.org/item-memberships/',
-  definitions: {
-    // permission values
-    permission: {
-      type: 'string',
-      enum: [PermissionLevel.Read, PermissionLevel.Write, PermissionLevel.Admin],
+export const itemMembershipSchemaRef = registerSchemaAsRef(
+  'itemMembership',
+  'Item Membership',
+  customType.StrictObject(
+    {
+      id: customType.UUID(),
+      account: augmentedAccountSchemaRef,
+      item: itemSchemaRef,
+      permission: Type.Enum(PermissionLevel),
+      creator: Type.Optional(nullableAugmentedAccountSchemaRef),
+      createdAt: customType.DateTime(),
+      updatedAt: customType.DateTime(),
     },
+    {
+      description: 'Define the permission access between account and item',
+    },
+  ),
+);
 
-    // item membership properties to be returned to the client
-    itemMembership: {
-      type: 'object',
-      properties: {
-        id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-        account: { $ref: 'https://graasp.org/accounts/#/definitions/augmentedAccount' },
-        /**
-         * itemPath's 'pattern' not supported in serialization.
-         * since 'itemMembership' schema is only used for serialization it's safe
-         * to just use `{ type: 'string' }`
-         */
-        // itemPath: { $ref: 'https://graasp.org/#/definitions/itemPath' },
-        // bug: cannot set item schema because it's a fluent schema
-        item: { $ref: 'https://graasp.org/items/#/definitions/item' },
-        // TODO: bug! should allow relative $ref: #/definitions/permission
-        // check: https://github.com/fastify/fastify/issues/2328
-        permission: { $ref: 'https://graasp.org/item-memberships/#/definitions/permission' },
-        creator: { $ref: 'https://graasp.org/members/#/definitions/member' },
-        createdAt: { type: 'string' },
-        updatedAt: { type: 'string' },
-      },
-      additionalProperties: false,
-    },
-
-    // item membership properties required at creation
-    createPartialItemMembership: {
-      type: 'object',
-      required: ['accountId', 'permission'],
-      properties: {
-        accountId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-        permission: { $ref: '#/definitions/permission' },
-      },
-      additionalProperties: false,
-    },
-
-    // item membership properties that can be modified after creation
-    updatePartialItemMembership: {
-      type: 'object',
-      required: ['permission'],
-      properties: {
-        permission: { $ref: '#/definitions/permission' },
-      },
-      additionalProperties: false,
-    },
-  },
-};
+export const createItemMembershipSchema = customType.StrictObject({
+  accountId: customType.UUID(),
+  permission: Type.Enum(PermissionLevel),
+});
 
 // schema for creating an item membership
-const create = {
-  querystring: {
-    type: 'object',
-    required: ['itemId'],
-    properties: {
-      itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-    additionalProperties: false,
-  },
-  body: { $ref: 'https://graasp.org/item-memberships/#/definitions/createPartialItemMembership' },
+export const create = {
+  operationId: 'createItemMembership',
+  tags: ['item-membership'],
+  summary: 'Create access to item for account',
+  description: 'Create access to item for account, given permission',
+
+  querystring: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
+  body: createItemMembershipSchema,
   response: {
-    [StatusCodes.OK]: { $ref: 'https://graasp.org/item-memberships/#/definitions/itemMembership' },
+    [StatusCodes.OK]: itemMembershipSchemaRef,
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
 // schema for creating many item memberships
-const createMany = {
-  params: {
-    type: 'object',
-    required: ['itemId'],
-    properties: {
-      itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-    additionalProperties: false,
-  },
-  body: {
-    type: 'object',
-    properties: {
-      memberships: {
-        type: 'array',
-        items: {
-          $ref: 'https://graasp.org/item-memberships/#/definitions/createPartialItemMembership',
-        },
-      },
-    },
-  },
+export const createMany = {
+  operationId: 'createManyItemMemberships',
+  tags: ['item-membership'],
+  summary: 'Create access to item for many accounts',
+  description: 'Create access to item for many account, given permissions',
+
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
+  body: customType.StrictObject({ memberships: Type.Array(createItemMembershipSchema) }),
   response: {
-    202: {},
+    [StatusCodes.OK]: Type.Array(itemMembershipSchemaRef),
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
 // schema for getting many item's memberships
-const getItems = {
-  querystring: {
-    type: 'object',
-    required: ['itemId'],
-    properties: {
-      itemId: {
-        type: 'array',
-        items: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      },
-    },
-
-    additionalProperties: false,
-  },
+export const getManyItemMemberships = {
+  querystring: customType.StrictObject({ itemId: Type.Array(customType.UUID()) }),
   response: {
-    200: {
-      type: 'object',
-      // additionalProperties:true,
-      properties: {
-        data: {
-          type: 'object',
-          patternProperties: {
-            [UUID_REGEX]: {
-              type: 'array',
-              items: {
-                $ref: 'https://graasp.org/item-memberships/#/definitions/itemMembership',
-              },
-            },
-          },
-        },
-        errors: {
-          type: 'array',
-          items: {
-            $ref: 'https://graasp.org/#/definitions/error',
-          },
-        },
-      },
-    },
+    [StatusCodes.OK]: customType.StrictObject({
+      data: Type.Record(Type.String({ format: 'uuid' }), Type.Array(itemMembershipSchemaRef)),
+      errors: Type.Array(errorSchemaRef),
+    }),
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
 // schema for updating an item membership
-const updateOne = {
-  params: { $ref: 'https://graasp.org/#/definitions/idParam' },
-  body: { $ref: 'https://graasp.org/item-memberships/#/definitions/updatePartialItemMembership' },
+export const updateOne = {
+  operationId: 'updateItemMembership',
+  tags: ['item-membership'],
+  summary: 'Update permission for item membership',
+  description: 'Update permission for item membership',
+
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
+  body: customType.StrictObject({
+    permission: Type.Enum(PermissionLevel),
+  }),
   response: {
-    200: { $ref: 'https://graasp.org/item-memberships/#/definitions/itemMembership' },
+    [StatusCodes.OK]: itemMembershipSchemaRef,
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
 // schema for deleting an item membership
-const deleteOne = {
-  params: { $ref: 'https://graasp.org/#/definitions/idParam' },
-  querystring: {
-    type: 'object',
-    properties: {
-      purgeBelow: { type: 'boolean' },
-    },
-    additionalProperties: false,
-  },
+export const deleteOne = {
+  operationId: 'deleteItemMembership',
+  tags: ['item-membership'],
+  summary: 'Delete access to item for account',
+  description: 'Delete access to item for account',
+
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
+  querystring: customType.StrictObject({ purgeBelow: Type.Optional(Type.Boolean()) }),
   response: {
-    200: { $ref: 'https://graasp.org/item-memberships/#/definitions/itemMembership' },
+    [StatusCodes.OK]: itemMembershipSchemaRef,
+    '4xx': errorSchemaRef,
   },
-};
-
-// schema for deleting all item's tree item memberships
-const deleteAll = {
-  querystring: {
-    type: 'object',
-    required: ['itemId'],
-    properties: {
-      itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-    additionalProperties: false,
-  },
-};
-
-export { getItems, create, createMany, updateOne, deleteOne, deleteAll };
+} as const satisfies FastifySchema;

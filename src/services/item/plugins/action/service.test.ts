@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { addDays, formatISO } from 'date-fns';
 import { v4 } from 'uuid';
 
@@ -11,7 +12,11 @@ import {
   PermissionLevel,
 } from '@graasp/sdk';
 
-import build, { clearDatabase } from '../../../../../test/app';
+import build, {
+  clearDatabase,
+  mockAuthenticate,
+  unmockAuthenticate,
+} from '../../../../../test/app';
 import { BaseLogger } from '../../../../logger';
 import { AppDataSource } from '../../../../plugins/datasource';
 import { MailerService } from '../../../../plugins/mailer/service';
@@ -26,14 +31,16 @@ import { saveMember } from '../../../member/test/fixtures/members';
 import { ThumbnailService } from '../../../thumbnail/service';
 import { ItemService } from '../../service';
 import { ItemTestUtils } from '../../test/fixtures/items';
+import { ItemThumbnailService } from '../thumbnail/service';
 import { ActionItemService } from './service';
 import { ItemActionType } from './utils';
 
-const itemService = new ItemService({} as unknown as ThumbnailService, {} as unknown as BaseLogger);
-const memberService = new MemberService(
-  {} as unknown as MailerService,
-  {} as unknown as BaseLogger,
+const itemService = new ItemService(
+  {} as ThumbnailService,
+  {} as ItemThumbnailService,
+  {} as BaseLogger,
 );
+const memberService = new MemberService({} as MailerService, {} as BaseLogger);
 const service = new ActionItemService(new ActionService(itemService, memberService), itemService);
 const rawRepository = AppDataSource.getRepository(Action);
 const testUtils = new ItemTestUtils();
@@ -43,16 +50,23 @@ describe('ActionItemService', () => {
   let actor;
   let item;
 
+  beforeAll(async () => {
+    ({ app } = await build({ member: null }));
+  });
+
+  afterAll(async () => {
+    await clearDatabase(app.db);
+    app.close();
+  });
+
   afterEach(async () => {
     jest.clearAllMocks();
-    await clearDatabase(app.db);
+    unmockAuthenticate();
     actor = null;
-    app.close();
   });
 
   describe('getForItem', () => {
     it('throw for signed out user', async () => {
-      ({ app } = await build({ member: null }));
       const bob = await saveMember();
       const { item } = await testUtils.saveItemAndMembership({ member: bob });
       // todo: update when testing memberships
@@ -70,7 +84,8 @@ describe('ActionItemService', () => {
 
     describe('Signed in', () => {
       beforeEach(async () => {
-        ({ app, actor } = await build());
+        actor = await saveMember();
+        mockAuthenticate(actor);
         const { item: i } = await testUtils.saveItemAndMembership({ member: actor });
         // todo: update when testing memberships
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -287,7 +302,8 @@ describe('ActionItemService', () => {
 
   describe('getAnalyticsAggregation', () => {
     beforeEach(async () => {
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const { item: i } = await testUtils.saveItemAndMembership({ member: actor });
       // todo: update when testing memberships
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -392,7 +408,8 @@ describe('ActionItemService', () => {
 
   describe('getBaseAnalyticsForItem', () => {
     beforeEach(async () => {
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const { item: i } = await testUtils.saveItemAndMembership({ member: actor });
       // todo: update when testing memberships
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -506,7 +523,8 @@ describe('ActionItemService', () => {
 
   describe('post actions', () => {
     beforeEach(async () => {
-      ({ app, actor } = await build());
+      actor = await saveMember();
+      mockAuthenticate(actor);
       const { item: i } = await testUtils.saveItemAndMembership({ member: actor });
       // todo: update when testing memberships
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -515,39 +533,33 @@ describe('ActionItemService', () => {
 
     it('postPostAction', async () => {
       await service.postPostAction(MOCK_REQUEST, buildRepositories(), item);
-      const [action] = await rawRepository.find();
-      expect(action.type).toEqual(ItemActionType.Create);
-      expect(action.extra).toMatchObject({ itemId: item.id });
+      const actions = await rawRepository.findBy({
+        type: ItemActionType.Create,
+        extra: { itemId: item.id },
+      });
+      expect(actions).toHaveLength(1);
     });
 
     it('postPatchAction', async () => {
-      const body = { name: 'new name' };
+      const body = { name: faker.word.sample() };
       await service.postPatchAction({ ...MOCK_REQUEST, body }, buildRepositories(), item);
-      const [action] = await rawRepository.find();
-      expect(action.type).toEqual(ItemActionType.Update);
-      expect(action.extra).toMatchObject({ itemId: item.id, body });
-    });
-
-    it('postManyPatchAction', async () => {
-      const body = { name: 'new name' };
-      await service.postManyPatchAction({ ...MOCK_REQUEST, body }, buildRepositories(), [
-        item,
-        item,
-      ]);
-      const [action1, action2] = await rawRepository.find();
-      expect(action1.type).toEqual(ItemActionType.Update);
-      expect(action1.extra).toMatchObject({ itemId: item.id });
-      expect(action2.type).toEqual(ItemActionType.Update);
-      expect(action2.extra).toMatchObject({ itemId: item.id });
+      const actions = await rawRepository.findBy({
+        type: ItemActionType.Update,
+        item: { id: item.id },
+      });
+      expect(actions).toHaveLength(1);
+      expect(actions[0].extra).toMatchObject({ itemId: item.id, body });
     });
 
     it('postManyDeleteAction', async () => {
       await service.postManyDeleteAction(MOCK_REQUEST, buildRepositories(), [item, item]);
-      const [action1, action2] = await rawRepository.find();
-      expect(action1.type).toEqual(ItemActionType.Delete);
-      expect(action1.extra).toMatchObject({ itemId: item.id });
-      expect(action2.type).toEqual(ItemActionType.Delete);
-      expect(action2.extra).toMatchObject({ itemId: item.id });
+      const actions = await rawRepository.findBy({
+        extra: { itemId: item.id },
+        type: ItemActionType.Delete,
+      });
+      expect(actions).toHaveLength(2);
+      expect(actions[0].extra).toMatchObject({ itemId: item.id });
+      expect(actions[1].extra).toMatchObject({ itemId: item.id });
     });
 
     it('postManyMoveAction', async () => {
@@ -556,11 +568,13 @@ describe('ActionItemService', () => {
         item,
         item,
       ]);
-      const [action1, action2] = await rawRepository.find();
-      expect(action1.type).toEqual(ItemActionType.Move);
-      expect(action1.extra).toMatchObject({ itemId: item.id, body });
-      expect(action2.type).toEqual(ItemActionType.Move);
-      expect(action2.extra).toMatchObject({ itemId: item.id });
+      const actions = await rawRepository.findBy({
+        item: { id: item.id },
+        type: ItemActionType.Move,
+      });
+      expect(actions).toHaveLength(2);
+      expect(actions[0].extra).toMatchObject({ itemId: item.id, body });
+      expect(actions[1].extra).toMatchObject({ itemId: item.id, body });
     });
 
     it('postManyCopyAction', async () => {
@@ -569,11 +583,13 @@ describe('ActionItemService', () => {
         item,
         item,
       ]);
-      const [action1, action2] = await rawRepository.find();
-      expect(action1.type).toEqual(ItemActionType.Copy);
-      expect(action1.extra).toMatchObject({ itemId: item.id, body });
-      expect(action2.type).toEqual(ItemActionType.Copy);
-      expect(action2.extra).toMatchObject({ itemId: item.id });
+      const actions = await rawRepository.findBy({
+        item: { id: item.id },
+        type: ItemActionType.Copy,
+      });
+      expect(actions).toHaveLength(2);
+      expect(actions[0].extra).toMatchObject({ itemId: item.id, body });
+      expect(actions[1].extra).toMatchObject({ itemId: item.id, body });
     });
   });
 });

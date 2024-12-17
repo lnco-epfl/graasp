@@ -1,17 +1,17 @@
-import { StatusCodes } from 'http-status-codes';
-
 import { fastifyCors } from '@fastify/cors';
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import { ItemType, MembershipRequestStatus, PermissionLevel } from '@graasp/sdk';
+import { MembershipRequestStatus, PermissionLevel } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../di/utils';
-import { notUndefined } from '../../../../utils/assertions';
-import { ItemNotFolder } from '../../../../utils/errors';
+import { asDefined } from '../../../../utils/assertions';
+import { ItemNotFound } from '../../../../utils/errors';
 import { buildRepositories } from '../../../../utils/repositories';
 import { isAuthenticated } from '../../../auth/plugins/passport';
-import { matchOne, validatePermission } from '../../../authorization';
+import { hasPermission, matchOne } from '../../../authorization';
 import { ItemService } from '../../../item/service';
+import { ItemLoginSchemaExists } from '../../../itemLogin/errors';
+import { ItemLoginService } from '../../../itemLogin/service';
 import { assertIsMember } from '../../../member/entities/member';
 import { validatedMemberAccountRole } from '../../../member/strategies/validatedMemberAccountRole';
 import { ItemMembershipService } from '../../service';
@@ -20,49 +20,36 @@ import {
   MembershipRequestAlreadyExists,
   MembershipRequestNotFound,
 } from './error';
-import {
-  completeMembershipRequest,
-  createOne,
-  deleteOne,
-  getAllByItem,
-  getOwn,
-  simpleMembershipRequest,
-} from './schemas';
+import { createOne, deleteOne, getAllByItem, getOwn } from './schemas';
 import { MembershipRequestService } from './service';
 
-const plugin: FastifyPluginAsync = async (fastify) => {
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { db } = fastify;
 
   const membershipRequestService = resolveDependency(MembershipRequestService);
   const itemMembershipService = resolveDependency(ItemMembershipService);
   const itemService = resolveDependency(ItemService);
-
-  // schemas
-  fastify.addSchema(simpleMembershipRequest);
-  fastify.addSchema(completeMembershipRequest);
+  const itemLoginService = resolveDependency(ItemLoginService);
 
   if (fastify.corsPluginOptions) {
     await fastify.register(fastifyCors, fastify.corsPluginOptions);
   }
 
-  fastify.get<{ Params: { itemId: string } }>(
+  fastify.get(
     '/',
     {
       schema: getAllByItem,
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async ({ user, params }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       const { itemId } = params;
 
       await db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);
 
-        // Check if the Item exists and the member has the required permission. Also, check if the item is a folder
-        const item = await itemService.get(member, repositories, itemId, PermissionLevel.Admin);
-        if (item.type !== ItemType.FOLDER) {
-          throw new ItemNotFolder({ id: itemId });
-        }
+        // Check if the Item exists and the member has the required permission.
+        await itemService.get(member, repositories, itemId, PermissionLevel.Admin);
 
         const requests = await membershipRequestService.getAllByItem(repositories, itemId);
         reply.send(requests);
@@ -70,18 +57,36 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.get<{ Params: { itemId: string } }>(
+  fastify.get(
     '/own',
     {
       schema: getOwn,
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async ({ user, params }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       const { itemId } = params;
 
       await db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);
+
+        const membershipRequest = await membershipRequestService.get(
+          repositories,
+          member.id,
+          itemId,
+        );
+        if (membershipRequest) {
+          return reply.send({ status: MembershipRequestStatus.Pending });
+        }
+
+        const itemMembership = await itemMembershipService.getByAccountAndItem(
+          repositories,
+          member.id,
+          itemId,
+        );
+        if (itemMembership) {
+          return reply.send({ status: MembershipRequestStatus.Approved });
+        }
 
         const item = await itemService.get(
           member,
@@ -90,31 +95,23 @@ const plugin: FastifyPluginAsync = async (fastify) => {
           PermissionLevel.Read,
           false,
         );
-        if (item.type !== ItemType.FOLDER) {
-          throw new ItemNotFolder({ id: itemId });
+        if (item) {
+          return reply.send({ status: MembershipRequestStatus.NotSubmittedOrDeleted });
         }
 
-        if (await membershipRequestService.get(repositories, member.id, itemId)) {
-          return reply.send({ status: MembershipRequestStatus.Pending });
-        }
-
-        if (await itemMembershipService.getByAccountAndItem(repositories, member.id, itemId)) {
-          return reply.send({ status: MembershipRequestStatus.Approved });
-        }
-
-        return reply.send({ status: MembershipRequestStatus.NotSubmittedOrDeleted });
+        throw new ItemNotFound(itemId);
       });
     },
   );
 
-  fastify.post<{ Params: { itemId: string } }>(
+  fastify.post(
     '/',
     {
       schema: createOne,
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async ({ user, params }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       const { itemId } = params;
 
@@ -137,18 +134,14 @@ const plugin: FastifyPluginAsync = async (fastify) => {
           PermissionLevel.Read,
           false,
         );
-        if (item.type !== ItemType.FOLDER) {
-          throw new ItemNotFolder({ id: itemId });
+
+        const itemLoginSchema = await itemLoginService.getByItemPath(repositories, item.path);
+        if (itemLoginSchema) {
+          throw new ItemLoginSchemaExists();
         }
 
-        // Check if the member already has a membership, if so, throw an error
-        let hasPermission = true;
-        try {
-          await validatePermission(repositories, PermissionLevel.Read, member, item);
-        } catch (err) {
-          hasPermission = err.statusCode !== StatusCodes.FORBIDDEN;
-        }
-        if (hasPermission) {
+        // Check if the member already has an access to the item (from membership or item visibility), if so, throw an error
+        if (await hasPermission(repositories, PermissionLevel.Read, member, item)) {
           throw new ItemMembershipAlreadyExists();
         }
 
@@ -159,14 +152,14 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.delete<{ Params: { itemId: string; memberId: string } }>(
+  fastify.delete(
     '/:memberId',
     {
       schema: deleteOne,
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async ({ user, params }, reply) => {
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       const { itemId, memberId } = params;
 
       await db.transaction(async (manager) => {

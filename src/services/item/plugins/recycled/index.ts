@@ -1,40 +1,24 @@
 import { StatusCodes } from 'http-status-codes';
 
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import { MAX_TARGETS_FOR_READ_REQUEST } from '@graasp/sdk';
-
-import { IdParam, IdsParams } from '../../../../types';
-import { notUndefined } from '../../../../utils/assertions';
+import { resolveDependency } from '../../../../di/utils';
+import { asDefined } from '../../../../utils/assertions';
 import { buildRepositories } from '../../../../utils/repositories';
 import { isAuthenticated } from '../../../auth/plugins/passport';
 import { matchOne } from '../../../authorization';
 import { assertIsMember } from '../../../member/entities/member';
 import { memberAccountRole } from '../../../member/strategies/memberAccountRole';
 import { validatedMemberAccountRole } from '../../../member/strategies/validatedMemberAccountRole';
+import { ITEMS_PAGE_SIZE } from '../../constants';
 import { ItemOpFeedbackErrorEvent, ItemOpFeedbackEvent, memberItemsTopic } from '../../ws/events';
-import schemas, { getRecycledItemDatas, recycleMany, restoreMany } from './schemas';
+import { getOwnRecycledItems, recycleMany, restoreMany } from './schemas';
 import { RecycledBinService } from './service';
 
-export interface RecycledItemDataOptions {
-  /** Max number of items to recycle in a request.
-   * A number above this value will trigger an immediate bad request (400). Defaults to `10`. */
-  maxItemsInRequest: number;
-  /** Max number of items to recycle in a request w/ response. A number of items less or equal
-   * to this value will make the server completely finish the execution before returning a response.
-   * Above this value, the server will immediatly return a 202 (accepted) and the execution
-   * will continue "in the back". **This value should be smaller than `maxItemsInRequest`**
-   * otherwise it has no effect. Defaults to `5`. */
-  maxItemsWithResponse: number;
-}
-
-const plugin: FastifyPluginAsync<RecycledItemDataOptions> = async (fastify, options) => {
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { db, websockets } = fastify;
-  const { maxItemsInRequest = MAX_TARGETS_FOR_READ_REQUEST } = options;
 
-  const recycleBinService = new RecycledBinService();
-
-  fastify.addSchema(schemas);
+  const recycleBinService = resolveDependency(RecycledBinService);
 
   // Note: it's okay to not prevent memberships changes on recycled items
   // it is not really possible to change them in the interface
@@ -43,22 +27,29 @@ const plugin: FastifyPluginAsync<RecycledItemDataOptions> = async (fastify, opti
   // API endpoints
 
   // get own recycled items data
-  fastify.get<{ Params: IdParam }>(
+  fastify.get(
     '/recycled',
-    { schema: getRecycledItemDatas, preHandler: [isAuthenticated, matchOne(memberAccountRole)] },
-    async ({ user }) => {
-      const member = notUndefined(user?.account);
+    {
+      schema: getOwnRecycledItems,
+      preHandler: [isAuthenticated, matchOne(memberAccountRole)],
+    },
+    async ({ user, query }) => {
+      const member = asDefined(user?.account);
       assertIsMember(member);
-      const result = await recycleBinService.getAll(member, buildRepositories());
+      const { page = 1, pageSize = ITEMS_PAGE_SIZE } = query;
+      const result = await recycleBinService.getOwn(member, buildRepositories(), {
+        page,
+        pageSize,
+      });
       return result;
     },
   );
 
   // recycle multiple items
-  fastify.post<{ Querystring: IdsParams }>(
+  fastify.post(
     '/recycle',
     {
-      schema: recycleMany(maxItemsInRequest),
+      schema: recycleMany,
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async (request, reply) => {
@@ -67,7 +58,7 @@ const plugin: FastifyPluginAsync<RecycledItemDataOptions> = async (fastify, opti
         log,
         user,
       } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       db.transaction(async (manager) => {
         const items = await recycleBinService.recycleMany(member, buildRepositories(manager), ids);
@@ -92,10 +83,10 @@ const plugin: FastifyPluginAsync<RecycledItemDataOptions> = async (fastify, opti
   );
 
   // restore multiple items
-  fastify.post<{ Querystring: IdsParams }>(
+  fastify.post(
     '/restore',
     {
-      schema: restoreMany(maxItemsInRequest),
+      schema: restoreMany,
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async (request, reply) => {
@@ -104,7 +95,7 @@ const plugin: FastifyPluginAsync<RecycledItemDataOptions> = async (fastify, opti
         log,
         user,
       } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
       log.info(`Restoring items ${ids}`);
 

@@ -15,7 +15,7 @@ import {
   LocalFileConfiguration,
   S3FileConfiguration,
 } from '../services/file/interfaces/configuration';
-import { notUndefined } from './assertions';
+import { asDefined } from './assertions';
 import { ExpectedEnvVariable } from './errors';
 
 enum Environment {
@@ -204,9 +204,10 @@ export const PASSWORD_RESET_JWT_EXPIRATION_IN_MINUTES: number =
   Number(process.env.PASSWORD_RESET_JWT_EXPIRATION_IN_MINUTES) || 1440;
 
 /** Email change token Secret */
-export const EMAIL_CHANGE_JWT_SECRET: string = notUndefined(
+export const EMAIL_CHANGE_JWT_SECRET: string = asDefined(
   process.env.EMAIL_CHANGE_JWT_SECRET,
-  new ExpectedEnvVariable('EMAIL_CHANGE_JWT_SECRET'),
+  ExpectedEnvVariable,
+  'EMAIL_CHANGE_JWT_SECRET',
 );
 
 /** Email change token expiration, in minutes */
@@ -345,6 +346,10 @@ const getGptVersion = (): GPTVersion => {
 export const OPENAI_GPT_VERSION = getGptVersion();
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 export const OPENAI_ORG_ID = process.env.OPENAI_ORG_ID;
+
+export const OPENAI_MAX_TEMPERATURE = 2;
+export const OPENAI_MIN_TEMPERATURE = 0;
+export const OPENAI_DEFAULT_TEMPERATURE = 1;
 
 /**
  * mapping from language code and postgres full text search supported language

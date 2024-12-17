@@ -1,95 +1,96 @@
-export default {
-  $id: 'https://graasp.org/itemlikes/',
-  definitions: {
-    itemLike: {
-      type: 'object',
-      properties: {
-        id: {
-          $ref: 'https://graasp.org/#/definitions/uuid',
-        },
-        item: {
-          $ref: 'https://graasp.org/items/#/definitions/item',
-        },
-        // warning: do not include for privacy for now
-        // member: {
-        //   $ref: 'https://graasp.org/#/definitions/uuid',
-        // },
-        createdAt: {},
-      },
-      additionalProperties: false,
-    },
-    packedIemLike: {
-      type: 'object',
-      properties: {
-        id: {
-          $ref: 'https://graasp.org/#/definitions/uuid',
-        },
-        item: {
-          $ref: 'https://graasp.org/items/#/definitions/packedItem',
-        },
-        // warning: do not include for privacy for now
-        // member: {
-        //   $ref: 'https://graasp.org/#/definitions/uuid',
-        // },
-        createdAt: {},
-      },
-      additionalProperties: false,
-    },
-    likeCount: {
-      type: 'number',
-      additionalProperties: false,
-    },
-  },
-};
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
 
-export const getLikesForMember = {
-  querystring: {
-    type: 'object',
-    properties: {
-      memberId: { $ref: 'https://graasp.org/#/definitions/uuid' },
+import { customType, registerSchemaAsRef } from '../../../../plugins/typebox';
+import { errorSchemaRef } from '../../../../schemas/global';
+import { itemSchemaRef } from '../../schemas';
+import { packedItemSchemaRef } from '../../schemas.packed';
+
+export const itemLikeSchemaRef = registerSchemaAsRef(
+  'itemLike',
+  'Item Like',
+  Type.Object(
+    {
+      // Object Definition
+      id: customType.UUID(),
+      item: itemSchemaRef,
     },
-    additionalProperties: false,
-  },
+    {
+      description: 'Like object of an item when a member likes it.',
+      additionalProperties: false,
+    },
+  ),
+);
+
+export const packedItemLikeSchemaRef = registerSchemaAsRef(
+  'packedItemLike',
+  'Packed Item Like',
+  Type.Object(
+    {
+      // Object Definition
+      id: Type.Optional(customType.UUID()),
+      item: packedItemSchemaRef,
+    },
+    {
+      // Schema Options
+      description: 'Like object of an item when a member likes it. Item property is a packed item',
+      additionalProperties: false,
+    },
+  ),
+);
+export const getLikesForCurrentMember = {
+  operationId: 'getLikesForCurrentMember',
+  tags: ['like', 'current'],
+  summary: 'Get likes for current member',
+  description: 'Get likes for current member. Item property is a packed item.',
+
   response: {
-    200: {
-      type: 'array',
-      items: {
-        $ref: 'https://graasp.org/itemlikes/#/definitions/packedIemLike',
-      },
-    },
+    [StatusCodes.OK]: Type.Array(packedItemLikeSchemaRef, { description: 'Successful Response' }),
+    '4xx': errorSchemaRef,
   },
 };
 
 export const getLikesForItem = {
-  params: {
-    itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-  },
+  operationId: 'getLikesForItem',
+  tags: ['like'],
+  summary: 'Get likes for item',
+  description: 'Get likes for item.',
+
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
   response: {
-    200: {
-      type: 'array',
-      items: {
-        $ref: 'https://graasp.org/itemlikes/#/definitions/itemLike',
-      },
-    },
+    [StatusCodes.OK]: Type.Array(itemLikeSchemaRef, { description: 'Successful Response' }),
+    '4xx': errorSchemaRef,
   },
 };
 
 export const create = {
-  params: {
-    itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-  },
+  operationId: 'createItemLike',
+  tags: ['like'],
+  summary: 'Like item',
+  description: 'Like item.',
+
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
   response: {
-    200: {
-      $ref: 'https://graasp.org/itemlikes/#/definitions/itemLike',
-    },
+    [StatusCodes.OK]: itemLikeSchemaRef,
+    '4xx': errorSchemaRef,
   },
 };
 
 export const deleteOne = {
-  params: {
-    itemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-  },
+  operationId: 'deleteItemLike',
+  tags: ['like'],
+  summary: 'Unlike item',
+  description: 'Unlike item.',
+
+  params: customType.StrictObject({
+    itemId: customType.UUID(),
+  }),
   response: {
-    200: { $ref: 'https://graasp.org/#/definitions/uuid' },
+    [StatusCodes.OK]: customType.UUID({ description: 'Successful Response' }),
+    '4xx': errorSchemaRef,
   },
 };

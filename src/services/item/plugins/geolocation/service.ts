@@ -9,19 +9,23 @@ import { Actor, Member } from '../../../member/entities/member';
 import { ItemWrapper } from '../../ItemWrapper';
 import { Item } from '../../entities/Item';
 import { ItemService } from '../../service';
+import { ItemThumbnailService } from '../thumbnail/service';
 import { ItemGeolocation, PackedItemGeolocation } from './ItemGeolocation';
 import { MissingGeolocationApiKey } from './errors';
 
 @singleton()
 export class ItemGeolocationService {
-  private itemService: ItemService;
-  private geolocationKey: string;
+  private readonly itemService: ItemService;
+  private readonly itemThumbnailService: ItemThumbnailService;
+  private readonly geolocationKey: string;
 
   constructor(
     itemService: ItemService,
+    itemThumbnailService: ItemThumbnailService,
     @inject(GEOLOCATION_API_KEY_DI_KEY) geolocationKey: string,
   ) {
     this.itemService = itemService;
+    this.itemThumbnailService = itemThumbnailService;
     this.geolocationKey = geolocationKey;
   }
 
@@ -85,12 +89,14 @@ export class ItemGeolocationService {
       return [];
     }
 
-    const { itemMemberships, tags } = await validatePermissionMany(
+    const { itemMemberships, visibilities } = await validatePermissionMany(
       repositories,
       PermissionLevel.Read,
       actor,
       geoloc.map(({ item }) => item),
     );
+
+    const thumbnailsByItem = await this.itemThumbnailService.getUrlsByItems(itemsWithGeoloc);
 
     // filter out items without permission
     return geoloc
@@ -104,7 +110,13 @@ export class ItemGeolocationService {
         if (itemIsAtLeastPublicOrInParent || itemIsAtLeastReadable) {
           // and add permission for item packed
           // TODO optimize?
-          const newItem = new ItemWrapper(g.item, itemMemberships.data[itemId], tags.data[itemId]);
+          const thumbnails = thumbnailsByItem[g.item.id];
+          const newItem = new ItemWrapper(
+            g.item,
+            itemMemberships.data[itemId],
+            visibilities.data[itemId],
+            thumbnails,
+          );
           return {
             ...g,
             item: newItem.packed(),

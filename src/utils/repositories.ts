@@ -18,13 +18,14 @@ import { ItemCategoryRepository } from '../services/item/plugins/itemCategory/re
 import { FavoriteRepository } from '../services/item/plugins/itemFavorite/repositories/favorite';
 import { ItemFlagRepository } from '../services/item/plugins/itemFlag/repository';
 import { ItemLikeRepository } from '../services/item/plugins/itemLike/repository';
-import { ItemTagRepository } from '../services/item/plugins/itemTag/repository';
+import { ItemVisibilityRepository } from '../services/item/plugins/itemVisibility/repository';
 import { ItemPublishedRepository } from '../services/item/plugins/publication/published/repositories/itemPublished';
 import { ItemValidationGroupRepository } from '../services/item/plugins/publication/validation/repositories/ItemValidationGroup';
 import { ItemValidationRepository } from '../services/item/plugins/publication/validation/repositories/itemValidation';
 import { ItemValidationReviewRepository } from '../services/item/plugins/publication/validation/repositories/itemValidationReview';
 import { RecycledItemDataRepository } from '../services/item/plugins/recycled/repository';
 import { ShortLinkRepository } from '../services/item/plugins/shortLink/repository';
+import { ItemTagRepository } from '../services/item/plugins/tag/ItemTag.repository';
 import { ItemRepository } from '../services/item/repository';
 import { GuestRepository } from '../services/itemLogin/repositories/guest';
 import { GuestPasswordRepository } from '../services/itemLogin/repositories/guestPassword';
@@ -33,6 +34,7 @@ import { MembershipRequestRepository } from '../services/itemMembership/plugins/
 import { ItemMembershipRepository } from '../services/itemMembership/repository';
 import MemberProfileRepository from '../services/member/plugins/profile/repository';
 import { MemberRepository } from '../services/member/repository';
+import { TagRepository } from '../services/tag/Tag.repository';
 
 export type Repositories = {
   actionRepository: ActionRepository;
@@ -49,12 +51,12 @@ export type Repositories = {
   itemFlagRepository: ItemFlagRepository;
   itemLikeRepository: ItemLikeRepository;
   itemLoginRepository: GuestRepository;
-  itemLoginSchemaRepository: typeof ItemLoginSchemaRepository;
-  itemMembershipRepository: typeof ItemMembershipRepository;
+  itemLoginSchemaRepository: ItemLoginSchemaRepository;
+  itemMembershipRepository: ItemMembershipRepository;
   membershipRequestRepository: MembershipRequestRepository;
   itemPublishedRepository: ItemPublishedRepository;
   itemRepository: ItemRepository;
-  itemTagRepository: ItemTagRepository;
+  itemVisibilityRepository: ItemVisibilityRepository;
   itemValidationGroupRepository: ItemValidationGroupRepository;
   itemValidationRepository: ItemValidationRepository;
   itemValidationReviewRepository: ItemValidationReviewRepository;
@@ -68,22 +70,20 @@ export type Repositories = {
   shortLinkRepository: ShortLinkRepository;
   itemGeolocationRepository: ItemGeolocationRepository;
   accountRepository: AccountRepository;
+  itemTagRepository: ItemTagRepository;
+  tagRepository: TagRepository;
 };
-// public: exists in item tag
+// public: exists in item visibility
 
 export const buildRepositories = (manager?: EntityManager): Repositories => ({
   itemRepository: new ItemRepository(manager),
-  itemMembershipRepository: manager
-    ? manager.withRepository(ItemMembershipRepository)
-    : ItemMembershipRepository,
+  itemMembershipRepository: new ItemMembershipRepository(manager),
   membershipRequestRepository: new MembershipRequestRepository(manager),
   memberRepository: new MemberRepository(manager),
 
   itemPublishedRepository: new ItemPublishedRepository(manager),
   itemLoginRepository: new GuestRepository(manager),
-  itemLoginSchemaRepository: manager
-    ? manager.withRepository(ItemLoginSchemaRepository)
-    : ItemLoginSchemaRepository,
+  itemLoginSchemaRepository: new ItemLoginSchemaRepository(manager),
   memberPasswordRepository: new MemberPasswordRepository(manager),
   guestPasswordRepository: new GuestPasswordRepository(manager),
   appRepository: new AppRepository(manager),
@@ -100,7 +100,7 @@ export const buildRepositories = (manager?: EntityManager): Repositories => ({
   itemCategoryRepository: new ItemCategoryRepository(manager),
   itemFavoriteRepository: new FavoriteRepository(manager),
   categoryRepository: new CategoryRepository(manager),
-  itemTagRepository: new ItemTagRepository(manager),
+  itemVisibilityRepository: new ItemVisibilityRepository(manager),
   itemValidationRepository: new ItemValidationRepository(manager),
   itemValidationReviewRepository: new ItemValidationReviewRepository(manager),
   itemValidationGroupRepository: new ItemValidationGroupRepository(manager),
@@ -111,4 +111,6 @@ export const buildRepositories = (manager?: EntityManager): Repositories => ({
   shortLinkRepository: new ShortLinkRepository(manager),
   itemGeolocationRepository: new ItemGeolocationRepository(manager),
   accountRepository: new AccountRepository(manager),
+  itemTagRepository: new ItemTagRepository(manager),
+  tagRepository: new TagRepository(manager),
 });

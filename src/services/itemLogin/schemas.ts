@@ -1,81 +1,108 @@
-import { S } from 'fluent-json-schema';
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
 
-import { ItemLoginSchemaType } from '@graasp/sdk';
+import { FastifySchema } from 'fastify';
 
-import { error, idParam, uuid } from '../../schemas/fluent-schema';
-import { item } from '../item/fluent-schema';
+import { ItemLoginSchemaStatus, ItemLoginSchemaType } from '@graasp/sdk';
 
-export const credentials = S.object()
-  .additionalProperties(false)
-  .prop('username', S.string().minLength(3).maxLength(50).pattern('^\\S+( \\S+)*$'))
-  .prop('password', S.string().minLength(3).maxLength(50).pattern('^\\S+( \\S+)*$'))
-  .prop('memberId', uuid)
-  .oneOf([S.required(['username']), S.required(['memberId'])]);
+import { customType, registerSchemaAsRef } from '../../plugins/typebox';
+import { errorSchemaRef } from '../../schemas/global';
+import { accountSchemaRef } from '../account/schemas';
+import { itemSchemaRef } from '../item/schemas';
 
-const loginSchemaType = S.string().enum(Object.values(ItemLoginSchemaType));
-
-export const loginSchema = S.object()
-  .additionalProperties(false)
-  .prop('type', loginSchemaType)
-  .prop('item', item)
-  .prop('createdAt', S.string())
-  .prop('updatedAt', S.string())
-  .prop('id', uuid);
-
-// tood: refactor out -> use uniform schema
-export const member = S.object()
-  .additionalProperties(false)
-  .prop('email', S.string())
-  .prop('name', S.string())
-  .prop('createdAt', S.string())
-  .prop('updatedAt', S.string())
-  .prop('id', uuid);
-
-export const login = {
-  params: idParam,
-  querystring: S.object().additionalProperties(false).prop('m', S.boolean()),
-  body: credentials,
-  response: {
-    // TODO: use member schema
-    '2xx': member,
-    '4xx': error,
-    '5xx': error,
+const itemLoginSchemaSchema = customType.StrictObject(
+  {
+    id: customType.UUID(),
+    type: customType.EnumString(Object.values(ItemLoginSchemaType), {
+      description: 'Defines which credentials are necessary to login.',
+    }),
+    status: customType.EnumString(Object.values(ItemLoginSchemaStatus), {
+      description:
+        'Item login status, which can be enabled, frozen, or disabled. Item login cannot be deleted, an item login can be disabled instead to prevent deleting associated guest accounts.',
+    }),
+    item: Type.Optional(itemSchemaRef),
+    createdAt: customType.DateTime(),
+    updatedAt: customType.DateTime(),
   },
-};
+  {
+    description:
+      'Instance allowing to login without a member on related item and its descendants. The required credentials are defined given the type.',
+  },
+);
+
+export const itemLoginSchemaSchemaRef = registerSchemaAsRef(
+  'itemLoginSchema',
+  'Item Login Schema',
+  itemLoginSchemaSchema,
+);
+
+export const loginOrRegisterAsGuest = {
+  operationId: 'loginOrRegisterAsGuest',
+  tags: ['item-login'],
+  summary: 'Login or Register in item as guest',
+  description: `Log in to an item with necessary credentials depending on item login's type. If the username does not exist, a guest account is created and is given access.`,
+
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
+  body: customType.StrictObject({
+    username: customType.Username(),
+    password: Type.Optional(Type.String({ minLength: 3, maxLength: 50 })),
+  }),
+  response: {
+    [StatusCodes.OK]: accountSchemaRef,
+    '4xx': errorSchemaRef,
+    '5xx': errorSchemaRef,
+  },
+} as const satisfies FastifySchema;
 
 export const getLoginSchemaType = {
-  params: idParam,
-  response: {
-    '2xx': S.oneOf([loginSchemaType, S.null()]),
-    '4xx': error,
-    '5xx': error,
-  },
-};
+  operationId: 'getItemLoginSchemaType',
+  tags: ['item-login'],
+  summary: 'Get type of item login',
+  description: `Get type of item login. Return null if the item does not allow item login.`,
 
-export const getLoginSchema = {
-  params: idParam,
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
   response: {
-    '2xx': loginSchema,
-    '4xx': error,
-    '5xx': error,
+    [StatusCodes.OK]: customType.Nullable(
+      customType.EnumString(Object.values(ItemLoginSchemaType)),
+    ),
+    '4xx': errorSchemaRef,
+    '5xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
+
+export const getItemLoginSchema = {
+  operationId: 'getItemLoginSchema',
+  tags: ['item-login'],
+  summary: 'Get item login data',
+  description: `Get item login data.`,
+
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
+  response: {
+    [StatusCodes.OK]: itemLoginSchemaSchemaRef,
+    '4xx': errorSchemaRef,
+    '5xx': errorSchemaRef,
+  },
+} as const satisfies FastifySchema;
 
 export const updateLoginSchema = {
-  params: idParam,
-  body: loginSchema,
-  response: {
-    '2xx': loginSchema,
-    '4xx': error,
-    '5xx': error,
-  },
-};
+  operationId: 'updateItemLoginSchema',
+  tags: ['item-login'],
+  summary: 'Update item login data',
+  description: `Update item login's status and/or type.`,
 
-export const deleteLoginSchema = {
-  params: idParam,
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
+  body: Type.Partial(Type.Pick(itemLoginSchemaSchema, ['status', 'type']), { minProperties: 1 }),
   response: {
-    '2xx': loginSchema,
-    '4xx': error,
-    '5xx': error,
+    [StatusCodes.OK]: itemLoginSchemaSchemaRef,
+    '4xx': errorSchemaRef,
+    '5xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;

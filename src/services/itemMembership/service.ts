@@ -2,16 +2,22 @@ import { singleton } from 'tsyringe';
 
 import { PermissionLevel, UUID } from '@graasp/sdk';
 
+import { MailBuilder } from '../../plugins/mailer/builder';
 import { MAIL } from '../../plugins/mailer/langs/constants';
 import { MailerService } from '../../plugins/mailer/service';
 import { PLAYER_HOST } from '../../utils/config';
-import { CannotDeleteOnlyAdmin, ItemMembershipNotFound } from '../../utils/errors';
+import {
+  CannotDeleteOnlyAdmin,
+  CannotModifyGuestItemMembership,
+  ItemMembershipNotFound,
+} from '../../utils/errors';
 import HookManager from '../../utils/hook';
 import { Repositories } from '../../utils/repositories';
 import { Account } from '../account/entities/account';
 import { validatePermission } from '../authorization';
 import { Item } from '../item/entities/Item';
 import { ItemService } from '../item/service';
+import { isGuest } from '../itemLogin/entities/guest';
 import { Actor, Member } from '../member/entities/member';
 import { ItemMembership } from './entities/ItemMembership';
 
@@ -33,21 +39,22 @@ export class ItemMembershipService {
   async _notifyMember(account: Account, member: Member, item: Item): Promise<void> {
     const link = new URL(item.id, PLAYER_HOST.url).toString();
 
-    const lang = member.lang;
-    const t = this.mailerService.translate(lang);
-
-    const text = t(MAIL.SHARE_ITEM_TEXT, { itemName: item.name });
-    const html = `
-        ${this.mailerService.buildText(text)}
-        ${this.mailerService.buildButton(link, t(MAIL.SHARE_ITEM_BUTTON))}
-      `;
-
-    const title = t(MAIL.SHARE_ITEM_TITLE, { creatorName: account.name, itemName: item.name });
-
-    const footer = this.mailerService.buildFooter(lang);
+    const mail = new MailBuilder({
+      subject: {
+        text: MAIL.SHARE_ITEM_TITLE,
+        translationVariables: {
+          creatorName: account.name,
+          itemName: item.name,
+        },
+      },
+      lang: member.lang,
+    })
+      .addText(MAIL.SHARE_ITEM_TEXT, { itemName: item.name })
+      .addButton(MAIL.SHARE_ITEM_BUTTON, link)
+      .build();
 
     await this.mailerService
-      .sendEmail(title, member.email, link, html, footer)
+      .send(mail, member.email)
       .then(() => {
         console.debug('send email on membership creation');
       })
@@ -75,7 +82,7 @@ export class ItemMembershipService {
     return { data: result.data, errors: [...items.errors, ...result.errors] };
   }
 
-  private async _post(
+  private async _create(
     account: Account,
     repositories: Repositories,
     item: Item,
@@ -87,12 +94,15 @@ export class ItemMembershipService {
       repositories;
     const member = await memberRepository.get(memberId);
 
-    await this.hooks.runPreHooks('create', account, repositories, { item, account: member });
-
-    const result = await itemMembershipRepository.post({
+    await this.hooks.runPreHooks('create', account, repositories, {
       item,
       account: member,
-      creator: account,
+    });
+
+    const result = await itemMembershipRepository.addOne({
+      itemPath: item.path,
+      accountId: member.id,
+      creatorId: account.id,
       permission,
     });
 
@@ -106,7 +116,7 @@ export class ItemMembershipService {
     return result;
   }
 
-  async post(
+  async create(
     actor: Account,
     repositories: Repositories,
     membership: { permission: PermissionLevel; itemId: UUID; memberId: UUID },
@@ -119,10 +129,10 @@ export class ItemMembershipService {
       PermissionLevel.Admin,
     );
 
-    return this._post(actor, repositories, item, membership.memberId, membership.permission);
+    return this._create(actor, repositories, item, membership.memberId, membership.permission);
   }
 
-  async postMany(
+  async createMany(
     actor: Account,
     repositories: Repositories,
     memberships: { permission: PermissionLevel; accountId: UUID }[],
@@ -133,7 +143,7 @@ export class ItemMembershipService {
 
     return Promise.all(
       memberships.map(async ({ accountId, permission }) => {
-        return this._post(actor, repositories, item, accountId, permission);
+        return this._create(actor, repositories, item, accountId, permission);
       }),
     );
   }
@@ -147,11 +157,14 @@ export class ItemMembershipService {
     const { itemMembershipRepository } = repositories;
     // check memberships
     const membership = await itemMembershipRepository.get(itemMembershipId);
+    if (isGuest(membership.account)) {
+      throw new CannotModifyGuestItemMembership();
+    }
     await validatePermission(repositories, PermissionLevel.Admin, actor, membership.item);
 
     await this.hooks.runPreHooks('update', actor, repositories, membership);
 
-    const result = await itemMembershipRepository.patch(itemMembershipId, data);
+    const result = await itemMembershipRepository.updateOne(itemMembershipId, data);
 
     await this.hooks.runPostHooks('update', actor, repositories, result);
 

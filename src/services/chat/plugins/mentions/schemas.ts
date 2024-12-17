@@ -2,101 +2,105 @@
  * JSON schema definitions to validate requests and responses
  * through Fastify's AJV instance
  */
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
+
+import { FastifySchema } from 'fastify';
+
 import { MentionStatus } from '@graasp/sdk';
 
-export default {
-  $id: 'https://graasp.org/mentions/',
-  definitions: {
-    memberIdParam: {
-      type: 'object',
-      required: ['memberId'],
-      properties: {
-        memberId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      },
-    },
+import { customType, registerSchemaAsRef } from '../../../../plugins/typebox';
+import { errorSchemaRef } from '../../../../schemas/global';
+import { accountSchemaRef } from '../../../account/schemas';
+import { chatMessageSchemaRef } from '../../schemas';
 
-    mentionParam: {
-      type: 'object',
-      required: ['mentionId'],
-      properties: {
-        mentionId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      },
+export const minimalChatMentionSchemaRef = registerSchemaAsRef(
+  'minimalChatMention',
+  'Minimal Chat Mention',
+  customType.StrictObject(
+    {
+      id: customType.UUID(),
+      account: accountSchemaRef,
+      createdAt: customType.DateTime(),
+      updatedAt: customType.DateTime(),
+      status: Type.Enum(MentionStatus),
     },
+    {
+      description: 'Mention of a user in a chat, without message',
+    },
+  ),
+);
 
-    memberMentions: {
-      type: 'array',
-      items: { $ref: '#/definitions/chatMention' },
+export const completeChatMentionSchemaRef = registerSchemaAsRef(
+  'completeChatMention',
+  'Complete Chat Mention',
+  Type.Intersect(
+    [
+      minimalChatMentionSchemaRef,
+      customType.StrictObject({
+        message: chatMessageSchemaRef,
+      }),
+    ],
+    {
+      description: 'Mention of a user in a chat including message',
       additionalProperties: false,
     },
+  ),
+);
 
-    chatMention: {
-      type: 'object',
-      properties: {
-        id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-        message: { $ref: 'https://graasp.org/chat/#/definitions/chatMessage' },
-        account: { $ref: 'https://graasp.org/accounts/#/definitions/account' },
-        createdAt: { type: 'string' },
-        updatedAt: { type: 'string' },
-        status: {
-          type: 'string',
-          enum: Object.values(MentionStatus),
-        },
-      },
-      additionalProperties: false,
-    },
+export const getOwnMentions = {
+  operationId: 'getOwnMentions',
+  tags: ['chat', 'mention'],
+  summary: 'Get mentions for current user',
+  description: 'Get mentions for current user.',
 
-    // chat mention properties required for update
-    partialChatMention: {
-      type: 'object',
-      required: ['status'],
-      properties: {
-        status: {
-          type: 'string',
-          enum: Object.values(MentionStatus),
-        },
-      },
-      additionalProperties: false,
-    },
-  },
-};
-
-/**
- * JSON schema on GET mentions route for request and response
- */
-const getMentions = {
   response: {
-    200: { $ref: 'https://graasp.org/mentions/#/definitions/memberMentions' },
+    [StatusCodes.OK]: Type.Array(completeChatMentionSchemaRef),
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
-/**
- * JSON schema on PATCH mention route for request and response
- */
-const patchMention = {
-  params: { $ref: 'https://graasp.org/mentions/#/definitions/mentionParam' },
-  body: { $ref: 'https://graasp.org/mentions/#/definitions/partialChatMention' },
+export const patchMention = {
+  operationId: 'patchMention',
+  tags: ['chat', 'mention'],
+  summary: 'Patch mention',
+  description: "Patch mention's status.",
+
+  params: customType.StrictObject({
+    mentionId: customType.UUID(),
+  }),
+  body: customType.StrictObject({
+    status: Type.Enum(MentionStatus),
+  }),
   response: {
-    200: { $ref: 'https://graasp.org/mentions/#/definitions/chatMention' },
+    [StatusCodes.OK]: minimalChatMentionSchemaRef,
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
-/**
- * JSON schema on DELETE remove mention route for request and response
- */
-const deleteMention = {
-  params: { $ref: 'https://graasp.org/mentions/#/definitions/mentionParam' },
+export const deleteMention = {
+  operationId: 'deleteMention',
+  tags: ['chat', 'mention'],
+  summary: 'Delete mention',
+  description: 'Delete mention.',
+
+  params: customType.StrictObject({
+    mentionId: customType.UUID(),
+  }),
   response: {
-    200: { $ref: 'https://graasp.org/mentions/#/definitions/chatMention' },
+    [StatusCodes.OK]: minimalChatMentionSchemaRef,
+    '4xx': errorSchemaRef,
   },
-};
+} as const satisfies FastifySchema;
 
-/**
- * JSON schema on DELETE clear all mentions route for request and response
- */
-const clearAllMentions = {
+export const clearAllMentions = {
+  operationId: 'clearAllMentions',
+  tags: ['chat', 'mention'],
+  summary: 'Clear all mentions for current user',
+  description: 'Clear all mentions for current user.',
+
   response: {
-    200: { $ref: 'https://graasp.org/mentions/#/definitions/memberMentions' },
+    [StatusCodes.OK]: Type.Array(completeChatMentionSchemaRef),
+    '4xx': errorSchemaRef,
   },
-};
-
-export { getMentions, patchMention, deleteMention, clearAllMentions };
+} as const satisfies FastifySchema;

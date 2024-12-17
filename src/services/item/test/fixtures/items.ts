@@ -4,39 +4,43 @@ import {
   AppItemFactory,
   DocumentItemFactory,
   FolderItemFactory,
-  ItemTagType,
   ItemType,
+  ItemVisibilityType,
   LinkItemFactory,
   LocalFileItemFactory,
   PermissionLevel,
   S3FileItemFactory,
   ShortcutItemFactory,
+  ThumbnailSize,
   buildPathFromIds,
 } from '@graasp/sdk';
 
 import { AppDataSource } from '../../../../plugins/datasource';
+import { Guest } from '../../../itemLogin/entities/guest';
 import { ItemMembership } from '../../../itemMembership/entities/ItemMembership';
-import { ItemMembershipRepository } from '../../../itemMembership/repository';
-import { Actor, Member } from '../../../member/entities/member';
+import { Member } from '../../../member/entities/member';
+import { saveMember } from '../../../member/test/fixtures/members';
 import { ItemWrapper, PackedItem } from '../../ItemWrapper';
 import { DEFAULT_ORDER, Item, ItemExtraMap } from '../../entities/Item';
-import { ItemTag } from '../../plugins/itemTag/ItemTag';
-import { ItemTagRepository } from '../../plugins/itemTag/repository';
-import { setItemPublic } from '../../plugins/itemTag/test/fixtures';
+import { ItemVisibility } from '../../plugins/itemVisibility/ItemVisibility';
+import { ItemVisibilityRepository } from '../../plugins/itemVisibility/repository';
+import { setItemPublic } from '../../plugins/itemVisibility/test/fixtures';
 import { ItemPublished } from '../../plugins/publication/published/entities/itemPublished';
 import { RecycledItemDataRepository } from '../../plugins/recycled/repository';
 import { ItemRepository } from '../../repository';
 
+const itemMembershipRawRepository = AppDataSource.getRepository(ItemMembership);
+
 export class ItemTestUtils {
   public itemRepository: ItemRepository;
-  public itemTagRepository: ItemTagRepository;
+  public itemVisibilityRepository: ItemVisibilityRepository;
   public rawItemRepository: Repository<Item<keyof ItemExtraMap>>;
   recycledItemDataRepository: RecycledItemDataRepository;
   rawItemPublishedRepository: Repository<ItemPublished>;
 
   constructor() {
     this.itemRepository = new ItemRepository();
-    this.itemTagRepository = new ItemTagRepository();
+    this.itemVisibilityRepository = new ItemVisibilityRepository();
     this.rawItemRepository = AppDataSource.getRepository(Item);
     this.recycledItemDataRepository = new RecycledItemDataRepository();
     this.rawItemPublishedRepository = AppDataSource.getRepository(ItemPublished);
@@ -113,11 +117,11 @@ export class ItemTestUtils {
   }) => {
     const value = this.createItem({ ...item, creator: member, parentItem });
     const newItem = await this.rawItemRepository.save(value);
-    const publicTag = await setItemPublic(newItem, member);
+    const publicVisibility = await setItemPublic(newItem, member);
     return {
       item: newItem,
-      packedItem: new ItemWrapper(newItem, undefined, [publicTag]).packed(),
-      publicTag,
+      packedItem: new ItemWrapper(newItem, undefined, [publicVisibility]).packed(),
+      publicVisibility,
     };
   };
 
@@ -135,16 +139,16 @@ export class ItemTestUtils {
     }
   };
 
-  saveMembership = ({
+  saveMembership = async ({
     item,
     account,
     permission = PermissionLevel.Admin,
   }: {
     item: Item;
-    account: Actor;
+    account: Member | Guest;
     permission?: PermissionLevel;
   }) => {
-    return ItemMembershipRepository.save({ item, account, permission });
+    return await itemMembershipRawRepository.save({ item, account, permission });
   };
 
   saveItemAndMembership = async (options: {
@@ -158,12 +162,16 @@ export class ItemTestUtils {
     itemMembership: ItemMembership;
     packedItem: PackedItem;
   }> => {
-    const { item, member, permission, creator, parentItem } = options;
+    const { item, permission, creator, parentItem } = options;
+    let member = options.member;
     const newItem = await this.saveItem({
       item,
       actor: creator ?? member,
       parentItem,
     });
+    if (!member) {
+      member = await saveMember();
+    }
     const im = await this.saveMembership({ item: newItem, account: member, permission });
     return {
       item: newItem,
@@ -174,28 +182,27 @@ export class ItemTestUtils {
 
   saveRecycledItem = async (member: Member, defaultItem?: Item) => {
     let item = defaultItem;
-    let packedItem;
     if (!item) {
-      ({ item, packedItem } = await this.saveItemAndMembership({ member }));
+      ({ item } = await this.saveItemAndMembership({ member }));
     }
     await this.recycledItemDataRepository.addOne({ itemPath: item.path, creatorId: member.id });
     await this.rawItemRepository.softRemove(item);
-    return { item, packedItem };
+    return { item };
   };
 
   saveCollections = async (member) => {
     const items: Item[] = [];
     const packedItems: PackedItem[] = [];
-    const tags: ItemTag[] = [];
+    const visibilities: ItemVisibility[] = [];
     for (let i = 0; i < 3; i++) {
       const { item, itemMembership } = await this.saveItemAndMembership({ member });
       items.push(item);
-      const publicTag = await setItemPublic(item, member);
-      packedItems.push(new ItemWrapper(item, itemMembership, [publicTag]).packed());
-      tags.push(publicTag);
+      const publicVisibility = await setItemPublic(item, member);
+      packedItems.push(new ItemWrapper(item, itemMembership, [publicVisibility]).packed());
+      visibilities.push(publicVisibility);
       await this.rawItemPublishedRepository.save({ item, creator: member });
     }
-    return { items, packedItems, tags };
+    return { items, packedItems, visibilities };
   };
 
   getOrderForItemId = async (itemId: Item['id']): Promise<number | null> => {
@@ -279,23 +286,23 @@ export const expectPackedItem = (
     | null,
   creator?: Member,
   parent?: Item,
-  tags?: ItemTag[],
+  visibilities?: ItemVisibility[],
 ) => {
   expectItem(newItem, correctItem, creator, parent);
 
   expect(newItem!.permission).toEqual(correctItem?.permission);
 
-  const pTag = tags?.find((t) => t.type === ItemTagType.Public);
-  if (pTag) {
-    expect(newItem!.public!.type).toEqual(pTag.type);
-    expect(newItem!.public!.id).toEqual(pTag.id);
-    expect(newItem!.public!.item!.id).toEqual(pTag.item.id);
+  const pVisibility = visibilities?.find((t) => t.type === ItemVisibilityType.Public);
+  if (pVisibility) {
+    expect(newItem!.public!.type).toEqual(pVisibility.type);
+    expect(newItem!.public!.id).toEqual(pVisibility.id);
+    expect(newItem!.public!.item!.id).toEqual(pVisibility.item.id);
   }
-  const hTag = tags?.find((t) => t.type === ItemTagType.Hidden);
-  if (hTag) {
-    expect(newItem!.hidden!.type).toEqual(hTag.type);
-    expect(newItem!.hidden!.id).toEqual(hTag.id);
-    expect(newItem!.hidden!.item!.id).toEqual(hTag.item.id);
+  const hVisibility = visibilities?.find((t) => t.type === ItemVisibilityType.Hidden);
+  if (hVisibility) {
+    expect(newItem!.hidden!.type).toEqual(hVisibility.type);
+    expect(newItem!.hidden!.id).toEqual(hVisibility.id);
+    expect(newItem!.hidden!.item!.id).toEqual(hVisibility.item.id);
   }
 };
 
@@ -324,14 +331,28 @@ export const expectManyPackedItems = (
     Pick<PackedItem, 'permission'>)[],
   creator?: Member,
   parent?: Item,
-  tags?: ItemTag[],
+  visibilities?: ItemVisibility[],
 ) => {
   expect(items).toHaveLength(correctItems.length);
 
   items.forEach(({ id }) => {
     const item = items.find(({ id: thisId }) => thisId === id);
     const correctItem = correctItems.find(({ id: thisId }) => thisId === id);
-    const tTags = tags?.filter((t) => t.item.id === id);
-    expectPackedItem(item, correctItem, creator, parent, tTags);
+    const tVisibilities = visibilities?.filter((t) => t.item.id === id);
+    expectPackedItem(item, correctItem, creator, parent, tVisibilities);
   });
+};
+
+export const expectThumbnails = (
+  item: PackedItem,
+  thumbnailUrl: string,
+  shouldContainThumbnails: boolean,
+) => {
+  if (shouldContainThumbnails) {
+    expect(item.thumbnails).toBeDefined();
+    expect(item.thumbnails![ThumbnailSize.Small]).toBe(thumbnailUrl);
+    expect(item.thumbnails![ThumbnailSize.Medium]).toBe(thumbnailUrl);
+  } else {
+    expect(item.thumbnails).toBeUndefined();
+  }
 };

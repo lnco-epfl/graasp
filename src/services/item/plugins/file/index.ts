@@ -1,11 +1,10 @@
 import { fastifyMultipart } from '@fastify/multipart';
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import { FileItemProperties, HttpMethod, PermissionLevel } from '@graasp/sdk';
+import { FileItemProperties, PermissionLevel } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../di/utils';
-import { IdParam } from '../../../../types';
-import { notUndefined } from '../../../../utils/assertions';
+import { asDefined } from '../../../../utils/assertions';
 import { buildRepositories } from '../../../../utils/repositories';
 import { isAuthenticated, optionalIsAuthenticated } from '../../../auth/plugins/passport';
 import { matchOne, validatePermission } from '../../../authorization';
@@ -15,7 +14,7 @@ import { StorageService } from '../../../member/plugins/storage/service';
 import { validatedMemberAccountRole } from '../../../member/strategies/validatedMemberAccountRole';
 import { Item } from '../../entities/Item';
 import { ItemService } from '../../service';
-import { download, updateSchema, upload } from './schema';
+import { download, upload } from './schema';
 import FileItemService from './service';
 import { DEFAULT_MAX_FILE_SIZE, MAX_NUMBER_OF_FILES_UPLOAD } from './utils/constants';
 
@@ -25,12 +24,11 @@ export interface GraaspPluginFileOptions {
   maxMemberStorage?: number; // max storage space for a user
 }
 
-const basePlugin: FastifyPluginAsync<GraaspPluginFileOptions> = async (fastify, options) => {
+const basePlugin: FastifyPluginAsyncTypebox<GraaspPluginFileOptions> = async (fastify, options) => {
   const { uploadMaxFileNb = MAX_NUMBER_OF_FILES_UPLOAD, maxFileSize = DEFAULT_MAX_FILE_SIZE } =
     options;
 
-  const { db, items } = fastify;
-  const { extendExtrasUpdateSchema } = items;
+  const { db } = fastify;
 
   const fileService = resolveDependency(FileService);
   const itemService = resolveDependency(ItemService);
@@ -48,9 +46,6 @@ const basePlugin: FastifyPluginAsync<GraaspPluginFileOptions> = async (fastify, 
       // headerPairs: 2000             // Max number of header key=>value pairs (Default: 2000 - same as node's http).
     },
   });
-
-  // "install" custom schema for validating file items update
-  extendExtrasUpdateSchema(updateSchema(fileService.fileType));
 
   // register post delete handler to remove the file object after item delete
   itemService.hooks.setPostHook(
@@ -105,9 +100,7 @@ const basePlugin: FastifyPluginAsync<GraaspPluginFileOptions> = async (fastify, 
     await fileItemService.copy(actor, repositories, { original, copy });
   });
 
-  fastify.route<{ Querystring: IdParam & { previousItemId?: string }; Body: unknown }>({
-    method: HttpMethod.Post,
-    url: '/upload',
+  fastify.post('/upload', {
     schema: upload,
     preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     handler: async (request) => {
@@ -116,7 +109,7 @@ const basePlugin: FastifyPluginAsync<GraaspPluginFileOptions> = async (fastify, 
         query: { id: parentId, previousItemId },
         log,
       } = request;
-      const member = notUndefined(user?.account);
+      const member = asDefined(user?.account);
       assertIsMember(member);
 
       // check rights
@@ -141,14 +134,16 @@ const basePlugin: FastifyPluginAsync<GraaspPluginFileOptions> = async (fastify, 
           const repositories = buildRepositories(manager);
 
           try {
-            const i = await fileItemService.upload(member, repositories, {
+            // if the file is an H5P file, we treat it appropriately
+            // othwerwise, we save it as a generic file
+            const item = await fileItemService.upload(member, repositories, {
               parentId,
               filename,
               mimetype,
               stream,
               previousItemId,
             });
-            items.push(i);
+            items.push(item);
           } catch (e) {
             // ignore errors
             log.error(e);
@@ -173,11 +168,10 @@ const basePlugin: FastifyPluginAsync<GraaspPluginFileOptions> = async (fastify, 
     },
   });
 
-  fastify.get<{ Params: IdParam; Querystring: { replyUrl?: boolean } }>(
+  fastify.get(
     '/:id/download',
     {
       schema: download,
-
       preHandler: optionalIsAuthenticated,
     },
     async (request, reply) => {

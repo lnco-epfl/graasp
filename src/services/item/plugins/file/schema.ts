@@ -1,39 +1,47 @@
-import { S } from 'fluent-json-schema';
+import { Type } from '@sinclair/typebox';
+import { StatusCodes } from 'http-status-codes';
 
-import { FileItemType } from '@graasp/sdk';
+import { customType } from '../../../../plugins/typebox';
+import { errorSchemaRef } from '../../../../schemas/global';
+import { itemSchemaRef } from '../../schemas';
 
 export const upload = {
-  querystring: {
-    type: 'object',
-    properties: {
-      id: { $ref: 'https://graasp.org/#/definitions/uuid' },
-      previousItemId: { $ref: 'https://graasp.org/#/definitions/uuid' },
-    },
-    additionalProperties: false,
+  operationId: 'uploadFile',
+  tags: ['item', 'file'],
+  summary: 'Upload files',
+  description: 'Upload files to create corresponding items.',
+
+  querystring: customType.StrictObject({
+    id: Type.Optional(
+      customType.UUID({
+        description: 'Folder id in which the uploaded files should be created.',
+      }),
+    ),
+    previousItemId: Type.Optional(
+      customType.UUID({ description: 'The uploaded files should be created after this item.' }),
+    ),
+  }),
+  response: {
+    [StatusCodes.OK]: customType.StrictObject({
+      data: Type.Record(customType.UUID(), itemSchemaRef),
+      errors: Type.Array(errorSchemaRef),
+    }),
+    '4xx': errorSchemaRef,
   },
 };
 
 export const download = {
-  params: { $ref: 'https://graasp.org/#/definitions/idParam' },
-  querystring: {
-    type: 'object',
-    properties: {
-      replyUrl: {
-        type: 'boolean',
-        default: false,
-      },
-    },
-    additionalProperties: false,
+  operationId: 'downloadFile',
+  tags: ['item', 'file'],
+  summary: 'Download file',
+  description: 'Download file.',
+
+  params: customType.StrictObject({
+    id: customType.UUID(),
+  }),
+  querystring: customType.StrictObject({ replyUrl: Type.Boolean({ default: false }) }),
+  response: {
+    [StatusCodes.OK]: Type.String({ format: 'uri' }),
+    '4xx': errorSchemaRef,
   },
 };
-
-export const updateSchema = (type: FileItemType) =>
-  S.object()
-    // TODO: .additionalProperties(false) in schemas don't seem to work properly and
-    // are very counter-intuitive. We should change to JTD format (as soon as it is supported)
-    // .additionalProperties(false)
-    .prop(
-      type,
-      S.object().additionalProperties(false).prop('altText', S.string()).required(['altText']),
-    )
-    .required([type]);
