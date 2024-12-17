@@ -35,7 +35,6 @@ import graaspValidationPlugin from './plugins/publication/validation';
 import graaspRecycledItemData from './plugins/recycled';
 import ShortLinkService from './plugins/shortLink';
 import { SHORT_LINKS_ROUTE_PREFIX } from './plugins/shortLink/service';
-import graaspItemTagPlugin from './plugins/tag/controller';
 import thumbnailsPlugin from './plugins/thumbnail';
 import { itemWsHooks } from './ws/hooks';
 
@@ -112,8 +111,6 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         fastify.register(actionItemPlugin);
 
         fastify.register(itemGeolocationPlugin);
-
-        fastify.register(graaspItemTagPlugin);
 
         fastify.register(itemController);
       });
