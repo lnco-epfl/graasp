@@ -132,7 +132,6 @@ const basePlugin: FastifyPluginAsyncTypebox<GraaspPluginFileOptions> = async (fa
         // transaction to ensure item is saved with memberships
         await db.transaction(async (manager) => {
           const repositories = buildRepositories(manager);
-
           try {
             // if the file is an H5P file, we treat it appropriately
             // othwerwise, we save it as a generic file
@@ -155,7 +154,6 @@ const basePlugin: FastifyPluginAsyncTypebox<GraaspPluginFileOptions> = async (fa
           }
         });
       }
-
       // rescale is necessary when uploading multiple files: they have the same order number
       if (items.length) {
         await itemService.rescaleOrderForParent(member, buildRepositories(), items[0]);
