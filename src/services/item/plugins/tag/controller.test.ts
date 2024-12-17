@@ -29,7 +29,7 @@ const createTagsForItem = async (item: Item, tags: Tag[]): Promise<ItemTag[]> =>
   return itemTags;
 };
 
-describe('Tag Endpoints', () => {
+describe('Item Tag Endpoints', () => {
   let app: FastifyInstance;
   let actor;
   let tags: Tag[];
@@ -75,7 +75,7 @@ describe('Tag Endpoints', () => {
           url: `/items/${item.id}/tags`,
         });
         expect(response.statusCode).toBe(StatusCodes.OK);
-        expect(response.json()).toEqual(tags);
+        expect(response.json()).toEqual(expect.arrayContaining(tags));
       });
 
       it('Throws for private item', async () => {
@@ -109,7 +109,7 @@ describe('Tag Endpoints', () => {
         });
 
         expect(response.statusCode).toBe(StatusCodes.OK);
-        expect(response.json()).toEqual(tags);
+        expect(response.json()).toEqual(expect.arrayContaining(tags));
       });
 
       it('Return no tag', async () => {

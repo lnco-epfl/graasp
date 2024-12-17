@@ -11,6 +11,7 @@ import { CachingService } from '../caching/service';
 import { Actor } from '../member/entities/member';
 import { LocalFileConfiguration, S3FileConfiguration } from './interfaces/configuration';
 import { FileRepository } from './interfaces/fileRepository';
+import { createSanitizedFile, sanitizeHtml } from './sanitize';
 import {
   CopyFileInvalidPathError,
   CopyFolderInvalidPathError,
@@ -52,9 +53,11 @@ class FileService {
       });
     }
 
+    const sanitizedFile = await this.sanitizeFile({ file, mimetype });
+
     try {
       await this.repository.uploadFile({
-        fileStream: file,
+        fileStream: sanitizedFile,
         filepath,
         memberId: account.id,
         mimetype,
@@ -69,13 +72,26 @@ class FileService {
     return data;
   }
 
+  /**
+   * Sanitize file content. Return readable file with updated content.
+   * Filter out tags for HTML
+   * @param file file to be sanitized
+   * @param mimetype mimetype of the file
+   * @returns sanitized stream
+   */
+  async sanitizeFile({ file, mimetype }: { file: Readable; mimetype?: string }): Promise<Readable> {
+    // sanitize content of html
+    if (mimetype === 'text/html') {
+      return await createSanitizedFile(file, sanitizeHtml);
+    }
+
+    return file;
+  }
+
   async getFile(_actor: Actor, data): Promise<Readable> {
     const { id, path: filepath } = data;
     if (!filepath || !id) {
-      throw new DownloadFileInvalidParameterError({
-        filepath,
-        id,
-      });
+      throw new DownloadFileInvalidParameterError();
     }
 
     return this.repository.getFile(
@@ -87,13 +103,10 @@ class FileService {
     );
   }
 
-  async getUrl(data: { expiration?: number; id?: string; path?: string }): Promise<string> {
-    const { expiration, id, path: filepath } = data;
-    if (!filepath || !id) {
-      throw new DownloadFileInvalidParameterError({
-        filepath,
-        id,
-      });
+  async getUrl(data: { expiration?: number; path?: string }): Promise<string> {
+    const { expiration, path: filepath } = data;
+    if (!filepath) {
+      throw new DownloadFileInvalidParameterError();
     }
 
     const getUrl = () =>
@@ -101,7 +114,6 @@ class FileService {
         {
           expiration,
           filepath,
-          id,
         },
         this.logger,
       );

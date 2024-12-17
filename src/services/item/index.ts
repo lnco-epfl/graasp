@@ -20,6 +20,7 @@ import graaspEmbeddedLinkItem from './plugins/embeddedLink';
 import { PREFIX_EMBEDDED_LINK } from './plugins/embeddedLink/service';
 import graaspEnrollPlugin from './plugins/enroll';
 import graaspFileItem from './plugins/file';
+import graaspFolderItem from './plugins/folder/controller';
 import itemGeolocationPlugin from './plugins/geolocation/index';
 import graaspZipPlugin from './plugins/importExport';
 import graaspInvitationsPlugin from './plugins/invitation';
@@ -34,7 +35,6 @@ import graaspValidationPlugin from './plugins/publication/validation';
 import graaspRecycledItemData from './plugins/recycled';
 import ShortLinkService from './plugins/shortLink';
 import { SHORT_LINKS_ROUTE_PREFIX } from './plugins/shortLink/service';
-import graaspItemTagPlugin from './plugins/tag/controller';
 import thumbnailsPlugin from './plugins/thumbnail';
 import { itemWsHooks } from './ws/hooks';
 
@@ -74,6 +74,8 @@ const plugin: FastifyPluginAsync = async (fastify) => {
 
       fastify.register(graaspItemVisibility);
 
+      fastify.register(graaspFolderItem);
+
       fastify.register(ShortLinkService, {
         prefix: SHORT_LINKS_ROUTE_PREFIX,
       });
@@ -109,8 +111,6 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         fastify.register(actionItemPlugin);
 
         fastify.register(itemGeolocationPlugin);
-
-        fastify.register(graaspItemTagPlugin);
 
         fastify.register(itemController);
       });

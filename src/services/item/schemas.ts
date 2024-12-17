@@ -8,11 +8,9 @@ import {
   CCLicenseAdaptions,
   DescriptionPlacement,
   DocumentItemExtraFlavor,
-  MAX_ITEM_NAME_LENGTH,
   MAX_TARGETS_FOR_MODIFY_REQUEST,
   MAX_TARGETS_FOR_MODIFY_REQUEST_W_RESPONSE,
   MaxWidth,
-  OldCCLicenseAdaptations,
   PermissionLevel,
 } from '@graasp/sdk';
 
@@ -25,14 +23,16 @@ export const settingsSchema = Type.Partial(
     {
       lang: Type.String({ deprecated: true }),
       isPinned: Type.Boolean(),
-      tags: Type.Array(Type.String()),
+      /**
+       * @deprecated use entities tags and item tags instead
+       */
+      tags: Type.Array(Type.String(), { deprecated: true }),
       showChatbox: Type.Boolean(),
       isResizable: Type.Boolean(),
       hasThumbnail: Type.Boolean(),
-      ccLicenseAdaption: Type.Union([
-        customType.Nullable(customType.EnumString(Object.values(CCLicenseAdaptions))),
-        customType.EnumString(Object.values(OldCCLicenseAdaptations), { deprecated: true }),
-      ]),
+      ccLicenseAdaption: customType.Nullable(
+        customType.EnumString(Object.values(CCLicenseAdaptions)),
+      ),
       displayCoEditors: Type.Boolean(),
       descriptionPlacement: customType.EnumString(Object.values(DescriptionPlacement)),
       isCollapsible: Type.Boolean(),
@@ -55,7 +55,6 @@ export const itemSchema = customType.StrictObject(
   {
     id: customType.UUID(),
     name: customType.ItemName(),
-    displayName: Type.String({ maxLength: MAX_ITEM_NAME_LENGTH }),
     description: Type.Optional(customType.Nullable(Type.String())),
     type: Type.String(),
     path: Type.String(),
@@ -77,7 +76,7 @@ export const itemSchemaRef = registerSchemaAsRef('item', 'Item', itemSchema);
 export const itemUpdateSchema = Type.Partial(
   Type.Composite(
     [
-      Type.Pick(itemSchema, ['name', 'displayName', 'description', 'lang']),
+      Type.Pick(itemSchema, ['name', 'description', 'lang']),
       customType.StrictObject({
         settings: Type.Optional(settingsSchema),
         extra: Type.Union([
@@ -160,9 +159,12 @@ export const reorder = {
     id: customType.UUID({ description: 'Item to reorder' }),
   }),
   body: customType.StrictObject({
-    previousItemId: customType.UUID({
-      description: 'Item which the item defined in params should go after',
-    }),
+    previousItemId: Type.Optional(
+      customType.UUID({
+        description:
+          'Item which the item defined in params should go after. If not defined, the item will become the first child of its parent.',
+      }),
+    ),
   }),
   response: {
     [StatusCodes.OK]: itemSchemaRef,

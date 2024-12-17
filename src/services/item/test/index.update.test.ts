@@ -16,7 +16,6 @@ import {
   ItemType,
   MAX_NUMBER_OF_CHILDREN,
   MAX_TARGETS_FOR_MODIFY_REQUEST,
-  MAX_TREE_LEVELS,
   PermissionLevel,
   buildPathFromIds,
 } from '@graasp/sdk';
@@ -41,6 +40,7 @@ import { ActionItemService } from '../plugins/action/service';
 import { ItemGeolocation } from '../plugins/geolocation/ItemGeolocation';
 import { ItemService } from '../service';
 import { ItemTestUtils, expectItem } from './fixtures/items';
+import { saveUntilMaxDescendants } from './utils';
 
 const itemMembershipRawRepository = AppDataSource.getRepository(ItemMembership);
 const testUtils = new ItemTestUtils();
@@ -78,21 +78,6 @@ jest.mock('@aws-sdk/lib-storage', () => {
     }),
   };
 });
-
-const saveUntilMaxDescendants = async (parent: Item, actor: Member) => {
-  // save maximum depth
-  // TODO: DYNAMIC
-  let currentParent = parent;
-  for (let i = 0; i < MAX_TREE_LEVELS - 1; i++) {
-    const newCurrentParent = await testUtils.saveItem({
-      actor,
-      parentItem: currentParent,
-    });
-    currentParent = newCurrentParent;
-  }
-  // return last child
-  return currentParent;
-};
 
 const saveNbOfItems = async ({
   nb,
@@ -360,23 +345,6 @@ describe('Item routes tests', () => {
         await waitForPostCreation();
         expect(newItem.settings.descriptionPlacement).toBe(VALID_SETTING.descriptionPlacement);
         expect(Object.keys(newItem.settings)).not.toContain(Object.keys(BAD_SETTING)[0]);
-      });
-
-      it('Create successfully with empty display name', async () => {
-        const payload = FolderItemFactory({ displayName: '' });
-        const response = await app.inject({
-          method: HttpMethod.Post,
-          url: `/items`,
-          payload: { ...payload },
-        });
-
-        const newItem = response.json();
-        expectItem(newItem, payload, actor);
-        expect(newItem.displayName).toEqual('');
-        expect(response.statusCode).toBe(StatusCodes.OK);
-        await waitForPostCreation();
-
-        expect(await AppDataSource.getRepository(Item).countBy({ id: newItem.id })).toEqual(1);
       });
 
       it('Create successfully with between children', async () => {
@@ -804,26 +772,6 @@ describe('Item routes tests', () => {
         expect(newItem.settings.showLinkButton).toBe(false);
         expect(newItem.settings.showLinkIframe).toBe(true);
         expect(newItem.settings.hasThumbnail).toBeFalsy();
-      });
-
-      it('Update successfully with empty display name', async () => {
-        const { item } = await testUtils.saveItemAndMembership({
-          member: actor,
-          item: { displayName: 'Not empty' },
-        });
-
-        const payload = { displayName: '' };
-
-        const response = await app.inject({
-          method: HttpMethod.Patch,
-          url: `/items/${item.id}`,
-          payload,
-        });
-
-        expect(response.statusCode).toBe(StatusCodes.OK);
-
-        const newItem = response.json();
-        expect(newItem.displayName).toEqual('');
       });
 
       it('Filter out bad setting when updating', async () => {
@@ -1735,7 +1683,6 @@ describe('Item routes tests', () => {
     });
   });
 
-  // copy many items
   describe('PATCH /items/id/reorder', () => {
     it('Throws if signed out', async () => {
       const member = await saveMember();
@@ -1765,7 +1712,7 @@ describe('Item routes tests', () => {
         actor = await saveMember();
         mockAuthenticate(actor);
       });
-      it('reorder at beginning', async () => {
+      it('reorder at same place', async () => {
         const { item: parentItem } = await testUtils.saveItemAndMembership({ member: actor });
         const toReorder = await testUtils.saveItem({
           actor,
@@ -1788,6 +1735,29 @@ describe('Item routes tests', () => {
 
         expect(response.statusCode).toBe(StatusCodes.OK);
         await testUtils.expectOrder(toReorder.id, previousItem.id);
+      });
+      it('reorder at beginning', async () => {
+        const { item: parentItem } = await testUtils.saveItemAndMembership({ member: actor });
+        const toReorder = await testUtils.saveItem({
+          actor,
+          parentItem,
+          item: { order: 10 },
+        });
+        await testUtils.saveItem({
+          actor,
+          parentItem,
+          item: { order: 5 },
+        });
+
+        const response = await app.inject({
+          method: HttpMethod.Patch,
+          url: `/items/${toReorder.id}/reorder`,
+          payload: {},
+        });
+
+        expect(response.statusCode).toBe(StatusCodes.OK);
+        // should have order smaller than first item
+        expect(await testUtils.getOrderForItemId(toReorder.id)).toBeLessThan(5);
       });
 
       it('reorder at end', async () => {
