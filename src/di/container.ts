@@ -81,7 +81,7 @@ export const registerDependencies = (instance: FastifyInstance) => {
     }),
   );
 
-  // Register CachingService for the thumbnails urls.
+  // register the interface FileRepository with the concrete repo returned by the factory.
   registerValue(
     FILE_SERVICE_URLS_CACHING_DI_KEY,
     new CachingService(resolveDependency(Redis), 'file_service_url_caching'),
