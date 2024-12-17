@@ -1198,7 +1198,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/types@npm:^7.0.0, @babel/types@npm:^7.17.0, @babel/types@npm:^7.20.7, @babel/types@npm:^7.23.0, @babel/types@npm:^7.24.7, @babel/types@npm:^7.25.9, @babel/types@npm:^7.26.0, @babel/types@npm:^7.26.3, @babel/types@npm:^7.3.3":
+"@babel/types@npm:^7.0.0, @babel/types@npm:^7.17.0, @babel/types@npm:^7.20.7, @babel/types@npm:^7.23.0, @babel/types@npm:^7.24.7, @babel/types@npm:^7.25.9, @babel/types@npm:^7.26.0, @babel/types@npm:^7.3.3":
+  version: 7.26.0
+  resolution: "@babel/types@npm:7.26.0"
+  dependencies:
+    "@babel/helper-string-parser": "npm:^7.25.9"
+    "@babel/helper-validator-identifier": "npm:^7.25.9"
+  checksum: 10/40780741ecec886ed9edae234b5eb4976968cc70d72b4e5a40d55f83ff2cc457de20f9b0f4fe9d858350e43dab0ea496e7ef62e2b2f08df699481a76df02cd6e
+  languageName: node
+  linkType: hard
+
+"@babel/types@npm:^7.26.3":
   version: 7.26.3
   resolution: "@babel/types@npm:7.26.3"
   dependencies:
@@ -3191,12 +3201,12 @@ __metadata:
   linkType: hard
 
 "@smithy/property-provider@npm:^3.1.7":
-  version: 3.1.7
-  resolution: "@smithy/property-provider@npm:3.1.7"
+  version: 3.1.8
+  resolution: "@smithy/property-provider@npm:3.1.8"
   dependencies:
-    "@smithy/types": "npm:^3.5.0"
+    "@smithy/types": "npm:^3.6.0"
     tslib: "npm:^2.6.2"
-  checksum: 10/07ba03340e06605e216b229c4833f6bbcc220bdb8a39d5d8420559d1bd4643b5e93f831283a04a65f3c88aeb572dbe555b2dbc52f279182eea08b400f83a1305
+  checksum: 10/ddae58afee77b9d2b64696621855d21a4aac179c66bb483222f8a3218efc0eaf04f290d956d6433f6d1009c505bcd3897119856e46a5c29072a0dd697455b55a
   languageName: node
   linkType: hard
 
@@ -3281,12 +3291,12 @@ __metadata:
   linkType: hard
 
 "@smithy/shared-ini-file-loader@npm:^3.1.8":
-  version: 3.1.8
-  resolution: "@smithy/shared-ini-file-loader@npm:3.1.8"
+  version: 3.1.9
+  resolution: "@smithy/shared-ini-file-loader@npm:3.1.9"
   dependencies:
-    "@smithy/types": "npm:^3.5.0"
+    "@smithy/types": "npm:^3.6.0"
     tslib: "npm:^2.6.2"
-  checksum: 10/c91313654d556a9c8f95a6528b1304e8a768c6b636ab018a8988668a10251e839ee23989ed442ea2d8409dfc1a5efabf7b929525056c3af0005ea5d7b13153f9
+  checksum: 10/a215e6a671ffc585b508bf512f915d09cc7d0e6a58d1d505aaa9e87dcfa3b6576c13652c8c2c3e3bc8d818c77deeb3874ab55c30c14ed1125f5f3fc0dfca6a10
   languageName: node
   linkType: hard
 
@@ -3327,6 +3337,15 @@ __metadata:
   dependencies:
     tslib: "npm:^2.6.2"
   checksum: 10/7a40dcb7f858367a07456c5ae7e7eec89ea9efb7e511e521c105a9568e1e89add875b25e63df19bebdaa77af89f0e5fc691b9f408d077bedb10586a764133e41
+  languageName: node
+  linkType: hard
+
+"@smithy/types@npm:^3.6.0":
+  version: 3.6.0
+  resolution: "@smithy/types@npm:3.6.0"
+  dependencies:
+    tslib: "npm:^2.6.2"
+  checksum: 10/a600ab42f325eb4d66e773e12952281bda998230fb68095b9ace9f32f87489115f6170140cea7a4e856fb3c9532cb3800aba8400e359b38ca373d9cb183ea4b0
   languageName: node
   linkType: hard
 
