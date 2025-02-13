@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import os from 'os';
 
-import { ClientManager, Context, FileItemType, GPTVersion, ItemType } from '@graasp/sdk';
+import { ClientManager, Context, GPTVersion, ItemType } from '@graasp/sdk';
 
 import {
   LocalFileConfiguration,

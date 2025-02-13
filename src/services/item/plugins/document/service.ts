@@ -10,7 +10,6 @@ import { ThumbnailService } from '../../../thumbnail/service';
 import { DocumentItem, Item, isItemType } from '../../entities/Item';
 import { WrongItemTypeError } from '../../errors';
 import { ItemService } from '../../service';
-import { MeiliSearchWrapper } from '../publication/published/plugins/search/meilisearch';
 import { ItemThumbnailService } from '../thumbnail/service';
 
 export const PREFIX_DOCUMENT = 'documents';
@@ -20,10 +19,9 @@ export class DocumentItemService extends ItemService {
   constructor(
     thumbnailService: ThumbnailService,
     itemThumbnailService: ItemThumbnailService,
-    meilisearchWrapper: MeiliSearchWrapper,
     log: BaseLogger,
   ) {
-    super(thumbnailService, itemThumbnailService, meilisearchWrapper, log);
+    super(thumbnailService, itemThumbnailService, log);
   }
 
   /**

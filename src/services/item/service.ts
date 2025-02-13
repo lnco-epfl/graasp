@@ -51,7 +51,6 @@ import { FolderItem, Item, isItemType } from './entities/Item';
 import { ItemGeolocation } from './plugins/geolocation/ItemGeolocation';
 import { PartialItemGeolocation } from './plugins/geolocation/errors';
 import { ItemVisibility } from './plugins/itemVisibility/ItemVisibility';
-import { MeiliSearchWrapper } from './plugins/publication/published/plugins/search/meilisearch';
 import { ItemThumbnailService } from './plugins/thumbnail/service';
 import { ItemChildrenParams, ItemSearchParams } from './types';
 
@@ -59,7 +58,6 @@ import { ItemChildrenParams, ItemSearchParams } from './types';
 export class ItemService {
   private readonly log: BaseLogger;
   private readonly thumbnailService: ThumbnailService;
-  private readonly meilisearchWrapper: MeiliSearchWrapper;
   private readonly itemThumbnailService: ItemThumbnailService;
 
   hooks = new HookManager<{
@@ -88,12 +86,10 @@ export class ItemService {
   constructor(
     thumbnailService: ThumbnailService,
     itemThumbnailService: ItemThumbnailService,
-    meilisearchWrapper: MeiliSearchWrapper,
     log: BaseLogger,
   ) {
     this.thumbnailService = thumbnailService;
     this.itemThumbnailService = itemThumbnailService;
-    this.meilisearchWrapper = meilisearchWrapper;
     this.log = log;
   }
 
@@ -749,15 +745,6 @@ export class ItemService {
         }
       }
     }
-
-    // index copied root if copied in a published item
-    if (parentItem) {
-      const published = await repositories.itemPublishedRepository.getForItem(parentItem);
-      if (published) {
-        await this.meilisearchWrapper.indexOne(published, repositories);
-      }
-    }
-
     return { item, copy: copyRoot };
   }
 

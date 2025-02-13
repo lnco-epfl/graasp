@@ -15,8 +15,6 @@ import { ThumbnailService } from '../thumbnail/service';
 import { FolderItem } from './entities/Item';
 import { ItemVisibility } from './plugins/itemVisibility/ItemVisibility';
 import { ItemVisibilityRepository } from './plugins/itemVisibility/repository';
-import { ItemPublished } from './plugins/publication/published/entities/itemPublished';
-import { MeiliSearchWrapper } from './plugins/publication/published/plugins/search/meilisearch';
 import { ItemThumbnailService } from './plugins/thumbnail/service';
 import { ItemService } from './service';
 import { ItemTestUtils } from './test/fixtures/items';
@@ -25,13 +23,7 @@ const testUtils = new ItemTestUtils();
 const mockedThumbnailService = {
   copyFolder: jest.fn(),
 } as unknown as jest.Mocked<ThumbnailService>;
-const meilisearchWrapper = { indexOne: async () => {} } as unknown as MeiliSearchWrapper;
-const service = new ItemService(
-  mockedThumbnailService,
-  {} as ItemThumbnailService,
-  meilisearchWrapper,
-  MOCK_LOGGER,
-);
+const service = new ItemService(mockedThumbnailService, {} as ItemThumbnailService, MOCK_LOGGER);
 
 describe('Item Service', () => {
   let app: FastifyInstance;
@@ -121,37 +113,6 @@ describe('Item Service', () => {
         .mockResolvedValue({ itemMembership: null, visibilities: [] });
       await service.copy(actor, buildRepositories(), item.id);
       expect(mockedThumbnailService.copyFolder).not.toHaveBeenCalled();
-    });
-
-    it('Index newly copied items if copied in a published item', async () => {
-      const indexMock = jest.spyOn(meilisearchWrapper, 'indexOne');
-      const actor = await saveMember();
-
-      const { item: unpublishedItem, itemMembership } = await testUtils.saveItemAndMembership({
-        member: actor,
-        item: { name: 'unpublishedItem' },
-      });
-
-      const { item: publishedFolder } = await testUtils.saveItemAndMembership({ member: actor });
-      const iv = await app.db.getRepository(ItemVisibility).save({
-        item: publishedFolder,
-        type: ItemVisibilityType.Public,
-        creator: actor,
-      });
-      await app.db.getRepository(ItemPublished).save({ item: publishedFolder, creator: actor });
-
-      jest
-        .spyOn(authorization, 'validatePermission')
-        .mockResolvedValue({ itemMembership, visibilities: [iv] });
-
-      await service.copy(
-        actor,
-        buildRepositories(),
-        unpublishedItem.id,
-        publishedFolder as FolderItem,
-      );
-
-      expect(indexMock).toHaveBeenCalledTimes(1);
     });
   });
 

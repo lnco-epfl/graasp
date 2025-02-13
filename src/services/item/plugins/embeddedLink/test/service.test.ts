@@ -3,7 +3,6 @@ import fetch, { Response } from 'node-fetch';
 import { BaseLogger } from '../../../../../logger';
 import { EMBEDDED_LINK_ITEM_IFRAMELY_HREF_ORIGIN } from '../../../../../utils/config';
 import { ThumbnailService } from '../../../../thumbnail/service';
-import { MeiliSearchWrapper } from '../../publication/published/plugins/search/meilisearch';
 import { ItemThumbnailService } from '../../thumbnail/service';
 import { EmbeddedLinkItemService } from '../service';
 import { FAKE_URL, FETCH_RESULT, expectedResult } from './fixtures';
@@ -25,7 +24,6 @@ export const mockHeaderResponse = (headers: { [key: string]: string }) => {
 const embeddedLinkService = new EmbeddedLinkItemService(
   {} as ThumbnailService,
   {} as ItemThumbnailService,
-  {} as MeiliSearchWrapper,
   {} as BaseLogger,
   EMBEDDED_LINK_ITEM_IFRAMELY_HREF_ORIGIN,
 );

@@ -20,7 +20,6 @@ import { ThumbnailService } from '../../../thumbnail/service';
 import { EmbeddedLinkItem, Item, isItemType } from '../../entities/Item';
 import { WrongItemTypeError } from '../../errors';
 import { ItemService } from '../../service';
-import { MeiliSearchWrapper } from '../publication/published/plugins/search/meilisearch';
 import { ItemThumbnailService } from '../thumbnail/service';
 import { InvalidUrl } from './errors';
 import { isValidUrl } from './utils';
@@ -65,11 +64,10 @@ export class EmbeddedLinkItemService extends ItemService {
   constructor(
     thumbnailService: ThumbnailService,
     itemThumbnailService: ItemThumbnailService,
-    meilisearchWrapper: MeiliSearchWrapper,
     log: BaseLogger,
     @inject(IFRAMELY_API_DI_KEY) iframelyHrefOrigin: string,
   ) {
-    super(thumbnailService, itemThumbnailService, meilisearchWrapper, log);
+    super(thumbnailService, itemThumbnailService, log);
     this.iframelyHrefOrigin = iframelyHrefOrigin;
   }
 

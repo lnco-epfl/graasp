@@ -4,16 +4,13 @@ import { Repositories } from '../../../../utils/repositories';
 import { filterOutPackedItems } from '../../../authorization';
 import { ItemService } from '../../../item/service';
 import { Actor, Member } from '../../../member/entities/member';
-import { MeiliSearchWrapper } from '../publication/published/plugins/search/meilisearch';
 
 @singleton()
 export class ItemLikeService {
   private itemService: ItemService;
-  private readonly meilisearchClient: MeiliSearchWrapper;
 
-  constructor(itemService: ItemService, meilisearchClient: MeiliSearchWrapper) {
+  constructor(itemService: ItemService) {
     this.itemService = itemService;
-    this.meilisearchClient = meilisearchClient;
   }
 
   async getForMember(member: Member, repositories: Repositories) {
@@ -45,36 +42,22 @@ export class ItemLikeService {
   }
 
   async removeOne(member: Member, repositories: Repositories, itemId: string) {
-    const { itemLikeRepository, itemPublishedRepository } = repositories;
+    const { itemLikeRepository } = repositories;
 
     // QUESTION: allow public to be liked?
     const item = await this.itemService.get(member, repositories, itemId);
 
     const result = await itemLikeRepository.deleteOneByCreatorAndItem(member.id, item.id);
 
-    // update index if item is published
-    const publishedItem = await itemPublishedRepository.getForItem(item);
-    if (publishedItem) {
-      const likes = await itemLikeRepository.getCountByItemId(item.id);
-      await this.meilisearchClient.updateItem(item.id, { likes });
-    }
-
     return result;
   }
 
   async post(member: Member, repositories: Repositories, itemId: string) {
-    const { itemLikeRepository, itemPublishedRepository } = repositories;
+    const { itemLikeRepository } = repositories;
 
     // QUESTION: allow public to be liked?
     const item = await this.itemService.get(member, repositories, itemId);
     const result = await itemLikeRepository.addOne({ creatorId: member.id, itemId: item.id });
-
-    // update index if item is published
-    const publishedItem = await itemPublishedRepository.getForItem(item);
-    if (publishedItem) {
-      const likes = await itemLikeRepository.getCountByItemId(item.id);
-      await this.meilisearchClient.updateItem(item.id, { likes });
-    }
 
     return result;
   }

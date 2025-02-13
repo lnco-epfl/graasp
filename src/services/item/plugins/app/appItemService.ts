@@ -9,7 +9,6 @@ import { ThumbnailService } from '../../../thumbnail/service';
 import { AppItem, Item, isItemType } from '../../entities/Item';
 import { WrongItemTypeError } from '../../errors';
 import { ItemService } from '../../service';
-import { MeiliSearchWrapper } from '../publication/published/plugins/search/meilisearch';
 import { ItemThumbnailService } from '../thumbnail/service';
 
 @singleton()
@@ -17,10 +16,9 @@ export class AppItemService extends ItemService {
   constructor(
     thumbnailService: ThumbnailService,
     itemThumbnailService: ItemThumbnailService,
-    meilisearchWrapper: MeiliSearchWrapper,
     log: BaseLogger,
   ) {
-    super(thumbnailService, itemThumbnailService, meilisearchWrapper, log);
+    super(thumbnailService, itemThumbnailService, log);
   }
 
   async postWithOptions(

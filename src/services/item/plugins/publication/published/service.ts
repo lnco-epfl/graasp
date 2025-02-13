@@ -29,7 +29,6 @@ import {
   ItemPublicationAlreadyExists,
   ItemTypeNotAllowedToPublish,
 } from './errors';
-import { MeiliSearchWrapper } from './plugins/search/meilisearch';
 
 interface ActionCount {
   actionCount: number;
@@ -40,7 +39,6 @@ export class ItemPublishedService {
   private readonly log: BaseLogger;
   private readonly itemService: ItemService;
   private readonly itemThumbnailService: ItemThumbnailService;
-  private readonly meilisearchWrapper: MeiliSearchWrapper;
   private readonly mailerService: MailerService;
 
   hooks = new HookManager<{
@@ -52,13 +50,11 @@ export class ItemPublishedService {
     itemService: ItemService,
     itemThumbnailService: ItemThumbnailService,
     mailerService: MailerService,
-    meilisearchWrapper: MeiliSearchWrapper,
     log: BaseLogger,
   ) {
     this.log = log;
     this.itemService = itemService;
     this.itemThumbnailService = itemThumbnailService;
-    this.meilisearchWrapper = meilisearchWrapper;
     this.mailerService = mailerService;
   }
 
@@ -215,8 +211,6 @@ export class ItemPublishedService {
 
     const published = await itemPublishedRepository.post(member, item);
 
-    await this.meilisearchWrapper.indexOne(published, repositories);
-
     //TODO: should we sent a publish hooks for all descendants? If yes take inspiration from delete method in ItemService
 
     this._notifyContributors(member, repositories, item);
@@ -236,15 +230,6 @@ export class ItemPublishedService {
     await this.hooks.runPostHooks('delete', member, repositories, { item });
 
     return result;
-  }
-
-  async touchUpdatedAt(repositories: Repositories, item: { id: Item['id']; path: Item['path'] }) {
-    const { itemPublishedRepository } = repositories;
-
-    const updatedAt = await itemPublishedRepository.touchUpdatedAt(item.path);
-
-    // change value in meilisearch index
-    await this.meilisearchWrapper.updateItem(item.id, { updatedAt });
   }
 
   async getItemsForMember(actor: Actor, repositories: Repositories, memberId: UUID) {

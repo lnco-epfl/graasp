@@ -34,7 +34,6 @@ import { ThumbnailService } from '../../../thumbnail/service';
 import { ItemService } from '../../service';
 import { ItemTestUtils, expectItem } from '../../test/fixtures/items';
 import { saveAppActions } from '../app/appAction/test/fixtures';
-import { MeiliSearchWrapper } from '../publication/published/plugins/search/meilisearch';
 import { ItemThumbnailService } from '../thumbnail/service';
 import { ActionItemService } from './service';
 import { ItemActionType } from './utils';
@@ -42,7 +41,6 @@ import { ItemActionType } from './utils';
 const itemService = new ItemService(
   {} as ThumbnailService,
   {} as ItemThumbnailService,
-  {} as MeiliSearchWrapper,
   {} as BaseLogger,
 );
 const memberService = new MemberService({} as MailerService, {} as BaseLogger);

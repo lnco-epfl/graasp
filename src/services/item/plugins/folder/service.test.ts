@@ -10,14 +10,12 @@ import { Item } from '../../entities/Item';
 import { WrongItemTypeError } from '../../errors';
 import { ItemRepository } from '../../repository';
 import { ItemService } from '../../service';
-import { MeiliSearchWrapper } from '../publication/published/plugins/search/meilisearch';
 import { ItemThumbnailService } from '../thumbnail/service';
 import { FolderItemService } from './service';
 
 const folderService = new FolderItemService(
   {} as unknown as ThumbnailService,
   {} as unknown as ItemThumbnailService,
-  {} as MeiliSearchWrapper,
   MOCK_LOGGER,
 );
 const id = v4();
