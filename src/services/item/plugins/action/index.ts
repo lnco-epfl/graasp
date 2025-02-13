@@ -7,7 +7,7 @@ import { ExportActionsFormatting, FileItemType } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../di/utils';
 import { asDefined } from '../../../../utils/assertions';
-import { CLIENT_HOSTS } from '../../../../utils/config';
+import { ALLOWED_ORIGINS } from '../../../../utils/config';
 import { buildRepositories } from '../../../../utils/repositories';
 import { ActionService } from '../../../action/services/action';
 import { isAuthenticated, optionalIsAuthenticated } from '../../../auth/plugins/passport';
@@ -39,8 +39,6 @@ const plugin: FastifyPluginAsyncTypebox<GraaspActionsOptions> = async (fastify) 
   const actionItemService = resolveDependency(ActionItemService);
   const requestExportService = resolveDependency(ActionRequestExportService);
 
-  const allowedOrigins = Object.values(CLIENT_HOSTS).map(({ url }) => url.origin);
-
   // get actions and more data matching the given `id`
   fastify.get(
     '/:id/actions',
@@ -49,13 +47,19 @@ const plugin: FastifyPluginAsyncTypebox<GraaspActionsOptions> = async (fastify) 
       preHandler: isAuthenticated,
     },
     async ({ user, params: { id }, query }) => {
-      return actionItemService.getBaseAnalyticsForItem(user?.account, buildRepositories(), {
-        sampleSize: query.requestedSampleSize,
-        itemId: id,
-        view: query.view?.toLowerCase(),
-        startDate: query.startDate,
-        endDate: query.endDate,
-      });
+      // remove itemMemberships from return
+      const { itemMemberships: _, ...result } = await actionItemService.getBaseAnalyticsForItem(
+        user?.account,
+        buildRepositories(),
+        {
+          sampleSize: query.requestedSampleSize,
+          itemId: id,
+          view: query.view?.toLowerCase(),
+          startDate: query.startDate,
+          endDate: query.endDate,
+        },
+      );
+      return result;
     },
   );
 
@@ -102,7 +106,7 @@ const plugin: FastifyPluginAsyncTypebox<GraaspActionsOptions> = async (fastify) 
       if (!request.headers.origin) {
         throw new CannotPostAction();
       }
-      if (!allowedOrigins.includes(request.headers.origin)) {
+      if (!ALLOWED_ORIGINS.includes(request.headers.origin)) {
         throw new CannotPostAction(request.headers.origin);
       }
 

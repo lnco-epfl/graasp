@@ -4,6 +4,7 @@ import { DeepPartial } from 'typeorm';
 
 import {
   ItemType,
+  ItemVisibilityType,
   MAX_DESCENDANTS_FOR_COPY,
   MAX_DESCENDANTS_FOR_DELETE,
   MAX_DESCENDANTS_FOR_MOVE,
@@ -215,21 +216,16 @@ export class ItemService {
     repositories: Repositories,
     id: string,
     permission: PermissionLevel = PermissionLevel.Read,
-    throwOnForbiddenPermission: boolean = true,
   ) {
     const item = await repositories.itemRepository.getOneOrThrow(id);
 
-    if (throwOnForbiddenPermission) {
-      const { itemMembership, visibilities } = await validatePermission(
-        repositories,
-        permission,
-        actor,
-        item,
-      );
-      return { item, itemMembership, visibilities };
-    }
-
-    return { item, itemMembership: null, visibilities: [] };
+    const { itemMembership, visibilities } = await validatePermission(
+      repositories,
+      permission,
+      actor,
+      item,
+    );
+    return { item, itemMembership, visibilities };
   }
 
   /**
@@ -245,15 +241,8 @@ export class ItemService {
     repositories: Repositories,
     id: string,
     permission: PermissionLevel = PermissionLevel.Read,
-    throwOnForbiddenPermission?: boolean,
   ) {
-    const { item } = await this._get(
-      actor,
-      repositories,
-      id,
-      permission,
-      throwOnForbiddenPermission,
-    );
+    const { item } = await this._get(actor, repositories, id, permission);
 
     return item;
   }
@@ -488,8 +477,6 @@ export class ItemService {
 
     await validatePermission(repositories, PermissionLevel.Write, member, item);
 
-    // TODO: if updating a link item, fetch the new informations
-
     await this.hooks.runPreHooks('update', member, repositories, { item: item });
 
     const updated = await itemRepository.updateOne(item.id, body);
@@ -619,9 +606,14 @@ export class ItemService {
 
   // TODO: optimize
   async moveMany(member: Member, repositories: Repositories, itemIds: string[], toItemId?: string) {
-    let parentItem;
+    let parentItem: FolderItem | undefined = undefined;
     if (toItemId) {
-      parentItem = await this.get(member, repositories, toItemId, PermissionLevel.Write);
+      parentItem = (await this.get(
+        member,
+        repositories,
+        toItemId,
+        PermissionLevel.Write,
+      )) as FolderItem;
     }
 
     const results = await Promise.all(
@@ -732,6 +724,12 @@ export class ItemService {
     // post hook
     for (const { original, copy } of treeCopyMap.values()) {
       await this.hooks.runPostHooks('copy', member, repositories, { original, copy });
+
+      // copy hidden visibility
+      await repositories.itemVisibilityRepository.copyAll(member, original, copy, [
+        ItemVisibilityType.Public,
+      ]);
+
       // copy geolocation
       await itemGeolocationRepository.copy(original, copy);
       // copy thumbnails if original has setting to true
@@ -747,7 +745,6 @@ export class ItemService {
         }
       }
     }
-
     return { item, copy: copyRoot };
   }
 
@@ -760,9 +757,14 @@ export class ItemService {
   ) {
     const { itemRepository } = repositories;
 
-    let parentItem;
+    let parentItem: FolderItem | undefined;
     if (args.parentId) {
-      parentItem = await this.get(member, repositories, args.parentId, PermissionLevel.Write);
+      parentItem = (await this.get(
+        member,
+        repositories,
+        args.parentId,
+        PermissionLevel.Write,
+      )) as FolderItem;
     }
 
     const results = await Promise.all(

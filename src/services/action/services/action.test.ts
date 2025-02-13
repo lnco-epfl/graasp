@@ -18,11 +18,12 @@ import { ActionService } from './action';
 const service = new ActionService(
   new ItemService({} as ThumbnailService, {} as ItemThumbnailService, {} as BaseLogger),
   new MemberService({} as MailerService, {} as BaseLogger),
+  {} as BaseLogger,
 );
 const rawRepository = AppDataSource.getRepository(Action);
 
 export const MOCK_REQUEST = {
-  headers: { origin: 'origin' },
+  headers: { origin: 'https://origin.com' },
   raw: { headers: { 'x-forwarded-for': '' }, socket: { remoteAddress: 'address' } },
 } as unknown as FastifyRequest;
 

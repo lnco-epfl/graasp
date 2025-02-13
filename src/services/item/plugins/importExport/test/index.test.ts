@@ -5,6 +5,8 @@ import fetch from 'node-fetch';
 import path from 'path';
 import waitForExpect from 'wait-for-expect';
 
+import { FastifyInstance } from 'fastify';
+
 import { HttpMethod, ItemType } from '@graasp/sdk';
 
 import build, {
@@ -17,7 +19,7 @@ import { ItemTestUtils } from '../../../test/fixtures/items';
 import * as ARCHIVE_CONTENT from './fixtures/archive';
 
 // we need a different form data for each test
-const createFormData = (filename) => {
+const createFormData = (filename: string) => {
   const form = new FormData();
   form.append('myfile', fs.createReadStream(path.resolve(__dirname, `./fixtures/${filename}`)));
 
@@ -74,7 +76,7 @@ const iframelyResult = {
 };
 
 describe('ZIP routes tests', () => {
-  let app, actor;
+  let app: FastifyInstance;
 
   beforeAll(async () => {
     ({ app } = await build({ member: null }));
@@ -99,7 +101,7 @@ describe('ZIP routes tests', () => {
 
   describe('POST /zip-import', () => {
     it('Import successfully at root if signed in', async () => {
-      actor = await saveMember();
+      const actor = await saveMember();
       mockAuthenticate(actor);
       const form = createFormData('archive.zip');
 
@@ -169,7 +171,7 @@ describe('ZIP routes tests', () => {
       }, 5000);
     });
     it('Import successfully in folder if signed in', async () => {
-      actor = await saveMember();
+      const actor = await saveMember();
       mockAuthenticate(actor);
       const form = createFormData('archive.zip');
       const { item: parentItem } = await testUtils.saveItemAndMembership({ member: actor });
@@ -229,7 +231,7 @@ describe('ZIP routes tests', () => {
       }, 5000);
     });
     it('Import archive in folder with empty folder', async () => {
-      actor = await saveMember();
+      const actor = await saveMember();
       mockAuthenticate(actor);
       const form = createFormData('empty.zip');
       const { item: parentItem } = await testUtils.saveItemAndMembership({ member: actor });
@@ -254,7 +256,7 @@ describe('ZIP routes tests', () => {
       }, 1000);
     });
     it('Import in folder and sanitize html, txt and description', async () => {
-      actor = await saveMember();
+      const actor = await saveMember();
       mockAuthenticate(actor);
       const form = createFormData('htmlAndText.zip');
       const { item: parentItem } = await testUtils.saveItemAndMembership({ member: actor });
@@ -324,7 +326,7 @@ describe('ZIP routes tests', () => {
 
   describe('POST /export', () => {
     it('Export successfully if signed in', async () => {
-      actor = await saveMember();
+      const actor = await saveMember();
       mockAuthenticate(actor);
       const { item } = await testUtils.saveItemAndMembership({
         member: actor,

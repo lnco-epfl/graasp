@@ -5,7 +5,15 @@ import waitForExpect from 'wait-for-expect';
 
 import { FastifyInstance } from 'fastify';
 
-import { Context, HttpMethod, ItemType, PermissionLevel } from '@graasp/sdk';
+import {
+  ActionTriggers,
+  ClientManager,
+  Context,
+  DiscriminatedItem,
+  HttpMethod,
+  ItemType,
+  PermissionLevel,
+} from '@graasp/sdk';
 
 import build, {
   clearDatabase,
@@ -15,8 +23,9 @@ import build, {
 import { resolveDependency } from '../../../../../di/utils';
 import { AppDataSource } from '../../../../../plugins/datasource';
 import { MailerService } from '../../../../../plugins/mailer/service';
-import { BUILDER_HOST, ITEMS_ROUTE_PREFIX } from '../../../../../utils/config';
+import { ITEMS_ROUTE_PREFIX } from '../../../../../utils/config';
 import { Action } from '../../../../action/entities/action';
+import { saveItemLoginSchema } from '../../../../itemLogin/test/index.test';
 import { saveMember, saveMembers } from '../../../../member/test/fixtures/members';
 import { ItemTestUtils } from '../../../test/fixtures/items';
 import { saveAppActions } from '../../app/appAction/test/fixtures';
@@ -25,7 +34,9 @@ import { saveAppSettings } from '../../app/appSetting/test/fixtures';
 import { CannotPostAction } from '../errors';
 import { ActionRequestExportRepository } from '../requestExport/repository';
 import { ItemActionType } from '../utils';
-import { saveActions } from './fixtures/actions';
+import { getDummyAction, saveActions } from './fixtures/actions';
+
+const BUILDER_HOST = ClientManager.getInstance().getURLByContext(Context.Builder);
 
 const actionRequestExportRepository = new ActionRequestExportRepository();
 const rawActionRepository = AppDataSource.getRepository(Action);
@@ -97,7 +108,7 @@ describe('Action Plugin Tests', () => {
           url: `${ITEMS_ROUTE_PREFIX}/${item.id}/actions`,
           body,
           headers: {
-            Origin: BUILDER_HOST.url.toString(),
+            Origin: BUILDER_HOST.toString(),
           },
         });
 
@@ -117,7 +128,7 @@ describe('Action Plugin Tests', () => {
           url: `${ITEMS_ROUTE_PREFIX}/${item.id}/actions`,
           body,
           headers: {
-            Origin: BUILDER_HOST.url.origin,
+            Origin: BUILDER_HOST.origin,
           },
         });
 
@@ -151,7 +162,7 @@ describe('Action Plugin Tests', () => {
           url: `${ITEMS_ROUTE_PREFIX}/${item.id}/actions`,
           body,
           headers: {
-            Origin: BUILDER_HOST.url.origin,
+            Origin: BUILDER_HOST.origin,
           },
         });
         expect(response.statusCode).toEqual(StatusCodes.NO_CONTENT);
@@ -174,7 +185,7 @@ describe('Action Plugin Tests', () => {
           url: `${ITEMS_ROUTE_PREFIX}/${item.id}/actions`,
           body,
           headers: {
-            Origin: BUILDER_HOST.url.origin,
+            Origin: BUILDER_HOST.origin,
           },
         });
 
@@ -213,7 +224,7 @@ describe('Action Plugin Tests', () => {
           url: `${ITEMS_ROUTE_PREFIX}/${item.id}/actions`,
           body,
           headers: {
-            Origin: BUILDER_HOST.url.toString(),
+            Origin: BUILDER_HOST.toString(),
           },
         });
 
@@ -419,15 +430,25 @@ describe('Action Plugin Tests', () => {
         query: parameters,
       });
 
-      expect(response.json()).toHaveProperty([0, 'actionType'], ItemActionType.Create);
-      expect(response.json()).toHaveProperty([0, 'aggregateResult']);
-      expect(parseFloat(response.json()[0]['aggregateResult'])).toBeCloseTo(1);
-      expect(response.json()).toHaveProperty([0, 'createdDay'], '2023-05-20T00:00:00.000Z');
+      expect(response.statusCode).toEqual(StatusCodes.OK);
+      const result = await response.json();
 
-      expect(response.json()).toHaveProperty([1, 'actionType'], ItemActionType.Update);
-      expect(response.json()).toHaveProperty([1, 'aggregateResult']);
-      expect(parseFloat(response.json()[1]['aggregateResult'])).toBeCloseTo(1.33);
-      expect(response.json()).toHaveProperty([1, 'createdDay'], '2023-05-21T00:00:00.000Z');
+      const expectCreate = result.find((r) => r.actionType === ItemActionType.Create);
+      expect(expectCreate).toBeDefined();
+      expect(parseFloat(expectCreate['aggregateResult'])).toBeCloseTo(1);
+      expect(expectCreate['createdDay']).toEqual('2023-05-20T00:00:00.000Z');
+
+      const expectUpdate = result.find((r) => r.actionType === ItemActionType.Update);
+      expect(expectUpdate).toBeDefined();
+      expect(parseFloat(expectUpdate['aggregateResult'])).toBeCloseTo(1.33);
+      expect(expectUpdate['createdDay']).toEqual('2023-05-21T00:00:00.000Z');
+
+      const expectCollectionView = result.find(
+        (r) => r.actionType === ActionTriggers.CollectionView,
+      );
+      expect(expectCollectionView).toBeDefined();
+      expect(parseFloat(expectCollectionView['aggregateResult'])).toBeCloseTo(1);
+      expect(expectCollectionView['createdDay']).toEqual('2023-05-21T00:00:00.000Z');
     });
 
     it('Successfully get the number of active user by day', async () => {
@@ -481,13 +502,22 @@ describe('Action Plugin Tests', () => {
         query: parameters,
       });
 
-      expect(response.json()).toHaveProperty([0, 'actionType'], ItemActionType.Create);
-      expect(response.json()).toHaveProperty([0, 'aggregateResult']);
-      expect(parseFloat(response.json()[0]['aggregateResult'])).toBeCloseTo(1);
+      expect(response.statusCode).toEqual(StatusCodes.OK);
+      const result = await response.json();
 
-      expect(response.json()).toHaveProperty([1, 'actionType'], ItemActionType.Update);
-      expect(response.json()).toHaveProperty([1, 'aggregateResult']);
-      expect(parseFloat(response.json()[1]['aggregateResult'])).toBeCloseTo(4);
+      const expectCreate = result.find((r) => r.actionType === ItemActionType.Create);
+      expect(expectCreate).toBeDefined();
+      expect(parseFloat(expectCreate['aggregateResult'])).toBeCloseTo(1);
+
+      const expectUpdate = result.find((r) => r.actionType === ItemActionType.Update);
+      expect(expectUpdate).toBeDefined();
+      expect(parseFloat(expectUpdate['aggregateResult'])).toBeCloseTo(4);
+
+      const expectCollectionView = result.find(
+        (r) => r.actionType === ActionTriggers.CollectionView,
+      );
+      expect(expectCollectionView).toBeDefined();
+      expect(parseFloat(expectCollectionView['aggregateResult'])).toBeCloseTo(1);
     });
 
     it('Successfully get the total action count within specific period', async () => {
@@ -511,10 +541,17 @@ describe('Action Plugin Tests', () => {
         url: `items/${item.id}/actions/aggregation`,
         query: parameters,
       });
+      const result = await response.json();
 
-      expect(response.json()).toHaveProperty([0, 'actionType'], ItemActionType.Update);
-      expect(response.json()).toHaveProperty([0, 'aggregateResult']);
-      expect(parseFloat(response.json()[0]['aggregateResult'])).toBeCloseTo(4);
+      const expectUpdate = result.find((r) => r.actionType === ItemActionType.Update);
+      expect(expectUpdate).toBeDefined();
+      expect(expectUpdate['aggregateResult']).toBeCloseTo(4);
+
+      const expectCollectionView = result.find(
+        (r) => r.actionType === ActionTriggers.CollectionView,
+      );
+      expect(expectCollectionView).toBeDefined();
+      expect(expectCollectionView['aggregateResult']).toBeCloseTo(1);
     });
 
     it('Successfully get the total action count aggregated by time of day', async () => {
@@ -538,13 +575,15 @@ describe('Action Plugin Tests', () => {
         query: parameters,
       });
 
-      expect(response.json()).toHaveProperty([0, 'createdTimeOfDay'], '3');
-      expect(response.json()).toHaveProperty([0, 'aggregateResult']);
-      expect(parseFloat(response.json()[0]['aggregateResult'])).toBeCloseTo(1);
+      const result = await response.json();
 
-      expect(response.json()).toHaveProperty([1, 'createdTimeOfDay'], '8');
-      expect(response.json()).toHaveProperty([1, 'aggregateResult']);
-      expect(parseFloat(response.json()[1]['aggregateResult'])).toBeCloseTo(4);
+      const expectCreatedAt3 = result.find((r) => r.createdTimeOfDay === '3');
+      expect(expectCreatedAt3).toBeDefined();
+      expect(parseFloat(expectCreatedAt3['aggregateResult'])).toBeCloseTo(2);
+
+      const expectCreatedAt8 = result.find((r) => r.createdTimeOfDay === '8');
+      expect(expectCreatedAt8).toBeDefined();
+      expect(parseFloat(expectCreatedAt8['aggregateResult'])).toBeCloseTo(4);
     });
 
     it('Bad request if query parameters are invalid (aggregated by user)', async () => {
@@ -605,6 +644,48 @@ describe('Action Plugin Tests', () => {
       });
 
       expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST);
+    });
+  });
+
+  describe('GET /:id/actions', () => {
+    beforeEach(async () => {
+      actor = await saveMember();
+      mockAuthenticate(actor);
+    });
+
+    it('Succeed if the user has READ permission', async () => {
+      const members = await saveMembers();
+      const { item } = await testUtils.saveItemAndMembership({ member: members[0] });
+      await testUtils.saveMembership({
+        item,
+        account: actor,
+        permission: PermissionLevel.Read,
+      });
+      const { guest } = await saveItemLoginSchema({
+        item: item as unknown as DiscriminatedItem,
+        memberName: faker.internet.userName(),
+      });
+
+      expect(guest).toBeDefined();
+
+      await saveActions(item, members);
+      await rawActionRepository.save(
+        getDummyAction(Context.Player, ActionTriggers.CollapseItem, new Date(), guest!, item),
+      );
+
+      const parameters = {
+        requestedSampleSize: '5000',
+        view: Context.Player,
+        startDate: '2024-12-16T03:24:00',
+        endDate: '2024-12-20T03:24:00',
+      };
+      const response = await app.inject({
+        method: HttpMethod.Get,
+        url: `items/${item.id}/actions`,
+        query: parameters,
+      });
+
+      expect(response.statusCode).toBe(StatusCodes.OK);
     });
   });
 });

@@ -1,9 +1,9 @@
 import { sign } from 'jsonwebtoken';
 import { singleton } from 'tsyringe';
 
+import { TRANSLATIONS } from '../../langs/constants';
 import { BaseLogger } from '../../logger';
 import { MailBuilder } from '../../plugins/mailer/builder';
-import { MAIL } from '../../plugins/mailer/langs/constants';
 import { MailerService } from '../../plugins/mailer/service';
 import {
   JWT_SECRET,
@@ -15,7 +15,7 @@ import {
 import { Repositories } from '../../utils/repositories';
 import { Member } from '../member/entities/member';
 import { SHORT_TOKEN_PARAM } from './plugins/passport';
-import { getRedirectionUrl } from './utils';
+import { getRedirectionLink } from './utils';
 
 @singleton()
 export class AuthService {
@@ -38,7 +38,7 @@ export class AuthService {
       expiresIn: `${REGISTER_TOKEN_EXPIRATION_IN_MINUTES}m`,
     });
 
-    const redirectionUrl = getRedirectionUrl(this.log, url);
+    const redirectionUrl = getRedirectionLink(this.log, url);
     const domain = challenge ? MOBILE_AUTH_URL : PUBLIC_URL;
     const destination = new URL('/auth', domain);
     destination.searchParams.set(SHORT_TOKEN_PARAM, token);
@@ -46,12 +46,12 @@ export class AuthService {
     const link = destination.toString();
 
     const mail = new MailBuilder({
-      subject: { text: MAIL.SIGN_UP_TITLE },
+      subject: { text: TRANSLATIONS.SIGN_UP_TITLE },
       lang: member.lang,
     })
-      .addText(MAIL.GREETINGS)
-      .addText(MAIL.SIGN_UP_TEXT)
-      .addButton(MAIL.SIGN_UP_BUTTON_TEXT, link)
+      .addText(TRANSLATIONS.GREETINGS)
+      .addText(TRANSLATIONS.SIGN_UP_TEXT)
+      .addButton(TRANSLATIONS.SIGN_UP_BUTTON_TEXT, link)
       .addUserAgreement()
       .addIgnoreEmailIfNotRequestedNotice()
       .build();
@@ -73,7 +73,7 @@ export class AuthService {
       expiresIn: `${LOGIN_TOKEN_EXPIRATION_IN_MINUTES}m`,
     });
 
-    const redirectionUrl = getRedirectionUrl(this.log, url);
+    const redirectionUrl = getRedirectionLink(this.log, url);
     const domain = challenge ? MOBILE_AUTH_URL : PUBLIC_URL;
     const destination = new URL('/auth', domain);
     destination.searchParams.set(SHORT_TOKEN_PARAM, token);
@@ -81,11 +81,11 @@ export class AuthService {
     const link = destination.toString();
 
     const mail = new MailBuilder({
-      subject: { text: MAIL.SIGN_IN_TITLE },
+      subject: { text: TRANSLATIONS.SIGN_IN_TITLE },
       lang: member.lang,
     })
-      .addText(MAIL.SIGN_IN_TEXT)
-      .addButton(MAIL.SIGN_IN_BUTTON_TEXT, link)
+      .addText(TRANSLATIONS.SIGN_IN_TEXT)
+      .addButton(TRANSLATIONS.SIGN_IN_BUTTON_TEXT, link)
       .addIgnoreEmailIfNotRequestedNotice()
       .build();
 

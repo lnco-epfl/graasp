@@ -1,23 +1,20 @@
 import { singleton } from 'tsyringe';
 
-import { MentionStatus, PermissionLevel, buildItemLinkForBuilder } from '@graasp/sdk';
+import { ClientManager, Context, MentionStatus, PermissionLevel } from '@graasp/sdk';
 
+import { TRANSLATIONS } from '../../../../langs/constants';
 import { MailBuilder } from '../../../../plugins/mailer/builder';
-import { MAIL } from '../../../../plugins/mailer/langs/constants';
 import { MailerService } from '../../../../plugins/mailer/service';
-import { BUILDER_HOST } from '../../../../utils/config';
-import HookManager from '../../../../utils/hook';
 import { Repositories } from '../../../../utils/repositories';
 import { Account } from '../../../account/entities/account';
 import { validatePermission } from '../../../authorization';
 import { Item } from '../../../item/entities/Item';
-import { Member } from '../../../member/entities/member';
+import { Member, isMember } from '../../../member/entities/member';
 import { ChatMessage } from '../../chatMessage';
 import { MemberCannotAccessMention } from '../../errors';
 
 @singleton()
 export class MentionService {
-  hooks = new HookManager();
   private readonly mailerService: MailerService;
 
   constructor(mailerService: MailerService) {
@@ -33,15 +30,13 @@ export class MentionService {
     member: Member;
     creator: Account;
   }) {
-    const itemLink = buildItemLinkForBuilder({
-      origin: BUILDER_HOST.url.origin,
-      itemId: item.id,
+    const itemLink = ClientManager.getInstance().getItemLink(Context.Builder, item.id, {
       chatOpen: true,
     });
 
     const mail = new MailBuilder({
       subject: {
-        text: MAIL.CHAT_MENTION_TITLE,
+        text: TRANSLATIONS.CHAT_MENTION_TITLE,
         translationVariables: {
           creatorName: creator.name,
           itemName: item.name,
@@ -49,11 +44,11 @@ export class MentionService {
       },
       lang: member.lang,
     })
-      .addText(MAIL.CHAT_MENTION_TEXT, {
+      .addText(TRANSLATIONS.CHAT_MENTION_TEXT, {
         creatorName: creator.name,
         itemName: item.name,
       })
-      .addButton(MAIL.CHAT_MENTION_BUTTON_TEXT, itemLink)
+      .addButton(TRANSLATIONS.CHAT_MENTION_BUTTON_TEXT, itemLink)
       .build();
 
     this.mailerService.send(mail, member.email).catch((err) => {
@@ -74,14 +69,16 @@ export class MentionService {
     await validatePermission(repositories, PermissionLevel.Read, account, item);
 
     // TODO: optimize ? suppose same item - validate multiple times
-    const results = await mentionRepository.postMany(mentionedMembers, message.id);
+    const mentions = await mentionRepository.postMany(mentionedMembers, message.id);
 
-    this.hooks.runPostHooks('createMany', account, repositories, {
-      mentions: results,
-      item,
+    mentions.forEach((mention) => {
+      const member = mention.account;
+      if (isMember(member)) {
+        this.sendMentionNotificationEmail({ item, member, creator: account });
+      }
     });
 
-    return results;
+    return mentions;
   }
 
   async getForAccount(account: Account, repositories: Repositories) {

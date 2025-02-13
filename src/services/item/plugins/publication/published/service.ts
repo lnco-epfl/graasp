@@ -1,11 +1,18 @@
 import { formatISO } from 'date-fns';
 import { singleton } from 'tsyringe';
 
-import { ItemVisibilityType, PermissionLevel, PublicationStatus, UUID } from '@graasp/sdk';
+import {
+  ClientManager,
+  Context,
+  ItemVisibilityType,
+  PermissionLevel,
+  PublicationStatus,
+  UUID,
+} from '@graasp/sdk';
 
+import { TRANSLATIONS } from '../../../../../langs/constants';
 import { BaseLogger } from '../../../../../logger';
 import { MailBuilder } from '../../../../../plugins/mailer/builder';
-import { MAIL } from '../../../../../plugins/mailer/langs/constants';
 import { MailerService } from '../../../../../plugins/mailer/service';
 import { resultOfToList } from '../../../../../services/utils';
 import HookManager from '../../../../../utils/hook';
@@ -16,7 +23,7 @@ import { ItemWrapper } from '../../../ItemWrapper';
 import { Item } from '../../../entities/Item';
 import { ItemService } from '../../../service';
 import { ItemThumbnailService } from '../../thumbnail/service';
-import { buildPublishedItemLink } from './constants';
+import { ItemPublished } from './entities/itemPublished';
 import {
   ItemIsNotValidated,
   ItemPublicationAlreadyExists,
@@ -35,7 +42,7 @@ export class ItemPublishedService {
   private readonly mailerService: MailerService;
 
   hooks = new HookManager<{
-    create: { pre: { item: Item }; post: { item: Item } };
+    create: { pre: { item: Item }; post: { published: ItemPublished; item: Item } };
     delete: { pre: { item: Item }; post: { item: Item } };
   }>();
 
@@ -61,19 +68,19 @@ export class ItemPublishedService {
       )
       .map(({ account }) => account);
 
-    const link = buildPublishedItemLink(item);
+    const link = ClientManager.getInstance().getItemLink(Context.Library, item.id);
 
     for (const member of contributors) {
       if (isMember(member)) {
         const mail = new MailBuilder({
           subject: {
-            text: MAIL.PUBLISH_ITEM_TITLE,
+            text: TRANSLATIONS.PUBLISH_ITEM_TITLE,
             translationVariables: { itemName: item.name },
           },
           lang: member.lang,
         })
-          .addText(MAIL.PUBLISH_ITEM_TEXT, { itemName: item.name })
-          .addButton(MAIL.PUBLISH_ITEM_BUTTON_TEXT, link, {
+          .addText(TRANSLATIONS.PUBLISH_ITEM_TEXT, { itemName: item.name })
+          .addButton(TRANSLATIONS.PUBLISH_ITEM_BUTTON_TEXT, link, {
             itemName: item.name,
           })
           .build();
@@ -202,11 +209,8 @@ export class ItemPublishedService {
 
     // TODO: check validation is alright
 
-    await this.hooks.runPreHooks('create', member, repositories, { item });
-
     const published = await itemPublishedRepository.post(member, item);
 
-    await this.hooks.runPostHooks('create', member, repositories, { item });
     //TODO: should we sent a publish hooks for all descendants? If yes take inspiration from delete method in ItemService
 
     this._notifyContributors(member, repositories, item);
@@ -228,17 +232,11 @@ export class ItemPublishedService {
     return result;
   }
 
-  async getItemsForMember(actor: Actor, repositories, memberId: UUID) {
+  async getItemsForMember(actor: Actor, repositories: Repositories, memberId: UUID) {
     const { itemRepository } = repositories;
     const items = await itemRepository.getPublishedItemsForMember(memberId);
 
     return ItemWrapper.createPackedItems(actor, repositories, this.itemThumbnailService, items);
-  }
-
-  async getLikedItems(actor: Actor, repositories: Repositories, limit?: number) {
-    const { itemPublishedRepository } = repositories;
-    const items = await itemPublishedRepository.getLikedItems(limit);
-    return filterOutHiddenItems(repositories, items);
   }
 
   async getRecentItems(actor: Actor, repositories: Repositories, limit?: number) {

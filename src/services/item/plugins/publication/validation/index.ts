@@ -18,10 +18,10 @@ import {
   ItemOpFeedbackEvent,
   memberItemsTopic,
 } from '../../../ws/events';
+import { FolderItemService } from '../../folder/service';
 import { ItemPublishedService } from '../published/service';
-import { itemValidation, itemValidationGroup } from './schemas';
+import { getItemValidationGroup, getLatestItemValidationGroup, validateItem } from './schemas';
 import { ItemValidationService } from './service';
-import { assertItemIsFolder } from './utils';
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { db, websockets } = fastify;
@@ -29,20 +29,24 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const validationService = resolveDependency(ItemValidationService);
   const publishService = resolveDependency(ItemPublishedService);
   const itemService = resolveDependency(ItemService);
+  const folderItemService = resolveDependency(FolderItemService);
 
   // get validation status of given itemId
   fastify.get(
     '/:itemId/validations/latest',
     {
-      schema: itemValidation,
-
+      schema: getLatestItemValidationGroup,
       preHandler: [isAuthenticated, matchOne(memberAccountRole)],
     },
     async ({ user, params: { itemId } }) => {
       const member = asDefined(user?.account);
       assertIsMember(member);
       const item = await itemService.get(member, buildRepositories(), itemId);
-      return validationService.getLastItemValidationGroupForItem(member, buildRepositories(), item);
+      return await validationService.getLastItemValidationGroupForItem(
+        member,
+        buildRepositories(),
+        item,
+      );
     },
   );
 
@@ -50,13 +54,13 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   fastify.get(
     '/:itemId/validations/:itemValidationGroupId',
     {
-      schema: itemValidationGroup,
+      schema: getItemValidationGroup,
       preHandler: [isAuthenticated, matchOne(memberAccountRole)],
     },
     async ({ user, params: { itemValidationGroupId } }) => {
       const member = asDefined(user?.account);
       assertIsMember(member);
-      return validationService.getItemValidationGroup(
+      return await validationService.getItemValidationGroup(
         member,
         buildRepositories(),
         itemValidationGroupId,
@@ -68,7 +72,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   fastify.post(
     '/:itemId/validate',
     {
-      schema: itemValidation,
+      schema: validateItem,
       preHandler: [isAuthenticated, matchOne(validatedMemberAccountRole)],
     },
     async (request, reply) => {
@@ -83,7 +87,13 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
       db.transaction(async (manager) => {
         const repositories = buildRepositories(manager);
         // get item and check permission
-        const item = await itemService.get(member, repositories, itemId, PermissionLevel.Admin);
+        // only folder items are allowed as root for validation
+        const item = await folderItemService.get(
+          member,
+          repositories,
+          itemId,
+          PermissionLevel.Admin,
+        );
 
         const notifyOnValidationChanges = () => {
           websockets.publish(
@@ -95,7 +105,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
 
         const hasValidationSucceeded = await validationService.post(
           repositories,
-          assertItemIsFolder(item),
+          item,
           notifyOnValidationChanges,
         );
 

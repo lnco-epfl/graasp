@@ -1,9 +1,20 @@
+import { v4 } from 'uuid';
+
 import { FastifyInstance } from 'fastify';
 
-import build, { clearDatabase } from '../../../test/app';
-import { BaseLogger } from '../../logger';
+import { FolderItemFactory, ItemType, ItemVisibilityType } from '@graasp/sdk';
+
+import build, { MOCK_LOGGER, clearDatabase, mockAuthenticate } from '../../../test/app';
+import { seedFromJson } from '../../../test/mocks/seed';
+import { assertIsDefined } from '../../utils/assertions';
 import { buildRepositories } from '../../utils/repositories';
+import * as authorization from '../authorization';
+import { Actor, assertIsMember } from '../member/entities/member';
+import { saveMember } from '../member/test/fixtures/members';
 import { ThumbnailService } from '../thumbnail/service';
+import { FolderItem } from './entities/Item';
+import { ItemVisibility } from './plugins/itemVisibility/ItemVisibility';
+import { ItemVisibilityRepository } from './plugins/itemVisibility/repository';
 import { ItemThumbnailService } from './plugins/thumbnail/service';
 import { ItemService } from './service';
 import { ItemTestUtils } from './test/fixtures/items';
@@ -12,42 +23,125 @@ const testUtils = new ItemTestUtils();
 const mockedThumbnailService = {
   copyFolder: jest.fn(),
 } as unknown as jest.Mocked<ThumbnailService>;
-const service = new ItemService(
-  mockedThumbnailService,
-  {} as ItemThumbnailService,
-  {} as BaseLogger,
-);
+const service = new ItemService(mockedThumbnailService, {} as ItemThumbnailService, MOCK_LOGGER);
 
 describe('Item Service', () => {
   let app: FastifyInstance;
-  let actor;
 
-  beforeEach(async () => {
-    ({ app, actor } = await build());
+  beforeAll(async () => {
+    ({ app } = await build({ member: null }));
   });
 
-  afterEach(async () => {
-    jest.clearAllMocks();
+  afterAll(async () => {
     await clearDatabase(app.db);
-    actor = null;
     app.close();
   });
+  afterEach(async () => {
+    jest.clearAllMocks();
+    jest.resetAllMocks();
+  });
+
+  describe('get', () => {
+    it('return item if exists and pass validation', async () => {
+      const actor = { id: v4() } as Actor;
+      const item = FolderItemFactory() as unknown as FolderItem;
+      const repositories = buildRepositories();
+      jest.spyOn(repositories.itemRepository, 'getOneOrThrow').mockResolvedValue(item);
+      jest
+        .spyOn(authorization, 'validatePermission')
+        .mockResolvedValue({ itemMembership: null, visibilities: [] });
+
+      const result = await service.get(actor, repositories, item.id);
+      expect(result).toEqual(item);
+    });
+    it('throw if item does not exists', async () => {
+      const actor = { id: v4() } as Actor;
+      const item = FolderItemFactory() as unknown as FolderItem;
+      const repositories = buildRepositories();
+      jest.spyOn(repositories.itemRepository, 'getOneOrThrow').mockRejectedValue(new Error());
+
+      await expect(() => service.get(actor, repositories, item.id)).rejects.toThrow();
+    });
+    it('throw if validation does not pass', async () => {
+      const actor = { id: v4() } as Actor;
+      const item = FolderItemFactory() as unknown as FolderItem;
+      const repositories = buildRepositories();
+      jest.spyOn(repositories.itemRepository, 'getOneOrThrow').mockResolvedValue(item);
+      jest.spyOn(authorization, 'validatePermission').mockRejectedValue(new Error());
+
+      await expect(() => service.get(actor, repositories, item.id)).rejects.toThrow();
+    });
+  });
   describe('Copy', () => {
+    it('Should copy hidden visiblity on item copy', async () => {
+      const actor = await saveMember();
+      const { item, itemMembership } = await testUtils.saveItemAndMembership({
+        member: actor,
+        item: { settings: { hasThumbnail: true } },
+      });
+      const iv = await app.db
+        .getRepository(ItemVisibility)
+        .save({ item, type: ItemVisibilityType.Hidden });
+      const visibilityCopyAllMock = jest.spyOn(ItemVisibilityRepository.prototype, 'copyAll');
+      jest
+        .spyOn(authorization, 'validatePermission')
+        .mockResolvedValue({ itemMembership, visibilities: [iv] });
+
+      await service.copy(actor, buildRepositories(), item.id);
+      expect(visibilityCopyAllMock).toHaveBeenCalled();
+    });
     it('Should copy thumbnails on item copy if original has thumbnails', async () => {
+      const actor = await saveMember();
       const { item } = await testUtils.saveItemAndMembership({
         member: actor,
         item: { settings: { hasThumbnail: true } },
       });
+      jest
+        .spyOn(authorization, 'validatePermission')
+        .mockResolvedValue({ itemMembership: null, visibilities: [] });
       await service.copy(actor, buildRepositories(), item.id);
       expect(mockedThumbnailService.copyFolder).toHaveBeenCalled();
     });
     it('Should not copy thumbnails on item copy if original has no thumbnails', async () => {
+      const actor = await saveMember();
       const { item } = await testUtils.saveItemAndMembership({
         member: actor,
         item: { settings: { hasThumbnail: false } },
       });
+      jest
+        .spyOn(authorization, 'validatePermission')
+        .mockResolvedValue({ itemMembership: null, visibilities: [] });
       await service.copy(actor, buildRepositories(), item.id);
       expect(mockedThumbnailService.copyFolder).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('post', () => {
+    it('throw if reached maximum tree depth', async () => {
+      // GIVEN
+      const {
+        actor,
+        items: [item],
+      } = await seedFromJson({
+        items: [{ memberships: [{ account: 'actor' }] }],
+      });
+      mockAuthenticate(actor);
+      assertIsDefined(actor);
+      assertIsMember(actor);
+      const repositories = buildRepositories();
+
+      // WHEN
+      jest.spyOn(repositories.itemRepository, 'checkHierarchyDepth').mockImplementation(() => {
+        throw new Error('is too deep');
+      });
+
+      // SHOULD
+      await expect(() =>
+        service.post(actor, repositories, {
+          parentId: item.id,
+          item: { name: 'item', type: ItemType.FOLDER },
+        }),
+      ).rejects.toThrow();
     });
   });
 });

@@ -1,8 +1,11 @@
+import { singleton } from 'tsyringe';
+
 import { Repositories } from '../../../../utils/repositories';
 import { filterOutPackedItems } from '../../../authorization';
 import { ItemService } from '../../../item/service';
 import { Actor, Member } from '../../../member/entities/member';
 
+@singleton()
 export class ItemLikeService {
   private itemService: ItemService;
 
@@ -35,7 +38,7 @@ export class ItemLikeService {
 
     await this.itemService.get(actor, repositories, itemId);
 
-    return itemLikeRepository.getByItem(itemId);
+    return itemLikeRepository.getByItemId(itemId);
   }
 
   async removeOne(member: Member, repositories: Repositories, itemId: string) {
@@ -44,7 +47,9 @@ export class ItemLikeService {
     // QUESTION: allow public to be liked?
     const item = await this.itemService.get(member, repositories, itemId);
 
-    return itemLikeRepository.deleteOneByCreatorAndItem(member.id, item.id);
+    const result = await itemLikeRepository.deleteOneByCreatorAndItem(member.id, item.id);
+
+    return result;
   }
 
   async post(member: Member, repositories: Repositories, itemId: string) {
@@ -52,6 +57,8 @@ export class ItemLikeService {
 
     // QUESTION: allow public to be liked?
     const item = await this.itemService.get(member, repositories, itemId);
-    return itemLikeRepository.addOne({ creatorId: member.id, itemId: item.id });
+    const result = await itemLikeRepository.addOne({ creatorId: member.id, itemId: item.id });
+
+    return result;
   }
 }

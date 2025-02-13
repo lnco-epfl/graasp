@@ -5,10 +5,6 @@ import { MAX_TARGETS_FOR_READ_REQUEST } from '@graasp/sdk';
 
 import { customType } from '../../../../../plugins/typebox';
 import { errorSchemaRef } from '../../../../../schemas/global';
-import {
-  GET_MOST_LIKED_ITEMS_MAXIMUM,
-  GET_MOST_RECENT_ITEMS_MAXIMUM,
-} from '../../../../../utils/config';
 import { nullableMemberSchemaRef } from '../../../../member/schemas';
 import { itemSchemaRef } from '../../../schemas';
 import { packedItemSchemaRef } from '../../../schemas.packed';
@@ -25,50 +21,11 @@ const publishEntry = customType.StrictObject(
   },
 );
 
-export const getRecentCollections = {
-  operationId: 'getRecentCollections',
-  tags: ['collection'],
-  summary: 'Get most recent published items',
-  description: 'Get most recently published items (collections)',
-
-  querystring: customType.StrictObject({
-    limit: Type.Number({
-      maximum: GET_MOST_RECENT_ITEMS_MAXIMUM,
-      minimum: 1,
-      default: 24,
-    }),
-  }),
-
-  response: {
-    [StatusCodes.OK]: Type.Array(itemSchemaRef),
-    '4xx': errorSchemaRef,
-  },
-};
-
-export const getMostLikedItems = {
-  operationId: 'getMostLikedCollections',
-  tags: ['collection'],
-  summary: 'Get most liked items',
-  description: 'Get most liked items (collections)',
-
-  querystring: customType.StrictObject({
-    limit: Type.Number({
-      maximum: GET_MOST_LIKED_ITEMS_MAXIMUM,
-      minimum: 1,
-      default: 24,
-    }),
-  }),
-  response: {
-    [StatusCodes.OK]: Type.Array(itemSchemaRef),
-    '4xx': errorSchemaRef,
-  },
-};
-
 export const getCollectionsForMember = {
   operationId: 'getCollectionsForMember',
   tags: ['collection'],
   summary: 'Get collections for member',
-  description: 'Get collections for member.',
+  description: 'Get packed collections for member, used in the builder view of the member.',
 
   params: customType.StrictObject({
     memberId: customType.UUID(),
@@ -128,24 +85,16 @@ export const getInformations = {
 };
 
 export const getManyInformations = {
-  querystring: Type.Object(
-    {
-      itemId: Type.Array(customType.UUID(), {
-        uniqueItems: true,
-        maxItems: MAX_TARGETS_FOR_READ_REQUEST,
-      }),
-    },
-    {
-      additionalProperties: false,
-    },
-  ),
+  querystring: customType.StrictObject({
+    itemId: Type.Array(customType.UUID(), {
+      uniqueItems: true,
+      maxItems: MAX_TARGETS_FOR_READ_REQUEST,
+    }),
+  }),
   response: {
-    [StatusCodes.OK]: Type.Object(
-      {
-        data: Type.Record(Type.String({ format: 'uuid' }), publishEntry),
-        errors: Type.Array(errorSchemaRef),
-      },
-      { additionalProperties: false },
-    ),
+    [StatusCodes.OK]: customType.StrictObject({
+      data: Type.Record(Type.String({ format: 'uuid' }), publishEntry),
+      errors: Type.Array(errorSchemaRef),
+    }),
   },
 };

@@ -38,11 +38,12 @@ export class Action extends BaseEntity {
   })
   @JoinColumn({ referencedColumnName: 'id', name: 'item_id' })
   item?: Item | null;
+
   @Column({
     nullable: false,
     enum: Object.values(Context),
   })
-  view: Context | 'Unknown';
+  view: Context;
 
   @Column({
     nullable: false,

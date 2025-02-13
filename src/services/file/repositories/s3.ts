@@ -174,7 +174,10 @@ export class S3FileRepository implements FileRepository {
     }
   }
 
-  private async _downloadS3File({ url, filepath, id }, log: FastifyBaseLogger) {
+  private async _downloadS3File(
+    { url, filepath, id }: { url: string; filepath: string; id: string },
+    log: FastifyBaseLogger,
+  ) {
     try {
       // return readstream of the file saved at given filepath
       // fetch and save file in temporary path
@@ -199,7 +202,13 @@ export class S3FileRepository implements FileRepository {
 
       return file;
     } catch (e) {
-      if (e.statusCode === StatusCodes.NOT_FOUND) {
+      log.error(e);
+      if (
+        e &&
+        typeof e === 'object' &&
+        'statusCode' in e &&
+        e.statusCode === StatusCodes.NOT_FOUND
+      ) {
         throw new S3FileNotFound({ filepath, id });
       }
 
@@ -212,7 +221,7 @@ export class S3FileRepository implements FileRepository {
    * @param
    * @returns temporary file content
    */
-  async getFile({ filepath, id }, log: FastifyBaseLogger) {
+  async getFile({ filepath, id }: { filepath: string; id: string }, log: FastifyBaseLogger) {
     const { s3Bucket: bucket } = this.options;
     try {
       // check whether file exists
@@ -264,7 +273,7 @@ export class S3FileRepository implements FileRepository {
 
       return url;
     } catch (e) {
-      if (e.name === 'NotFound') {
+      if (e && typeof e === 'object' && 'name' in e && e.name === 'NotFound') {
         throw new S3FileNotFound({ filepath });
       }
       if (!(e instanceof DownloadFileUnexpectedError)) {

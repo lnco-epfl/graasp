@@ -18,7 +18,7 @@ import {
 import { AppDataSource } from '../../../../plugins/datasource';
 import { Guest } from '../../../itemLogin/entities/guest';
 import { ItemMembership } from '../../../itemMembership/entities/ItemMembership';
-import { Member } from '../../../member/entities/member';
+import { Member, isMember } from '../../../member/entities/member';
 import { saveMember } from '../../../member/test/fixtures/members';
 import { ItemWrapper, PackedItem } from '../../ItemWrapper';
 import { DEFAULT_ORDER, Item, ItemExtraMap } from '../../entities/Item';
@@ -152,7 +152,7 @@ export class ItemTestUtils {
   };
 
   saveItemAndMembership = async (options: {
-    member?: Member;
+    member?: Member | Guest;
     item?: Partial<Item>;
     permission?: PermissionLevel;
     creator?: Member;
@@ -162,17 +162,23 @@ export class ItemTestUtils {
     itemMembership: ItemMembership;
     packedItem: PackedItem;
   }> => {
-    const { item, permission, creator, parentItem } = options;
-    let member = options.member;
+    const { item, permission, creator = null, parentItem, member } = options;
+    // use given creator, or member if it is a member
+    let itemCreator = creator;
+    if (!creator && member && isMember(member)) {
+      itemCreator = member;
+    }
+
     const newItem = await this.saveItem({
       item,
-      actor: creator ?? member,
+      actor: itemCreator,
       parentItem,
     });
-    if (!member) {
-      member = await saveMember();
-    }
-    const im = await this.saveMembership({ item: newItem, account: member, permission });
+    const im = await this.saveMembership({
+      item: newItem,
+      account: member ?? (await saveMember()),
+      permission,
+    });
     return {
       item: newItem,
       itemMembership: im,
@@ -190,7 +196,7 @@ export class ItemTestUtils {
     return { item };
   };
 
-  saveCollections = async (member) => {
+  saveCollections = async (member: Member) => {
     const items: Item[] = [];
     const packedItems: PackedItem[] = [];
     const visibilities: ItemVisibility[] = [];

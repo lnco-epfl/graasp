@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 
-import { PermissionLevel, UUID } from '@graasp/sdk';
+import { PermissionLevel } from '@graasp/sdk';
 
 import { resolveDependency } from '../../../../../di/utils';
 import { asDefined } from '../../../../../utils/assertions';
@@ -15,8 +15,6 @@ import {
   getCollectionsForMember,
   getInformations,
   getManyInformations,
-  getMostLikedItems,
-  getRecentCollections,
   publishItem,
   unpublishItem,
 } from './schemas';
@@ -28,7 +26,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const publicationService = resolveDependency(PublicationService);
   const itemService = resolveDependency(ItemService);
 
-  fastify.get<{ Params: { memberId: UUID } }>(
+  fastify.get(
     '/collections/members/:memberId',
     {
       schema: getCollectionsForMember,
@@ -58,17 +56,6 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
     },
     async ({ user, query: { itemId } }) => {
       return itemPublishedService.getMany(user?.account, buildRepositories(), itemId);
-    },
-  );
-
-  fastify.get(
-    '/collections/liked',
-    {
-      preHandler: optionalIsAuthenticated,
-      schema: getMostLikedItems,
-    },
-    async ({ user, query: { limit } }) => {
-      return itemPublishedService.getLikedItems(user?.account, buildRepositories(), limit);
     },
   );
 
@@ -109,17 +96,6 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
       return db.transaction(async (manager) => {
         return itemPublishedService.delete(member, buildRepositories(manager), params.itemId);
       });
-    },
-  );
-
-  fastify.get(
-    '/collections/recent',
-    {
-      preHandler: optionalIsAuthenticated,
-      schema: getRecentCollections,
-    },
-    async ({ user, query: { limit } }) => {
-      return itemPublishedService.getRecentItems(user?.account, buildRepositories(), limit);
     },
   );
 };

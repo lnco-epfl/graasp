@@ -22,19 +22,19 @@ import build, {
   mockAuthenticate,
   unmockAuthenticate,
 } from '../../../../../test/app';
+import { seedFromJson } from '../../../../../test/mocks/seed';
 import { resolveDependency } from '../../../../di/utils';
 import { AppDataSource } from '../../../../plugins/datasource';
+import { assertIsDefined } from '../../../../utils/assertions';
 import {
-  HierarchyTooDeep,
-  ItemNotFolder,
   MemberCannotAccess,
   MemberCannotWriteItem,
   TooManyChildren,
 } from '../../../../utils/errors';
 import { ItemMembership } from '../../../itemMembership/entities/ItemMembership';
-import { saveMember } from '../../../member/test/fixtures/members';
+import { assertIsMember } from '../../../member/entities/member';
+import { WrongItemTypeError } from '../../errors';
 import { ItemTestUtils, expectItem } from '../../test/fixtures/items';
-import { saveUntilMaxDescendants } from '../../test/utils';
 import { ActionItemService } from '../action/service';
 import { ItemGeolocation } from '../geolocation/ItemGeolocation';
 import { FolderItemService } from './service';
@@ -109,9 +109,6 @@ describe('Folder routes tests', () => {
     describe('Signed In', () => {
       let waitForPostCreation: () => Promise<unknown>;
       beforeEach(async () => {
-        actor = await saveMember();
-        mockAuthenticate(actor);
-
         const folderService = resolveDependency(FolderItemService);
         const actionItemService = resolveDependency(ActionItemService);
 
@@ -129,6 +126,9 @@ describe('Folder routes tests', () => {
       });
 
       it('Create successfully', async () => {
+        ({ actor } = await seedFromJson());
+        mockAuthenticate(actor);
+
         const payload = FolderItemFactory();
 
         const response = await app.inject({
@@ -140,7 +140,6 @@ describe('Folder routes tests', () => {
 
         // check response value
         const newItem = response.json();
-        console.log(newItem, payload);
         expectItem(newItem, payload);
         await waitForPostCreation();
 
@@ -162,14 +161,14 @@ describe('Folder routes tests', () => {
       });
 
       it('Create successfully in parent item', async () => {
-        const { item: parent } = await testUtils.saveItemAndMembership({
-          member: actor,
+        const { items, actor } = await seedFromJson({
+          items: [{ children: [{}], memberships: [{ account: 'actor' }] }],
         });
-        // child
-        const child = await testUtils.saveItem({
-          actor,
-          parentItem: parent,
-        });
+        const [parent, child] = items;
+        mockAuthenticate(actor);
+        assertIsDefined(actor);
+        assertIsMember(actor);
+
         const payload = FolderItemFactory();
         const response = await app.inject({
           method: HttpMethod.Post,
@@ -177,7 +176,6 @@ describe('Folder routes tests', () => {
           payload,
         });
         const newItem = response.json();
-
         expectItem(newItem, payload, actor, parent);
         expect(response.statusCode).toBe(StatusCodes.OK);
         await waitForPostCreation();
@@ -193,13 +191,16 @@ describe('Folder routes tests', () => {
       });
 
       it('Create successfully in shared parent item', async () => {
-        const member = await saveMember();
-        const { item: parent } = await testUtils.saveItemAndMembership({ member });
-        await testUtils.saveMembership({
-          account: actor,
-          item: parent,
-          permission: PermissionLevel.Write,
+        const {
+          items: [parent],
+          actor,
+        } = await seedFromJson({
+          items: [{ memberships: [{ account: 'actor', permission: PermissionLevel.Write }] }],
         });
+        mockAuthenticate(actor);
+        assertIsDefined(actor);
+        assertIsMember(actor);
+
         const payload = FolderItemFactory();
         const response = await app.inject({
           method: HttpMethod.Post,
@@ -226,6 +227,12 @@ describe('Folder routes tests', () => {
       });
 
       it('Create successfully with geolocation', async () => {
+        const { actor } = await seedFromJson();
+        mockAuthenticate(actor);
+
+        assertIsDefined(actor);
+        assertIsMember(actor);
+
         const payload = FolderItemFactory();
         const response = await app.inject({
           method: HttpMethod.Post,
@@ -244,6 +251,11 @@ describe('Folder routes tests', () => {
       });
 
       it('Create successfully with language', async () => {
+        const { actor } = await seedFromJson();
+        mockAuthenticate(actor);
+        assertIsDefined(actor);
+        assertIsMember(actor);
+
         const payload = FolderItemFactory({ lang: 'fr' });
         const response = await app.inject({
           method: HttpMethod.Post,
@@ -259,10 +271,16 @@ describe('Folder routes tests', () => {
 
       it('Create successfully with parent language', async () => {
         const lang = 'es';
-        const { item: parentItem } = await testUtils.saveItemAndMembership({
-          member: actor,
-          item: { lang },
+        const {
+          items: [parentItem],
+          actor,
+        } = await seedFromJson({
+          items: [{ lang, memberships: [{ account: 'actor' }] }],
         });
+        mockAuthenticate(actor);
+        assertIsDefined(actor);
+        assertIsMember(actor);
+
         const response = await app.inject({
           method: HttpMethod.Post,
           url: `/items/folders`,
@@ -277,6 +295,11 @@ describe('Folder routes tests', () => {
       });
 
       it('Create successfully with description placement above and should not erase default thumbnail', async () => {
+        const { actor } = await seedFromJson();
+        mockAuthenticate(actor);
+        assertIsDefined(actor);
+        assertIsMember(actor);
+
         const payload = FolderItemFactory({
           settings: { descriptionPlacement: DescriptionPlacement.ABOVE },
         });
@@ -295,6 +318,11 @@ describe('Folder routes tests', () => {
       });
 
       it('Filter out bad setting when creating', async () => {
+        const { actor } = await seedFromJson();
+        mockAuthenticate(actor);
+        assertIsDefined(actor);
+        assertIsMember(actor);
+
         const BAD_SETTING = { INVALID: 'Not a valid setting' };
         const VALID_SETTING = { descriptionPlacement: DescriptionPlacement.ABOVE };
 
@@ -319,10 +347,17 @@ describe('Folder routes tests', () => {
       });
 
       it('Create successfully with between children', async () => {
+        const {
+          items: [parentItem, previousItem, afterItem],
+          actor,
+        } = await seedFromJson({
+          items: [{ memberships: [{ account: 'actor' }], children: [{ order: 1 }, { order: 2 }] }],
+        });
+        mockAuthenticate(actor);
+        assertIsDefined(actor);
+        assertIsMember(actor);
+
         const payload = FolderItemFactory();
-        const { item: parentItem } = await testUtils.saveItemAndMembership({ member: actor });
-        const previousItem = await testUtils.saveItem({ parentItem, item: { order: 1 } });
-        const afterItem = await testUtils.saveItem({ parentItem, item: { order: 2 } });
         const response = await app.inject({
           method: HttpMethod.Post,
           url: `/items/folders`,
@@ -339,11 +374,17 @@ describe('Folder routes tests', () => {
       });
 
       it('Create successfully at end', async () => {
+        const {
+          items: [parentItem, _noise, previousItem],
+          actor,
+        } = await seedFromJson({
+          items: [{ memberships: [{ account: 'actor' }], children: [{ order: 1 }, { order: 40 }] }],
+        });
+        mockAuthenticate(actor);
+        assertIsDefined(actor);
+        assertIsMember(actor);
+
         const payload = FolderItemFactory();
-        const { item: parentItem } = await testUtils.saveItemAndMembership({ member: actor });
-        // first item noise
-        await testUtils.saveItem({ parentItem, item: { order: 1 } });
-        const previousItem = await testUtils.saveItem({ parentItem, item: { order: 40 } });
         const response = await app.inject({
           method: HttpMethod.Post,
           url: `/items/folders`,
@@ -360,17 +401,21 @@ describe('Folder routes tests', () => {
       });
 
       it('Create successfully after invalid child adds at end', async () => {
-        const payload = FolderItemFactory();
-        const { item: parentItem } = await testUtils.saveItemAndMembership({ member: actor });
-        const child = await testUtils.saveItem({ parentItem, item: { order: 30 } });
-
-        // noise, child in another parent
-        const { item: otherParent } = await testUtils.saveItemAndMembership({ member: actor });
-        const anotherChild = await testUtils.saveItem({
-          parentItem: otherParent,
-          item: { order: 100 },
+        const {
+          items: [parentItem, child, _noiseParent, anotherChild],
+          actor,
+        } = await seedFromJson({
+          items: [
+            { memberships: [{ account: 'actor' }], children: [{ order: 30 }] },
+            // noise
+            { memberships: [{ account: 'actor' }], children: [{ order: 100 }] },
+          ],
         });
+        mockAuthenticate(actor);
+        assertIsDefined(actor);
+        assertIsMember(actor);
 
+        const payload = FolderItemFactory();
         const response = await app.inject({
           method: HttpMethod.Post,
           url: `/items/folders`,
@@ -445,6 +490,9 @@ describe('Folder routes tests', () => {
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST);
       });
       it('Cannot create item in non-existing parent', async () => {
+        const { actor } = await seedFromJson();
+        mockAuthenticate(actor);
+
         const payload = FolderItemFactory();
         const parentId = uuidv4();
         const response = await app.inject({
@@ -458,8 +506,14 @@ describe('Folder routes tests', () => {
       });
 
       it('Cannot create item if member does not have membership on parent', async () => {
-        const member = await saveMember();
-        const { item: parent } = await testUtils.saveItemAndMembership({ member });
+        const {
+          items: [parent],
+          actor,
+        } = await seedFromJson({
+          items: [{}],
+        });
+        mockAuthenticate(actor);
+
         const payload = FolderItemFactory();
         const response = await app.inject({
           method: HttpMethod.Post,
@@ -472,12 +526,13 @@ describe('Folder routes tests', () => {
       });
 
       it('Cannot create item if member can only read parent', async () => {
-        const owner = await saveMember();
-        const { item: parent } = await testUtils.saveItemAndMembership({
-          member: actor,
-          creator: owner,
-          permission: PermissionLevel.Read,
+        const {
+          items: [parent],
+          actor,
+        } = await seedFromJson({
+          items: [{ memberships: [{ account: 'actor', permission: PermissionLevel.Read }] }],
         });
+        mockAuthenticate(actor);
 
         const payload = FolderItemFactory();
         const response = await app.inject({
@@ -490,18 +545,22 @@ describe('Folder routes tests', () => {
       });
 
       it('Cannot create item if parent item has too many children', async () => {
-        const { item: parent } = await testUtils.saveItemAndMembership({
-          member: actor,
+        const {
+          items: [parent],
+          actor,
+        } = await seedFromJson({
+          items: [
+            {
+              memberships: [{ account: 'actor' }],
+
+              // save maximum children
+              children: Array.from({ length: MAX_NUMBER_OF_CHILDREN }, () => ({})),
+            },
+          ],
         });
+        mockAuthenticate(actor);
+
         const payload = FolderItemFactory();
-
-        // save maximum children
-        await testUtils.saveItems({
-          nb: MAX_NUMBER_OF_CHILDREN,
-          parentItem: parent,
-          member: actor,
-        });
-
         const response = await app.inject({
           method: HttpMethod.Post,
           url: `/items/folders?parentId=${parent.id}`,
@@ -512,28 +571,20 @@ describe('Folder routes tests', () => {
         expect(response.json()).toEqual(new TooManyChildren());
       });
 
-      it('Cannot create item if parent is too deep in hierarchy', async () => {
-        const payload = FolderItemFactory();
-        const { item: parent } = await testUtils.saveItemAndMembership({
-          member: actor,
-        });
-        const currentParent = await saveUntilMaxDescendants(parent, actor);
-
-        const response = await app.inject({
-          method: HttpMethod.Post,
-          url: `/items/folders?parentId=${currentParent.id}`,
-          payload,
-        });
-
-        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN);
-        expect(response.json()).toEqual(new HierarchyTooDeep());
-      });
-
       it('Cannot create inside non-folder item', async () => {
-        const { item: parent } = await testUtils.saveItemAndMembership({
-          member: actor,
-          item: { type: ItemType.DOCUMENT },
+        const {
+          items: [parent],
+          actor,
+        } = await seedFromJson({
+          items: [
+            {
+              type: ItemType.DOCUMENT,
+              memberships: [{ account: 'actor' }],
+            },
+          ],
         });
+        mockAuthenticate(actor);
+
         const payload = FolderItemFactory();
         const response = await app.inject({
           method: HttpMethod.Post,
@@ -542,14 +593,14 @@ describe('Folder routes tests', () => {
         });
 
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST);
-        expect(response.json()).toMatchObject(new ItemNotFolder({ id: parent.id }));
+        expect(response.json()).toMatchObject(new WrongItemTypeError(ItemType.DOCUMENT));
       });
     });
   });
 
   describe('POST /items/folders-with-thumbnail', () => {
     beforeEach(async () => {
-      actor = await saveMember();
+      const { actor } = await seedFromJson({ actor: { extra: { lang: 'en' } } });
       mockAuthenticate(actor);
     });
     it('Post item with thumbnail', async () => {
@@ -588,8 +639,12 @@ describe('Folder routes tests', () => {
 
   describe('PATCH /items/folders/:id', () => {
     it('Throws if signed out', async () => {
-      const member = await saveMember();
-      const { item } = await testUtils.saveItemAndMembership({ member });
+      const {
+        items: [item],
+      } = await seedFromJson({
+        actor: null,
+        items: [{}],
+      });
 
       const response = await app.inject({
         method: HttpMethod.Patch,
@@ -601,21 +656,22 @@ describe('Folder routes tests', () => {
     });
 
     describe('Signed In', () => {
-      beforeEach(async () => {
-        actor = await saveMember();
-        mockAuthenticate(actor);
-      });
-
       it('Update successfully', async () => {
-        const { item } = await testUtils.saveItemAndMembership({
-          item: {
-            type: ItemType.FOLDER,
-            extra: {
-              [ItemType.FOLDER]: {},
+        const {
+          items: [item],
+          actor,
+        } = await seedFromJson({
+          items: [
+            {
+              memberships: [{ account: 'actor' }],
+              extra: {
+                [ItemType.FOLDER]: {},
+              },
             },
-          },
-          member: actor,
+          ],
         });
+        mockAuthenticate(actor);
+
         const payload = {
           name: 'new name',
           extra: {
@@ -645,9 +701,18 @@ describe('Folder routes tests', () => {
       });
 
       it('Update successfully new language', async () => {
-        const { item } = await testUtils.saveItemAndMembership({
-          member: actor,
+        const {
+          items: [item],
+          actor,
+        } = await seedFromJson({
+          items: [
+            {
+              memberships: [{ account: 'actor' }],
+            },
+          ],
         });
+        mockAuthenticate(actor);
+
         const payload = {
           lang: 'fr',
         };
@@ -668,9 +733,18 @@ describe('Folder routes tests', () => {
       });
 
       it('Update successfully description placement above', async () => {
-        const { item } = await testUtils.saveItemAndMembership({
-          member: actor,
+        const {
+          items: [item],
+          actor,
+        } = await seedFromJson({
+          items: [
+            {
+              memberships: [{ account: 'actor' }],
+            },
+          ],
         });
+        mockAuthenticate(actor);
+
         const payload = {
           settings: {
             ...item.settings,
@@ -698,12 +772,20 @@ describe('Folder routes tests', () => {
       });
 
       it('Filter out bad setting when updating', async () => {
+        const {
+          items: [item],
+          actor,
+        } = await seedFromJson({
+          items: [
+            {
+              memberships: [{ account: 'actor' }],
+            },
+          ],
+        });
+        mockAuthenticate(actor);
+
         const BAD_SETTING = { INVALID: 'Not a valid setting' };
         const VALID_SETTING = { descriptionPlacement: DescriptionPlacement.ABOVE };
-
-        const { item } = await testUtils.saveItemAndMembership({
-          member: actor,
-        });
         const payload = {
           settings: {
             ...item.settings,
@@ -747,12 +829,17 @@ describe('Folder routes tests', () => {
       });
 
       it('Cannot update item if does not have membership', async () => {
+        const {
+          items: [item],
+          actor,
+        } = await seedFromJson({
+          items: [{}],
+        });
+        mockAuthenticate(actor);
+
         const payload = {
           name: 'new name',
         };
-        const member = await saveMember();
-        const { item } = await testUtils.saveItemAndMembership({ member });
-
         const response = await app.inject({
           method: HttpMethod.Patch,
           url: `/items/folders/${item.id}`,
@@ -763,12 +850,17 @@ describe('Folder routes tests', () => {
         expect(response.statusCode).toBe(StatusCodes.FORBIDDEN);
       });
       it('Cannot update item if has only read membership', async () => {
+        const {
+          items: [item],
+          actor,
+        } = await seedFromJson({
+          items: [{ memberships: [{ account: 'actor', permission: PermissionLevel.Read }] }],
+        });
+        mockAuthenticate(actor);
+
         const payload = {
           name: 'new name',
         };
-        const member = await saveMember();
-        const { item } = await testUtils.saveItemAndMembership({ member });
-        await testUtils.saveMembership({ item, account: actor, permission: PermissionLevel.Read });
         const response = await app.inject({
           method: HttpMethod.Patch,
           url: `/items/folders/${item.id}`,

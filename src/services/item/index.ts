@@ -6,7 +6,6 @@ import {
   APPS_JWT_SECRET,
   APPS_PUBLISHER_ID,
   APP_ITEMS_PREFIX,
-  EMBEDDED_LINK_ITEM_IFRAMELY_HREF_ORIGIN,
   FILE_ITEM_PLUGIN_OPTIONS,
   ITEMS_ROUTE_PREFIX,
   S3_FILE_ITEM_PLUGIN_OPTIONS,
@@ -16,7 +15,10 @@ import graaspItemLogin from '../itemLogin';
 import itemController from './controller';
 import actionItemPlugin from './plugins/action';
 import graaspApps from './plugins/app';
-import graaspEmbeddedLinkItem from './plugins/embeddedLink';
+import { plugin as graaspAppItem } from './plugins/app/controller';
+import graaspDocumentItem from './plugins/document/controller';
+import { PREFIX_DOCUMENT } from './plugins/document/service';
+import graaspEmbeddedLinkItem from './plugins/embeddedLink/controller';
 import { PREFIX_EMBEDDED_LINK } from './plugins/embeddedLink/service';
 import graaspEnrollPlugin from './plugins/enroll';
 import graaspFileItem from './plugins/file';
@@ -24,7 +26,6 @@ import graaspFolderItem from './plugins/folder/controller';
 import itemGeolocationPlugin from './plugins/geolocation/index';
 import graaspZipPlugin from './plugins/importExport';
 import graaspInvitationsPlugin from './plugins/invitation';
-import graaspCategoryPlugin from './plugins/itemCategory';
 import graaspFavoritePlugin from './plugins/itemFavorite';
 import graaspItemFlags from './plugins/itemFlag';
 import graaspItemLikes from './plugins/itemLike';
@@ -35,6 +36,7 @@ import graaspValidationPlugin from './plugins/publication/validation';
 import graaspRecycledItemData from './plugins/recycled';
 import ShortLinkService from './plugins/shortLink';
 import { SHORT_LINKS_ROUTE_PREFIX } from './plugins/shortLink/service';
+import { plugin as graaspShortcutPlugin } from './plugins/shortcut/controller';
 import thumbnailsPlugin from './plugins/thumbnail';
 import { itemWsHooks } from './ws/hooks';
 
@@ -62,11 +64,11 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       // // plugins that don't require authentication
       fastify.register(graaspItemLogin);
 
-      fastify.register(graaspCategoryPlugin);
-
       fastify.register(graaspFavoritePlugin);
 
       fastify.register(graaspItemPublish);
+
+      fastify.register(graaspShortcutPlugin);
 
       fastify.register(thumbnailsPlugin);
 
@@ -75,6 +77,8 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       fastify.register(graaspItemVisibility);
 
       fastify.register(graaspFolderItem);
+
+      fastify.register(graaspAppItem);
 
       fastify.register(ShortLinkService, {
         prefix: SHORT_LINKS_ROUTE_PREFIX,
@@ -88,11 +92,11 @@ const plugin: FastifyPluginAsync = async (fastify) => {
 
         fastify.register(graaspZipPlugin);
 
-        // 'await' necessary because internally it uses 'extendCreateSchema'
-        await fastify.register(graaspEmbeddedLinkItem, {
-          iframelyHrefOrigin: EMBEDDED_LINK_ITEM_IFRAMELY_HREF_ORIGIN,
+        fastify.register(graaspEmbeddedLinkItem, {
           prefix: PREFIX_EMBEDDED_LINK,
         });
+
+        fastify.register(graaspDocumentItem, { prefix: PREFIX_DOCUMENT });
 
         fastify.register(graaspInvitationsPlugin);
 
