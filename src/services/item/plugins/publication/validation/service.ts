@@ -100,11 +100,6 @@ export class ItemValidationService {
 
     const operationResult = results.every((v) => v);
 
-    // update publication date
-    if (operationResult) {
-      await this.itemPublishedService.touchUpdatedAt(repositories, item);
-    }
-
     return operationResult;
   }
 }
