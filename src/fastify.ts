@@ -5,30 +5,14 @@ import { fastify } from 'fastify';
 import registerAppPlugins from './app';
 import ajvFormats from './schemas/ajvFormats';
 import { initSentry } from './sentry';
-import {
-  APP_VERSION,
-  CORS_ORIGIN_REGEX,
-  DEV,
-  ENVIRONMENT,
-  HOSTNAME,
-  PORT,
-  PROD,
-} from './utils/config';
+import { APP_VERSION, CORS_ORIGIN_REGEX, DEV, ENVIRONMENT, HOSTNAME, PORT } from './utils/config';
 import { GREETING } from './utils/constants';
 
 export const instance = fastify({
   // allows to remove logging of incomming requests
   // can not be set using an environnement variable
+  bodyLimit: 25 * 1024 * 1024,
   disableRequestLogging: false,
-  logger: {
-    // Do not use pino-pretty in production
-    transport: PROD
-      ? undefined
-      : {
-          target: 'pino-pretty',
-        },
-    level: process.env.LOG_LEVEL,
-  },
   ajv: {
     customOptions: {
       // This allow routes that take array to correctly interpret single values as an array
@@ -58,6 +42,7 @@ const start = async () => {
 
   try {
     await instance.listen({ port: PORT, host: HOSTNAME });
+
     instance.log.info('App is running version %s in %s mode', APP_VERSION, ENVIRONMENT);
     if (DEV) {
       // greet the world
