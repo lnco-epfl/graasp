@@ -477,6 +477,9 @@ export class ItemRepository extends MutableRepository<Item, UpdateItemBody> {
       }
     }
 
+    // generated column cannot be explicitly updated in PostgreSQL
+    delete newData.search_document;
+
     // TODO: check schema
 
     return await super.updateOne(id, newData);
