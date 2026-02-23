@@ -14,7 +14,6 @@ import build, {
   mockAuthenticate,
   unmockAuthenticate,
 } from '../../../../../../test/app';
-import { LocalFileRepository } from '../../../../file/repositories/local';
 import { saveMember } from '../../../../member/test/fixtures/members';
 import { ItemTestUtils } from '../../../test/fixtures/items';
 import * as ARCHIVE_CONTENT from './fixtures/archive';
