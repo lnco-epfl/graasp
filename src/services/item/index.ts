@@ -3,6 +3,7 @@ import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
 
 import {
+  APPS_JWT_EXPIRATION_IN_MINUTES,
   APPS_JWT_SECRET,
   APPS_PUBLISHER_ID,
   APP_ITEMS_PREFIX,
@@ -48,6 +49,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   // this needs to execute before 'create()' and 'updateOne()' are called
   // because graaspApps extends the schemas
   fastify.register(graaspApps, {
+    jwtExpiration: APPS_JWT_EXPIRATION_IN_MINUTES,
     jwtSecret: APPS_JWT_SECRET,
     prefix: APP_ITEMS_PREFIX,
     publisherId: APPS_PUBLISHER_ID,
