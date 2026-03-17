@@ -1,4 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
+import { decode } from 'jsonwebtoken';
 import { v4 } from 'uuid';
 
 import { FastifyInstance } from 'fastify';
@@ -11,7 +12,7 @@ import build, {
   unmockAuthenticate,
 } from '../../../../../../test/app';
 import { assertIsDefined } from '../../../../../utils/assertions';
-import { APP_ITEMS_PREFIX } from '../../../../../utils/config';
+import { APPS_JWT_EXPIRATION_IN_MINUTES, APP_ITEMS_PREFIX } from '../../../../../utils/config';
 import { Guest } from '../../../../itemLogin/entities/guest';
 import { Member } from '../../../../member/entities/member';
 import { expectAccount, saveMember } from '../../../../member/test/fixtures/members';
@@ -145,6 +146,37 @@ describe('Apps Plugin Tests', () => {
           payload: { origin: chosenApp.url, key: chosenApp.key },
         });
         expect(response.json().token).toBeTruthy();
+      });
+
+      it('Issues app tokens with the configured expiration window', async () => {
+        if (!actor) {
+          throw new Error('actor is not defined');
+        }
+        const { item } = await testUtils.saveApp({ url: chosenApp.url, member: actor });
+
+        const response = await app.inject({
+          method: HttpMethod.Post,
+          url: `${APP_ITEMS_PREFIX}/${item.id}/api-access-token`,
+          payload: { origin: chosenApp.url, key: chosenApp.key },
+        });
+
+        const { token } = response.json();
+        const payload = decode(token);
+
+        expect(typeof payload).toEqual('object');
+        if (!payload || typeof payload === 'string') {
+          throw new Error('token payload is invalid');
+        }
+
+        const { exp, iat } = payload;
+
+        expect(typeof exp).toEqual('number');
+        expect(typeof iat).toEqual('number');
+        if (typeof exp !== 'number' || typeof iat !== 'number') {
+          throw new Error('token timestamps are missing');
+        }
+
+        expect(exp - iat).toEqual(APPS_JWT_EXPIRATION_IN_MINUTES * 60);
       });
 
       it('Incorrect params throw bad request', async () => {

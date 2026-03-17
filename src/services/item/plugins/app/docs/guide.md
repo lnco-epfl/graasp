@@ -49,7 +49,7 @@ The response will contain `token` you will be using to request your app's data.
 
 3. **Use the API**: From now on you can freely use your token to access the API and fetch various data. See the [API Documentation](./api.md).
 
-4. **Refetch the token**: The token might expire. In this case, redo step 2.
+4. **Refetch the token**: The token might expire. In this case, redo step 2. Graasp app API tokens are long-lived by default so embedded experiments can run for hours on the same page, but apps should still be prepared to request a new token if needed.
 
 ## File Upload
 

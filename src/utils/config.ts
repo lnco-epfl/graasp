@@ -288,6 +288,9 @@ if (!process.env.APPS_JWT_SECRET) {
   throw new Error('APPS_JWT_SECRET is not defined');
 }
 export const APPS_JWT_SECRET = process.env.APPS_JWT_SECRET;
+export const APPS_JWT_EXPIRATION_IN_MINUTES = process.env.APPS_JWT_EXPIRATION_IN_MINUTES
+  ? +process.env.APPS_JWT_EXPIRATION_IN_MINUTES
+  : 360;
 
 // Graasp websockets
 export const REDIS_HOST = process.env.REDIS_HOST;
