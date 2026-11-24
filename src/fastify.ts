@@ -35,6 +35,8 @@ export const instance = fastify({
   // allows to remove logging of incomming requests
   // can not be set using an environnement variable
   disableRequestLogging: false,
+  // default is 1 MiB; raised to 10 MiB to allow large JSON payloads (e.g. experiment results)
+  bodyLimit: 10 * 1024 * 1024,
   logger: {
     transport: resolveLoggerTransport(),
     level: process.env.LOG_LEVEL,
